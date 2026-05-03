@@ -1,0 +1,28 @@
+# Dependencies — installed from package.json, never committed
+node_modules/
+
+# Build output — regenerated, not source
+dist/
+build/
+
+# Environment variables — secrets live here, NEVER commit
+.env
+.env.local
+.env.*.local
+
+# Editor / OS junk
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test output
+coverage/
+
+# Supabase local development artifacts
+supabase/.branches
+supabase/.temp
