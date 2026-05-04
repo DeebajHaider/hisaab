@@ -434,10 +434,10 @@ function TrendsVisual() {
 
 function FamilyVisual() {
   const people = [
-    { name: "Minhal", amt: "8,500", color: "bg-teal-500" },
-    { name: "Deebaj", amt: "12,200", color: "bg-teal-400" },
-    { name: "Batool", amt: "6,800", color: "bg-teal-500" },
-    { name: "Ismat", amt: "9,100", color: "bg-teal-400" },
+    { name: "John", amt: "8,500", color: "bg-teal-500" },
+    { name: "Charlie", amt: "12,200", color: "bg-teal-400" },
+    { name: "Dave", amt: "6,800", color: "bg-teal-500" },
+    { name: "Alice", amt: "9,100", color: "bg-teal-400" },
   ];
   return (
     <div className="p-6 space-y-2">
