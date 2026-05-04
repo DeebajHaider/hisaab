@@ -1,15 +1,24 @@
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthPage } from "@/routes/auth";
+import { BudgetsHome } from "@/routes/budgets-home";
+import { NotFound } from "@/routes/not-found";
 
 function App() {
-  // Just to confirm the client loaded; we'll wire real auth next phase.
-  console.log("Supabase client:", supabase);
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
-      <h1 className="text-3xl font-bold text-foreground">Hisaab</h1>
-      <Button>Click me</Button>
-    </div>
+    // BrowserRouter enables client-side routing using the History API.
+    // The whole app must be inside this for routing to work.
+    <BrowserRouter>
+      <Routes>
+        {/* Public route — no auth required */}
+        <Route path="/auth" element={<AuthPage />} />
+
+        {/* Protected routes — we'll add the auth wrapper in 5.3 */}
+        <Route path="/" element={<BudgetsHome />} />
+
+        {/* Catch-all for unmatched URLs */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
