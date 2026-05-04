@@ -1,6 +1,7 @@
 import { Link, Outlet } from "react-router-dom";
 import { Wallet, Sun, Moon, Monitor, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getInitials } from "@/lib/format/initials";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -81,7 +82,7 @@ function UserMenu() {
   const { user, signOut } = useAuth();
 
   // Get initials for the avatar fallback. e.g. "deebaj@example.com" → "D"
-  const initial = user?.email?.[0]?.toUpperCase() ?? "?";
+  const initial = getInitials({ email: user?.email });
 
   return (
     <DropdownMenu>
