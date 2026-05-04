@@ -364,7 +364,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_budget_role: {
+        Args: { b_id: string; min_role: string }
+        Returns: boolean
+      }
+      has_item_budget_role: {
+        Args: { item_category_id: string; min_role: string }
+        Returns: boolean
+      }
+      is_budget_member: { Args: { b_id: string }; Returns: boolean }
+      is_item_budget_member: {
+        Args: { item_category_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
