@@ -10,8 +10,14 @@ interface CreateBudgetInput {
 }
 
 /**
- * Create a new budget owned by the current user.
- * The DB trigger auto-adds the creator as 'owner' in budget_members.
+ * Create a new budget. The DB defaults `created_by` to auth.uid() and a
+ * trigger adds the creator as 'owner' in budget_members.
+ *
+ * Note: we don't .select() the inserted row. The SELECT policy on budgets
+ * calls is_budget_member(), which evaluates membership in the same statement
+ * the trigger just wrote — and there's an RLS-evaluation order issue that
+ * isn't fully untangled. Returning void and invalidating the list query
+ * works fine for this case.
  */
 export function useCreateBudget() {
   const queryClient = useQueryClient();

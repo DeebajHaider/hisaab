@@ -6,9 +6,13 @@ import { ThemeProvider } from "@/lib/theme-provider";
 import { queryClient } from "@/lib/query-client";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { AppLayout } from "@/components/layout/app-layout";
+import { BudgetLayout } from "@/components/layout/budget-layout";
 import { Landing } from "@/routes/landing";
 import { AuthPage } from "@/routes/auth";
 import { BudgetsHome } from "@/routes/budgets-home";
+import { BudgetRedirect } from "@/routes/budget-redirect";
+import { DayView } from "@/routes/day-view";
+import { Manage } from "@/routes/manage";
 import { NotFound } from "@/routes/not-found";
 
 function App() {
@@ -18,11 +22,11 @@ function App() {
         <AuthProvider>
           <BrowserRouter>
             <Routes>
-              {/* Public — no layout */}
+              {/* Public */}
               <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<AuthPage />} />
 
-              {/* Protected app routes — wrapped in RequireAuth + AppLayout */}
+              {/* Protected app — outer layout */}
               <Route
                 path="/app"
                 element={
@@ -31,12 +35,14 @@ function App() {
                   </RequireAuth>
                 }
               >
-                {/* index = renders at exactly /app */}
                 <Route index element={<BudgetsHome />} />
-                {/* Future routes go here:
-                <Route path="budgets/:id/day/:date" element={<DayView />} />
-                <Route path="budgets/:id/month/:yyyy-mm" element={<MonthView />} />
-                ... */}
+
+                {/* Budget detail — inner layout with sidebar */}
+                <Route path="budgets/:budgetId" element={<BudgetLayout />}>
+                  <Route index element={<BudgetRedirect />} />
+                  <Route path="day/:date" element={<DayView />} />
+                  <Route path="manage" element={<Manage />} />
+                </Route>
               </Route>
 
               <Route path="*" element={<NotFound />} />
