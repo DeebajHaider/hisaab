@@ -14,31 +14,47 @@ import {
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CategoryFormDialog } from "@/components/manage/category-form-dialog";
+import { ItemFormDialog } from "@/components/manage/item-form-dialog";
+import { ArchiveConfirmDialog } from "@/components/manage/archive-confirm-dialog";
+import { useArchiveCategory } from "@/queries/use-category-mutations";
+import { useArchiveItem } from "@/queries/use-item-mutations";
 import type { CategoryGroup } from "@/lib/format/tree-sort";
+import type { Category } from "@/queries/use-categories";
+import type { ItemWithCategory } from "@/queries/use-items";
 
 interface CategoryTreeProps {
   budgetId: string;
+  categories: Category[]; // flat list, needed for item dialog category picker
   groups: CategoryGroup[];
 }
 
-/**
- * Hierarchical view of categories with their items.
- * Each category is collapsible. Buttons for edit/archive/add-item sit on each row.
- */
-export function CategoryTree({ groups }: CategoryTreeProps) {
+export function CategoryTree({ budgetId, categories, groups }: CategoryTreeProps) {
   return (
     <div className="space-y-2">
       {groups.map((group) => (
-        <CategoryRow key={group.category.id} group={group} />
+        <CategoryRow
+          key={group.category.id}
+          budgetId={budgetId}
+          categories={categories}
+          group={group}
+        />
       ))}
     </div>
   );
 }
 
-function CategoryRow({ group }: { group: CategoryGroup }) {
-  // Categories start expanded so the user can see what's inside.
-  // We could persist this in localStorage if it became annoying.
+function CategoryRow({
+  budgetId,
+  categories,
+  group,
+}: {
+  budgetId: string;
+  categories: Category[];
+  group: CategoryGroup;
+}) {
   const [open, setOpen] = useState(true);
+  const archiveCategory = useArchiveCategory();
   const itemCount = group.items.length;
 
   return (
@@ -73,15 +89,33 @@ function CategoryRow({ group }: { group: CategoryGroup }) {
         </span>
 
         <div className="ml-auto flex items-center gap-1">
-          {/* Edit and archive — wired in 2.2c */}
-          <Button variant="ghost" size="icon" className="w-8 h-8" disabled>
-            <Pencil className="w-3.5 h-3.5" />
-            <span className="sr-only">Edit category</span>
-          </Button>
-          <Button variant="ghost" size="icon" className="w-8 h-8" disabled>
-            <Archive className="w-3.5 h-3.5" />
-            <span className="sr-only">Archive category</span>
-          </Button>
+          <CategoryFormDialog
+            budgetId={budgetId}
+            existing={group.category}
+            trigger={
+              <Button variant="ghost" size="icon" className="w-8 h-8">
+                <Pencil className="w-3.5 h-3.5" />
+                <span className="sr-only">Edit {group.category.name}</span>
+              </Button>
+            }
+          />
+          <ArchiveConfirmDialog
+            name={group.category.name}
+            kind="category"
+            isPending={archiveCategory.isPending}
+            onConfirm={() =>
+              archiveCategory.mutate({
+                id: group.category.id,
+                budgetId,
+              })
+            }
+            trigger={
+              <Button variant="ghost" size="icon" className="w-8 h-8">
+                <Archive className="w-3.5 h-3.5" />
+                <span className="sr-only">Archive {group.category.name}</span>
+              </Button>
+            }
+          />
         </div>
       </div>
 
@@ -90,18 +124,31 @@ function CategoryRow({ group }: { group: CategoryGroup }) {
           {group.items.length === 0 ? (
             <EmptyItemsRow />
           ) : (
-            group.items.map((item) => <ItemRow key={item.id} item={item} />)
+            group.items.map((item) => (
+              <ItemRow
+                key={item.id}
+                budgetId={budgetId}
+                categories={categories}
+                item={item}
+              />
+            ))
           )}
           <div className="pt-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs h-7 text-muted-foreground"
-              disabled
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Add item
-            </Button>
+            <ItemFormDialog
+              budgetId={budgetId}
+              categories={categories}
+              defaultCategoryId={group.category.id}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs h-7 text-muted-foreground"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  Add item
+                </Button>
+              }
+            />
           </div>
         </div>
       </CollapsibleContent>
@@ -109,10 +156,20 @@ function CategoryRow({ group }: { group: CategoryGroup }) {
   );
 }
 
-function ItemRow({ item }: { item: { id: string; name: string; unit: string | null; default_rate: number | null; default_mode: string } }) {
+function ItemRow({
+  budgetId,
+  categories,
+  item,
+}: {
+  budgetId: string;
+  categories: Category[];
+  item: ItemWithCategory;
+}) {
+  const archiveItem = useArchiveItem();
+
   return (
     <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-background transition-colors group">
-      <div className="w-4 shrink-0" /> {/* aligns with category chevron */}
+      <div className="w-4 shrink-0" />
       <span className="text-sm">{item.name}</span>
 
       {item.unit && (
@@ -131,15 +188,35 @@ function ItemRow({ item }: { item: { id: string; name: string; unit: string | nu
         </Badge>
       )}
 
-      <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="w-7 h-7" disabled>
-          <Pencil className="w-3 h-3" />
-          <span className="sr-only">Edit item</span>
-        </Button>
-        <Button variant="ghost" size="icon" className="w-7 h-7" disabled>
-          <Archive className="w-3 h-3" />
-          <span className="sr-only">Archive item</span>
-        </Button>
+      <div className="ml-auto opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex items-center gap-1">
+        <ItemFormDialog
+          budgetId={budgetId}
+          categories={categories}
+          existing={item}
+          trigger={
+            <Button variant="ghost" size="icon" className="w-7 h-7">
+              <Pencil className="w-3 h-3" />
+              <span className="sr-only">Edit {item.name}</span>
+            </Button>
+          }
+        />
+        <ArchiveConfirmDialog
+          name={item.name}
+          kind="item"
+          isPending={archiveItem.isPending}
+          onConfirm={() =>
+            archiveItem.mutate({
+              id: item.id,
+              budgetId,
+            })
+          }
+          trigger={
+            <Button variant="ghost" size="icon" className="w-7 h-7">
+              <Archive className="w-3 h-3" />
+              <span className="sr-only">Archive {item.name}</span>
+            </Button>
+          }
+        />
       </div>
     </div>
   );

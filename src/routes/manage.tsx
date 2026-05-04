@@ -6,6 +6,7 @@ import { useCategories } from "@/queries/use-categories";
 import { useItems } from "@/queries/use-items";
 import { groupItemsByCategory } from "@/lib/format/tree-sort";
 import { CategoryTree } from "@/components/manage/category-tree";
+import { CategoryFormDialog } from "@/components/manage/category-form-dialog";
 
 export function Manage() {
   const { budgetId } = useParams<{ budgetId: string }>();
@@ -21,14 +22,17 @@ export function Manage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-      <Header />
+      <Header budgetId={budgetId} />
 
       {isLoading && <ManageSkeleton />}
       {error && <ErrorState message={(error as Error).message} />}
-      {!isLoading && !error && categories.length === 0 && <EmptyState />}
+      {!isLoading && !error && categories.length === 0 && (
+        <EmptyState budgetId={budgetId} />
+      )}
       {!isLoading && !error && categories.length > 0 && (
         <CategoryTree
           budgetId={budgetId}
+          categories={categories}
           groups={groupItemsByCategory(categories, items)}
         />
       )}
@@ -36,7 +40,7 @@ export function Manage() {
   );
 }
 
-function Header() {
+function Header({ budgetId }: { budgetId: string }) {
   return (
     <div className="flex items-center justify-between mb-6">
       <div>
@@ -46,25 +50,27 @@ function Header() {
         </p>
       </div>
       <div className="flex gap-2">
-        {/* Buttons disabled in 2.2b — wired up in 2.2c */}
         <Button variant="outline" size="sm" disabled>
           Import template
         </Button>
-        <Button
-          size="sm"
-          className="bg-teal-600 hover:bg-teal-700 text-white"
-          disabled
-        >
-          <Plus className="w-4 h-4 mr-1.5" />
-          New category
-        </Button>
+        <CategoryFormDialog
+          budgetId={budgetId}
+          trigger={
+            <Button
+              size="sm"
+              className="bg-teal-600 hover:bg-teal-700 text-white"
+            >
+              <Plus className="w-4 h-4 mr-1.5" />
+              New category
+            </Button>
+          }
+        />
       </div>
     </div>
   );
 }
 
 function ManageSkeleton() {
-  // Three skeleton category rows so the page has shape while loading
   return (
     <div className="space-y-2">
       {[0, 1, 2].map((i) => (
@@ -90,17 +96,26 @@ function ErrorState({ message }: { message: string }) {
   );
 }
 
-function EmptyState() {
+function EmptyState({ budgetId }: { budgetId: string }) {
   return (
     <div className="rounded-lg border border-dashed border-border p-12 text-center">
       <FolderPlus className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
       <h3 className="font-medium mb-1">No categories yet</h3>
       <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
-        Add your first category to get started. Or import the template if your spending fits the standard family pattern.
+        Add your first category to get started.
       </p>
-      <p className="text-xs text-muted-foreground italic">
-        (Buttons disabled until step 2.2c.)
-      </p>
+      <CategoryFormDialog
+        budgetId={budgetId}
+        trigger={
+          <Button
+            size="sm"
+            className="bg-teal-600 hover:bg-teal-700 text-white"
+          >
+            <Plus className="w-4 h-4 mr-1.5" />
+            Add category
+          </Button>
+        }
+      />
     </div>
   );
 }
