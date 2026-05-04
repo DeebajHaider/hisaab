@@ -37,7 +37,7 @@ export function AuthPage() {
         if (error) throw error;
         // Successful sign-in. AuthProvider will pick up the session change
         // automatically; we just navigate to home.
-        navigate("/", { replace: true });
+        navigate("/app", { replace: true });
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
