@@ -1,4 +1,4 @@
-import { calculatePercentContribution } from "./percent-contribution";
+import { calculatePercentContribution } from "./percent-contribution.ts";
 
 describe("calculatePercentContribution", () => {
   it("returns the percentage of a part relative to a total", () => {
