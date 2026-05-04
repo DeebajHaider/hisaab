@@ -1,24 +1,33 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/lib/auth-context";
+import { RequireAuth } from "@/components/auth/require-auth";
 import { AuthPage } from "@/routes/auth";
 import { BudgetsHome } from "@/routes/budgets-home";
 import { NotFound } from "@/routes/not-found";
 
 function App() {
   return (
-    // BrowserRouter enables client-side routing using the History API.
-    // The whole app must be inside this for routing to work.
-    <BrowserRouter>
-      <Routes>
-        {/* Public route — no auth required */}
-        <Route path="/auth" element={<AuthPage />} />
+    // AuthProvider wraps everything so any component can call useAuth().
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public route */}
+          <Route path="/auth" element={<AuthPage />} />
 
-        {/* Protected routes — we'll add the auth wrapper in 5.3 */}
-        <Route path="/" element={<BudgetsHome />} />
+          {/* Protected — redirects to /auth if not signed in */}
+          <Route
+            path="/"
+            element={
+              <RequireAuth>
+                <BudgetsHome />
+              </RequireAuth>
+            }
+          />
 
-        {/* Catch-all for unmatched URLs */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
