@@ -1,28 +1,36 @@
-# Dependencies — installed from package.json, never committed
-node_modules/
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Build output — regenerated, not source
-dist/
-build/
+node_modules
+dist
+dist-ssr
+*.local
 
-# Environment variables — secrets live here, NEVER commit
+# Environment variables — NEVER commit secrets
 .env
 .env.local
 .env.*.local
 
-# Editor / OS junk
+# Editor / OS
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
 .idea/
-
-# Logs
-*.log
-npm-debug.log*
-
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+ 
 # Test output
 coverage/
-
-# Supabase local development artifacts
+ 
+# Supabase local development
 supabase/.branches
 supabase/.temp
