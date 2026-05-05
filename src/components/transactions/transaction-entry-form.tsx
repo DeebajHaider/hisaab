@@ -278,7 +278,7 @@ useEffect(() => {
         <SearchCombobox
             items={searchResults}
             selectedId={selectedItemId}
-            selectedName={selectedItem?.name ?? null}
+            selectedName={selectedItem?.name ?? existing?.item?.name ?? null}
             query={searchQuery}
             onQueryChange={setSearchQuery}
             onPick={pickItem}
