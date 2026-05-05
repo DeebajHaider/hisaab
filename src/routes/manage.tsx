@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
-import { Plus, FolderPlus } from "lucide-react";
+import { Plus, FolderPlus, Upload } from "lucide-react";
+import { ImportDialog } from "@/components/manage/import-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCategories } from "@/queries/use-categories";
@@ -50,9 +51,15 @@ function Header({ budgetId }: { budgetId: string }) {
         </p>
       </div>
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" disabled>
-          Import template
-        </Button>
+        <ImportDialog
+          budgetId={budgetId}
+          trigger={
+            <Button variant="outline" size="sm">
+              <Upload className="w-4 h-4 mr-1.5" />
+              Import
+            </Button>
+          }
+        />
         <CategoryFormDialog
           budgetId={budgetId}
           trigger={
@@ -102,20 +109,31 @@ function EmptyState({ budgetId }: { budgetId: string }) {
       <FolderPlus className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
       <h3 className="font-medium mb-1">No categories yet</h3>
       <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
-        Add your first category to get started.
+        Add your first category, or import a starter template.
       </p>
-      <CategoryFormDialog
-        budgetId={budgetId}
-        trigger={
-          <Button
-            size="sm"
-            className="bg-teal-600 hover:bg-teal-700 text-white"
-          >
-            <Plus className="w-4 h-4 mr-1.5" />
-            Add category
-          </Button>
-        }
-      />
+      <div className="flex justify-center gap-2">
+        <ImportDialog
+          budgetId={budgetId}
+          trigger={
+            <Button variant="outline" size="sm">
+              <Upload className="w-4 h-4 mr-1.5" />
+              Import
+            </Button>
+          }
+        />
+        <CategoryFormDialog
+          budgetId={budgetId}
+          trigger={
+            <Button
+              size="sm"
+              className="bg-teal-600 hover:bg-teal-700 text-white"
+            >
+              <Plus className="w-4 h-4 mr-1.5" />
+              Add category
+            </Button>
+          }
+        />
+      </div>
     </div>
   );
 }
