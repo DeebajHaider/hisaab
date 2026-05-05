@@ -11,11 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { useCategories } from "@/queries/use-categories";
 import { useItems, type ItemWithCategory } from "@/queries/use-items";
 import { usePeople } from "@/queries/use-people";
@@ -130,6 +125,7 @@ export function TransactionEntryForm({
 
   // --- Handlers
   const pickItem = (id: string) => {
+    console.log('[pickItem] called with id:', id);
     setSelectedItemId(id);
     setSearchOpen(false);
     setSearchQuery("");
@@ -209,6 +205,7 @@ export function TransactionEntryForm({
     return <NoSetup />;
   }
 
+  console.log('[render] selectedItemId:', selectedItemId, 'searchQuery:', searchQuery);
   return (
     <form
       onSubmit={handleSubmit}
@@ -217,50 +214,20 @@ export function TransactionEntryForm({
       {/* Search */}
       <div className="space-y-2">
         <Label htmlFor="search-input">Search items</Label>
-        <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-          <PopoverTrigger asChild>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                ref={searchInputRef}
-                id="search-input"
-                placeholder="Type to search..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setSearchOpen(true);
-                }}
-                onFocus={() => setSearchOpen(true)}
-                className="pl-9 pr-9"
-                autoComplete="off"
-              />
-              {selectedItem && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    clearItem();
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  aria-label="Clear selection"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </PopoverTrigger>
-          <PopoverContent
-            className="p-0 w-[var(--radix-popover-trigger-width)]"
-            align="start"
-            onOpenAutoFocus={(e) => e.preventDefault()}
-          >
-            <SearchDropdown
-              results={searchResults}
-              selectedId={selectedItemId}
-              onPick={pickItem}
-            />
-          </PopoverContent>
-        </Popover>
+        {/* Search */}
+        <div className="space-y-2">
+        <Label htmlFor="search-input">Search items</Label>
+        <SearchCombobox
+            items={searchResults}
+            selectedId={selectedItemId}
+            selectedName={selectedItem?.name ?? null}
+            query={searchQuery}
+            onQueryChange={setSearchQuery}
+            onPick={pickItem}
+            onClear={clearItem}
+            inputRef={searchInputRef}
+        />
+        </div>
       </div>
 
       <div className="text-xs text-muted-foreground text-center">— or browse —</div>
@@ -530,6 +497,162 @@ function SearchDropdown({
           )}
         </button>
       ))}
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------------------
+// SearchCombobox — custom search input with keyboard-navigable dropdown
+// Built without Popover to avoid click-outside flicker and have full control
+// over focus + keyboard.
+// ----------------------------------------------------------------------------
+function SearchCombobox({
+  items,
+  selectedId,
+  selectedName,
+  query,
+  onQueryChange,
+  onPick,
+  onClear,
+  inputRef,
+}: {
+  items: ItemWithCategory[];
+  selectedId: string | null;
+  selectedName: string | null;
+  query: string;
+  onQueryChange: (q: string) => void;
+  onPick: (id: string) => void;
+  onClear: () => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [highlightIdx, setHighlightIdx] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Reset highlight when results change
+  useEffect(() => {
+    setHighlightIdx(0);
+  }, [items]);
+
+  // Close when clicking outside the container
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  // The display value: when an item is selected and the user hasn't started a
+  // new query, show the selected name. Otherwise show what they're typing.
+  const displayValue = query !== "" ? query : selectedName ?? "";
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setOpen(true);
+      setHighlightIdx((idx) => Math.min(idx + 1, items.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setOpen(true);
+      setHighlightIdx((idx) => Math.max(idx - 1, 0));
+    } else if (e.key === "Enter") {
+      if (open && items[highlightIdx]) {
+        e.preventDefault();
+        onPick(items[highlightIdx].id);
+      }
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
+  };
+
+  // Keep the highlighted row visible when navigating with keys
+  useEffect(() => {
+    if (!open || !listRef.current) return;
+    const highlighted = listRef.current.querySelector<HTMLElement>(
+      `[data-idx="${highlightIdx}"]`,
+    );
+    highlighted?.scrollIntoView({ block: "nearest" });
+  }, [highlightIdx, open]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+      <Input
+        ref={inputRef}
+        id="search-input"
+        placeholder="Type to search..."
+        value={displayValue}
+        onChange={(e) => {
+          onQueryChange(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={handleKeyDown}
+        className="pl-9 pr-9"
+        autoComplete="off"
+      />
+      {selectedId && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClear();
+            inputRef.current?.focus();
+          }}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          aria-label="Clear selection"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      )}
+
+      {open && (
+        <div
+          ref={listRef}
+          className="absolute top-full left-0 right-0 mt-1 z-50 max-h-72 overflow-y-auto rounded-md border border-border/60 bg-popover shadow-md py-1"
+        >
+          {items.length === 0 ? (
+            <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+              No matching items.
+            </div>
+          ) : (
+            items.map((item, idx) => (
+              <button
+                key={item.id}
+                type="button"
+                data-idx={idx}
+                // Use onMouseDown rather than onClick so the click registers
+                // before the input's blur fires.
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onPick(item.id);
+                }}
+                onMouseEnter={() => setHighlightIdx(idx)}
+                className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 ${
+                  idx === highlightIdx ? "bg-muted/60" : "hover:bg-muted/40"
+                }`}
+              >
+                <span className="font-medium truncate">{item.name}</span>
+                <span className="text-xs text-muted-foreground truncate">
+                  {item.category?.name}
+                  {item.unit && ` · ${item.unit}`}
+                </span>
+                {item.id === selectedId && (
+                  <Check className="w-3.5 h-3.5 ml-auto text-teal-600 dark:text-teal-400" />
+                )}
+              </button>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }

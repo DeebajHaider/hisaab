@@ -78,8 +78,9 @@ describe("rankItems", () => {
 
     it("matches prefix on any word in the name", () => {
       const items = [
-        makeItem({ id: "1", name: "Cooking Oil" }),
-        makeItem({ id: "2", name: "Olive" }),
+        makeItem({ id: "1", name: "Sunflower Oil" }),
+        makeItem({ id: "2", name: "Cooking Oil" }),
+        makeItem({ id: "3", name: "Vinegar" }), // no match
       ];
       const result = rankItems({ query: "oil", items, recent: [] });
       // Both match: "Oil" as second word in "Cooking Oil", "Olive" as full prefix
