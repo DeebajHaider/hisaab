@@ -213,7 +213,7 @@ export function TransactionEntryForm({
     >
       {/* Search */}
       <div className="space-y-2">
-        <Label htmlFor="search-input">Search items</Label>
+        <Label htmlFor="search-input">Add items</Label>
         {/* Search */}
         <div className="space-y-2">
         <Label htmlFor="search-input">Search items</Label>
