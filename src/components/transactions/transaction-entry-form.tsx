@@ -15,12 +15,22 @@ import { useCategories } from "@/queries/use-categories";
 import { useItems, type ItemWithCategory } from "@/queries/use-items";
 import { usePeople } from "@/queries/use-people";
 import { useRecentItems } from "@/queries/use-recent-items";
-import { useCreateTransaction } from "@/queries/use-transaction-mutations";
 import { rankItems } from "@/lib/search/rank-items";
+import {
+  useCreateTransaction,
+  useUpdateTransaction,
+} from "@/queries/use-transaction-mutations";
+import type { TransactionWithRelations } from "@/queries/use-transactions";
 
 interface TransactionEntryFormProps {
   budgetId: string;
-  date: string; // yyyy-mm-dd
+  date: string;
+  // If provided, the form is in "edit" mode — pre-filled and updates instead of creating
+  existing?: TransactionWithRelations | null;
+  // Called after successful save (create or update). Useful for closing a dialog in edit mode.
+  onSaved?: () => void;
+  // Called when the user wants to cancel an in-progress edit. Only relevant in edit mode.
+  onCancel?: () => void;
 }
 
 /**
@@ -38,6 +48,9 @@ interface TransactionEntryFormProps {
 export function TransactionEntryForm({
   budgetId,
   date,
+  existing,
+  onSaved,
+  onCancel,
 }: TransactionEntryFormProps) {
   // --- Data
   const categoriesQuery = useCategories(budgetId);
@@ -58,6 +71,11 @@ export function TransactionEntryForm({
   const [error, setError] = useState<string | null>(null);
 
   const createMutation = useCreateTransaction();
+  const updateMutation = useUpdateTransaction();
+
+  const isEditing = !!existing;
+  const mutationPending = createMutation.isPending || updateMutation.isPending;
+
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // --- Derived values
@@ -100,6 +118,23 @@ export function TransactionEntryForm({
     () => rankItems({ query: searchQuery, items, recent, limit: 8 }),
     [searchQuery, items, recent],
   );
+
+  // Pre-fill the form when entering edit mode (or when the existing transaction changes)
+useEffect(() => {
+  if (existing) {
+    setSelectedItemId(existing.item_id);
+    setMode(existing.rate !== null && existing.qty !== null ? "rate_qty" : "lump");
+    setRate(existing.rate !== null ? String(existing.rate) : "");
+    setQty(existing.qty !== null ? String(existing.qty) : "");
+    setAmount(String(existing.amount));
+    setPersonId(existing.person_id);
+    setNotes(existing.notes ?? "");
+    setSearchQuery("");
+    setBrowseCategoryId(existing.category_id);
+  }
+  // We intentionally don't reset state when going from edit to create — let
+  // the parent handle that by remounting the form (e.g., via key prop).
+}, [existing]);
 
   // --- Effects: when an item is selected, apply its defaults
   useEffect(() => {
@@ -176,22 +211,41 @@ export function TransactionEntryForm({
       mode === "rate_qty" && rate.trim() !== "" ? Number(rate) : null;
     const parsedQty =
       mode === "rate_qty" && qty.trim() !== "" ? Number(qty) : null;
+    const trimmedNotes = notes.trim() || null;
 
     try {
-      await createMutation.mutateAsync({
-        budgetId,
-        categoryId: selectedCategory.id,
-        itemId: selectedItem.id,
-        date,
-        amount: parsedAmount,
-        rate: parsedRate,
-        qty: parsedQty,
-        personId: selectedCategory.tracks_person ? personId : null,
-        notes: notes.trim() || null,
-      });
-      resetForm();
-      // Refocus search for rapid sequential entry
-      searchInputRef.current?.focus();
+      if (isEditing) {
+        await updateMutation.mutateAsync({
+          id: existing.id,
+          budgetId,
+          patch: {
+            categoryId: selectedCategory.id,
+            itemId: selectedItem.id,
+            date,
+            amount: parsedAmount,
+            rate: parsedRate,
+            qty: parsedQty,
+            personId: selectedCategory.tracks_person ? personId : null,
+            notes: trimmedNotes,
+          },
+        });
+      } else {
+        await createMutation.mutateAsync({
+          budgetId,
+          categoryId: selectedCategory.id,
+          itemId: selectedItem.id,
+          date,
+          amount: parsedAmount,
+          rate: parsedRate,
+          qty: parsedQty,
+          personId: selectedCategory.tracks_person ? personId : null,
+          notes: trimmedNotes,
+        });
+        resetForm();
+        // Refocus search for rapid sequential entry — only when creating
+        searchInputRef.current?.focus();
+      }
+      onSaved?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't save");
     }
@@ -207,6 +261,10 @@ export function TransactionEntryForm({
 
   console.log('[render] selectedItemId:', selectedItemId, 'searchQuery:', searchQuery);
   return (
+    <section>
+      <h2 className="text-sm font-medium text-muted-foreground mb-2 px-1">
+        {isEditing ? "Edit transaction" : "Add a transaction"}
+      </h2>
     <form
       onSubmit={handleSubmit}
       className="rounded-lg border border-border/60 bg-card p-4 space-y-4"
@@ -424,35 +482,49 @@ export function TransactionEntryForm({
       )}
 
       <div className="flex justify-end gap-2 pt-2 border-t border-border/40">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={resetForm}
-          disabled={createMutation.isPending}
-        >
-          Reset
-        </Button>
+        {isEditing ? (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onCancel}
+            disabled={mutationPending}
+          >
+            Cancel
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={resetForm}
+            disabled={mutationPending}
+          >
+            Reset
+          </Button>
+        )}
         <Button
           type="submit"
           className="bg-teal-600 hover:bg-teal-700 text-white"
           disabled={
-            createMutation.isPending ||
+            mutationPending ||
             !selectedItem ||
             !amount.trim() ||
             (selectedCategory?.tracks_person && !personId)
           }
         >
-          {createMutation.isPending ? (
+          {mutationPending ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               Saving...
             </>
+          ) : isEditing ? (
+            "Save changes"
           ) : (
             "Save & next"
           )}
         </Button>
       </div>
     </form>
+  </section>
   );
 }
 

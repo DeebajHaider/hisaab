@@ -1,16 +1,23 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBudget } from "@/queries/use-budget";
-import { useTransactions } from "@/queries/use-transactions";
+import { useTransactions, type TransactionWithRelations } from "@/queries/use-transactions";
 import { calculateDayTotal } from "@/lib/calculations/day-totals";
 import { TransactionEntryForm } from "@/components/transactions/transaction-entry-form";
 import { DayHeader } from "@/components/transactions/day-header";
 import { TransactionList } from "@/components/transactions/transaction-list";
+import { EditTransactionDialog } from "@/components/transactions/edit-transaction-dialog";
+import { DeleteTransactionDialog } from "@/components/transactions/delete-transaction-dialog";
 
 export function DayView() {
   const { budgetId, date } = useParams<{ budgetId: string; date: string }>();
   const budgetQuery = useBudget(budgetId);
   const transactionsQuery = useTransactions(budgetId, date);
+
+  // Track which transaction is being edited or deleted (null = no dialog open)
+  const [editing, setEditing] = useState<TransactionWithRelations | null>(null);
+  const [deleting, setDeleting] = useState<TransactionWithRelations | null>(null);
 
   if (!budgetId || !date) return null;
 
@@ -28,19 +35,31 @@ export function DayView() {
         currency={currency}
       />
 
-      <TransactionEntryForm budgetId={budgetId} date={date} />
-
       {transactionsQuery.isLoading ? (
         <ListSkeleton />
       ) : (
         <TransactionList
           transactions={transactions}
           currency={currency}
-          // Stub handlers — wired up in next step
-          onEdit={(t) => console.log("edit", t)}
-          onDelete={(t) => console.log("delete", t)}
+          onEdit={setEditing}
+          onDelete={setDeleting}
         />
       )}
+
+      <TransactionEntryForm budgetId={budgetId} date={date} />
+
+      <EditTransactionDialog
+        budgetId={budgetId}
+        date={date}
+        transaction={editing}
+        onClose={() => setEditing(null)}
+      />
+
+      <DeleteTransactionDialog
+        budgetId={budgetId}
+        transaction={deleting}
+        onClose={() => setDeleting(null)}
+      />
     </div>
   );
 }
