@@ -567,6 +567,7 @@ function SearchCombobox({
       if (open && items[highlightIdx]) {
         e.preventDefault();
         onPick(items[highlightIdx].id);
+        setOpen(false);
       }
     } else if (e.key === "Escape") {
       setOpen(false);
@@ -634,6 +635,7 @@ function SearchCombobox({
                 onMouseDown={(e) => {
                   e.preventDefault();
                   onPick(item.id);
+                  setOpen(false);
                 }}
                 onMouseEnter={() => setHighlightIdx(idx)}
                 className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 ${
