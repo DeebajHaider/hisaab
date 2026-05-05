@@ -39,9 +39,20 @@ export function ImportDialog({ budgetId, trigger }: ImportDialogProps) {
     }
   };
 
-  const handleImportSuccess = () => {
-    // Close after a short delay so the user sees the success state
-    setTimeout(() => setOpen(false), 1200);
+  const handleImportSuccess = (result: {
+    categoriesInserted: number;
+    itemsInserted: number;
+    categoriesRestored: number;
+    itemsRestored: number;
+  }) => {
+    const changedSomething =
+      result.categoriesInserted > 0 ||
+      result.itemsInserted > 0 ||
+      result.categoriesRestored > 0 ||
+      result.itemsRestored > 0;
+    if (changedSomething) {
+      setTimeout(() => setOpen(false), 1500);
+    }
   };
 
   return (
@@ -85,7 +96,12 @@ function TemplateTab({
   onImported,
 }: {
   budgetId: string;
-  onImported: () => void;
+  onImported: (result: {
+    categoriesInserted: number;
+    itemsInserted: number;
+    categoriesRestored: number;
+    itemsRestored: number;
+  }) => void;
 }) {
   const importMutation = useImportTemplate();
 
@@ -96,8 +112,8 @@ function TemplateTab({
   const handleImport = async () => {
     if (!plan) return;
     try {
-      await importMutation.mutateAsync({ budgetId, plan });
-      onImported();
+      const result = await importMutation.mutateAsync({ budgetId, plan });
+      onImported(result);
     } catch {
       // Error state handled by mutation.error below
     }
@@ -175,7 +191,12 @@ function CSVTab({
   onImported,
 }: {
   budgetId: string;
-  onImported: () => void;
+  onImported: (result: {
+    categoriesInserted: number;
+    itemsInserted: number;
+    categoriesRestored: number;
+    itemsRestored: number;
+  }) => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [csvText, setCsvText] = useState("");
@@ -189,6 +210,12 @@ function CSVTab({
     const text = await file.text();
     setCsvText(text);
     validate(text);
+    if (importMutation.isSuccess || importMutation.isError) {
+      importMutation.reset();
+    }
+    // Clear the input's value so picking the same file again still triggers onChange.
+    // Without this, picking the same file twice silently does nothing.
+    e.target.value = "";
   };
 
   const validate = (text: string) => {
@@ -210,6 +237,9 @@ function CSVTab({
   const handleTextChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setCsvText(e.target.value);
     validate(e.target.value);
+    if (importMutation.isSuccess || importMutation.isError) {
+      importMutation.reset();
+    }
   };
 
   const handleDownloadSample = () => {
@@ -225,8 +255,8 @@ function CSVTab({
   const handleImport = async () => {
     if (!plan) return;
     try {
-      await importMutation.mutateAsync({ budgetId, plan });
-      onImported();
+      const result = await importMutation.mutateAsync({ budgetId, plan });
+      onImported(result);
     } catch {
       // shown via mutation.error
     }
@@ -234,17 +264,31 @@ function CSVTab({
 
   return (
     <div className="space-y-4">
-      <div className="text-sm text-muted-foreground">
-        CSV columns: <code className="text-xs bg-muted px-1 py-0.5 rounded">category</code>,{" "}
-        <code className="text-xs bg-muted px-1 py-0.5 rounded">item</code> (required) plus
-        optional{" "}
+      <div className="text-sm text-muted-foreground space-y-2">
+      <div>
+        Each row is one item. Categories are inferred from the{" "}
+        <code className="text-xs bg-muted px-1 py-0.5 rounded">category</code> column —
+        rows sharing the same category name are grouped under one category.
+      </div>
+      <div>
+        <span className="font-medium text-foreground">Required columns:</span>{" "}
+        <code className="text-xs bg-muted px-1 py-0.5 rounded">category</code>,{" "}
+        <code className="text-xs bg-muted px-1 py-0.5 rounded">item</code>.{" "}
+        <span className="font-medium text-foreground">Optional:</span>{" "}
         <code className="text-xs bg-muted px-1 py-0.5 rounded">unit</code>,{" "}
         <code className="text-xs bg-muted px-1 py-0.5 rounded">default_rate</code>,{" "}
         <code className="text-xs bg-muted px-1 py-0.5 rounded">default_mode</code>{" "}
-        (lump or rate_qty),{" "}
+        (<code className="text-xs">lump</code> or <code className="text-xs">rate_qty</code>,
+        defaults to <code className="text-xs">lump</code>),{" "}
         <code className="text-xs bg-muted px-1 py-0.5 rounded">tracks_person</code>{" "}
-        (true/false). Each row is one item; categories are inferred.
+        (accepts <code className="text-xs">true/false</code>,{" "}
+        <code className="text-xs">yes/no</code>,{" "}
+        <code className="text-xs">1/0</code>; case-insensitive; defaults to false).
       </div>
+      <div>
+        Re-importing the same CSV is safe — existing categories and items are skipped.
+      </div>
+    </div>
 
       <div className="flex flex-col sm:flex-row gap-2">
         <Button
@@ -345,11 +389,48 @@ function ImportStatusMessage({
   mutation: ReturnType<typeof useImportTemplate>;
 }) {
   if (mutation.isSuccess && mutation.data) {
+    const {
+      categoriesInserted,
+      itemsInserted,
+      categoriesSkipped,
+      itemsSkipped,
+      categoriesRestored,
+      itemsRestored,
+    } = mutation.data;
+
+    const addedSomething = categoriesInserted > 0 || itemsInserted > 0;
+    const restoredSomething = categoriesRestored > 0 || itemsRestored > 0;
+
     return (
-      <div className="rounded-md border border-teal-200 dark:border-teal-900/60 bg-teal-50 dark:bg-teal-950/30 p-3 text-sm flex items-center gap-2">
-        <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-        Imported {mutation.data.categoriesInserted} categories and{" "}
-        {mutation.data.itemsInserted} items.
+      <div className="rounded-md border border-teal-200 dark:border-teal-900/60 bg-teal-50 dark:bg-teal-950/30 p-3 text-sm flex items-start gap-2">
+        <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400 mt-0.5 shrink-0" />
+        <div className="space-y-1">
+          {addedSomething && (
+            <div>
+              Added <strong>{categoriesInserted}</strong>{" "}
+              {categoriesInserted === 1 ? "category" : "categories"} and{" "}
+              <strong>{itemsInserted}</strong>{" "}
+              {itemsInserted === 1 ? "item" : "items"}.
+            </div>
+          )}
+          {restoredSomething && (
+            <div>
+              Restored <strong>{categoriesRestored}</strong> archived{" "}
+              {categoriesRestored === 1 ? "category" : "categories"} and{" "}
+              <strong>{itemsRestored}</strong> archived{" "}
+              {itemsRestored === 1 ? "item" : "items"}.
+            </div>
+          )}
+          {!addedSomething && !restoredSomething && (
+            <div>Everything in the import was already in this budget.</div>
+          )}
+          {(categoriesSkipped > 0 || itemsSkipped > 0) && (
+            <div className="text-xs text-muted-foreground">
+              {categoriesSkipped} {categoriesSkipped === 1 ? "category" : "categories"} and{" "}
+              {itemsSkipped} {itemsSkipped === 1 ? "item" : "items"} already existed and were skipped.
+            </div>
+          )}
+        </div>
       </div>
     );
   }

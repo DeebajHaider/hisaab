@@ -19,16 +19,17 @@ export function DayView() {
   if (!budgetId || !date) return null;
 
   // Pick the first available category and item for the smoke test
-  const firstCategory = categoriesQuery.data?.[0];
-  const firstItem = itemsQuery.data?.find(
-    (i) => i.category_id === firstCategory?.id,
-  );
+  // NEW: pick any item, then derive its category from the join
+  const firstItem = itemsQuery.data?.[0];
+  const itemCategory = firstItem
+    ? categoriesQuery.data?.find((c) => c.id === firstItem.category_id)
+    : null;
 
   const handleCreate = () => {
-    if (!firstCategory || !firstItem) return;
+    if (!firstItem || !itemCategory) return;
     createTx.mutate({
       budgetId,
-      categoryId: firstCategory.id,
+      categoryId: itemCategory.id,
       itemId: firstItem.id,
       date,
       amount: Math.round(Math.random() * 1000) / 10,

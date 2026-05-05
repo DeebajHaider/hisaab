@@ -112,12 +112,25 @@ export function useArchiveCategory() {
 
   return useMutation({
     mutationFn: async (input: ArchiveCategoryInput) => {
-      const { error } = await supabase
-        .from("categories")
-        .update({ is_archived: input.archived ?? true })
-        .eq("id", input.id);
+      const archived = input.archived ?? true;
 
-      if (error) throw error;
+      // Update the category itself
+      const { error: catError } = await supabase
+        .from("categories")
+        .update({ is_archived: archived })
+        .eq("id", input.id);
+      if (catError) throw catError;
+
+      // Cascade: when archiving, also archive all items in this category.
+      // When un-archiving, do NOT cascade-restore items — the user may want
+      // to restore items selectively.
+      if (archived) {
+        const { error: itemError } = await supabase
+          .from("items")
+          .update({ is_archived: true })
+          .eq("category_id", input.id);
+        if (itemError) throw itemError;
+      }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -129,3 +142,4 @@ export function useArchiveCategory() {
     },
   });
 }
+
