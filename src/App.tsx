@@ -14,6 +14,8 @@ import { BudgetRedirect } from "@/routes/budget-redirect";
 import { DayView } from "@/routes/day-view";
 import { Manage } from "@/routes/manage";
 import { NotFound } from "@/routes/not-found";
+import { MonthView } from "@/routes/month-view";
+import { MonthRedirect } from "@/routes/month-redirect";
 
 function App() {
   return (
@@ -42,6 +44,8 @@ function App() {
                   <Route index element={<BudgetRedirect />} />
                   <Route path="day/:date" element={<DayView />} />
                   <Route path="manage" element={<Manage />} />
+                  <Route path="month" element={<MonthRedirect />} />
+                  <Route path="month/:yearMonth" element={<MonthView />} /> 
                 </Route>
               </Route>
 

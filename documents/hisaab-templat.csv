@@ -1,0 +1,25 @@
+category,item,unit,default_rate,default_mode,tracks_person
+Groceries,Flour,Kg,,rate_qty,FALSE
+Groceries,Rice,Kg,,rate_qty,FALSE
+Groceries,Cooking Oil,Ltr,,rate_qty,FALSE
+Groceries,Milk,Ltr,,rate_qty,FALSE
+Groceries,Eggs,Dozen,,rate_qty,FALSE
+Fresh Produce,Vegetables,,,lump,FALSE
+Fresh Produce,Fruits,,,lump,FALSE
+Fresh Produce,Meat,Kg,,rate_qty,FALSE
+Vehicle,Fuel,Ltr,,rate_qty,FALSE
+Vehicle,Maintenance,,,lump,FALSE
+Vehicle,Parking & Tolls,,,lump,FALSE
+Utilities,Electricity,,,lump,FALSE
+Utilities,Internet,,,lump,FALSE
+Utilities,Phone Bill,,,lump,FALSE
+Health,Doctor Visit,,,lump,TRUE
+Health,Medication,,,lump,TRUE
+Education,School Fees,,,,TRUE
+Education,Books & Supplies,,,,TRUE
+Personal,Pocket Money,,,,TRUE
+Personal,Clothes,,,,TRUE
+Dining,Restaurants,,,lump,FALSE
+Dining,Takeout & Delivery,,,lump,FALSE
+Misc,Gifts,,,lump,FALSE
+Misc,Other,,,lump,FALSE

@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
-import { ArrowLeft, Calendar, Settings, Menu } from "lucide-react";
+import { ArrowLeft, Calendar, Settings, Menu, CalendarRange } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -123,6 +123,11 @@ function SidebarNav({ budgetId }: { budgetId: string }) {
         to={`/app/budgets/${budgetId}/day/${today}`}
         icon={<Calendar className="w-4 h-4" />}
         label="Day view"
+      />
+      <NavItem
+        to={`/app/budgets/${budgetId}/month`}
+        icon={<CalendarRange className="w-4 h-4" />}
+        label="Month"
       />
       <NavItem
         to={`/app/budgets/${budgetId}/manage`}
