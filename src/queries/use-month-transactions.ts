@@ -6,16 +6,16 @@ import {
   lastDayOfMonth,
   type YearMonth,
 } from "@/lib/format/year-month";
+import type { TransactionWithRelations } from "./use-transactions";
 
 /**
- * Fetch all transactions for a given budget and month.
+ * Fetch all transactions in a budget across an entire calendar month,
+ * with item, category, and (optional) person info joined.
  *
- * Mirrors the select shape of useTransactions (joins item, category, person)
- * but ranges across an entire calendar month instead of a single day.
- *
- * Ordered by transaction_date ascending then created_at ascending so the
- * resulting list reads chronologically — important for the month view's
- * grouping by day in 3.6 and the trends aggregations in 3.5.
+ * Mirrors useTransactions exactly except:
+ *   - date filter is a range, not equality
+ *   - cache key is byMonth, not byDay
+ *   - additional secondary sort by date so the result reads chronologically
  */
 export function useMonthTransactions(
   budgetId: string | undefined,
@@ -26,45 +26,28 @@ export function useMonthTransactions(
       budgetId && yearMonth
         ? transactionKeys.byMonth(budgetId, yearMonth)
         : ["transactions", "noop"],
-    enabled: Boolean(budgetId && yearMonth),
-    queryFn: async () => {
-      // Narrowed by `enabled`, but TS needs a guard.
-      if (!budgetId || !yearMonth) return [];
-
-      const start = firstDayOfMonth(yearMonth);
-      const end = lastDayOfMonth(yearMonth);
+    enabled: !!budgetId && !!yearMonth,
+    queryFn: async (): Promise<TransactionWithRelations[]> => {
+      const start = firstDayOfMonth(yearMonth!);
+      const end = lastDayOfMonth(yearMonth!);
 
       const { data, error } = await supabase
         .from("transactions")
-        .select(
-          `
-          id,
-          transaction_date,
-          amount,
-          rate,
-          qty,
-          mode,
-          notes,
-          created_at,
-          item_id,
-          person_id,
-          item:items (
-            id,
-            name,
-            unit,
-            category:categories ( id, name, tracks_person )
-          ),
-          person:people ( id, name )
-          `,
-        )
-        .eq("budget_id", budgetId)
-        .gte("transaction_date", start)
-        .lte("transaction_date", end)
-        .order("transaction_date", { ascending: true })
+        .select(`
+          *,
+          item:items(id, name, unit),
+          category:categories(id, name, tracks_person),
+          person:people(id, name)
+        `)
+        .eq("budget_id", budgetId!)
+        .gte("date", start)
+        .lte("date", end)
+        .order("date", { ascending: true })
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      return data ?? [];
+
+      return (data ?? []) as unknown as TransactionWithRelations[];
     },
   });
 }
