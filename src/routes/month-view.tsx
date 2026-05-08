@@ -2,7 +2,12 @@ import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { MonthHeader } from "@/components/transactions/month-header";
 import { MonthSummaryCard } from "@/components/transactions/month-summary-card";
+import { VarianceCard } from "@/components/transactions/variance-card";
+import { IncomeSection } from "@/components/transactions/income-section";
+import { SavingsSection } from "@/components/transactions/savings-section";
 import { useMonthTransactions } from "@/queries/use-month-transactions";
+import { useIncome } from "@/queries/use-income";
+import { useSavings } from "@/queries/use-savings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -21,29 +26,26 @@ export function MonthView() {
     yearMonth: string;
   }>();
 
-  const { data: transactions, isLoading } = useMonthTransactions(
-    budgetId,
-    yearMonth,
-  );
+  const txQuery = useMonthTransactions(budgetId, yearMonth);
+  const incomeQuery = useIncome(budgetId, yearMonth);
+  const savingsQuery = useSavings(budgetId, yearMonth);
 
-  // Build the calendar metadata for this month. Done in the route because
-  // it depends on "today" — keeping it out of the pure calculator.
+  const isLoading =
+    txQuery.isLoading || incomeQuery.isLoading || savingsQuery.isLoading;
+
   const monthMeta = useMemo<MonthMeta | null>(() => {
     if (!yearMonth) return null;
-    const lastDay = lastDayOfMonth(yearMonth); // "YYYY-MM-DD"
+    const lastDay = lastDayOfMonth(yearMonth);
     const totalDays = Number(lastDay.slice(-2));
     const today = todayISO();
     const current = currentYearMonth();
 
     let daysElapsed: number;
     if (yearMonth < current) {
-      // Past month — entire month elapsed
       daysElapsed = totalDays;
     } else if (yearMonth > current) {
-      // Future month — nothing elapsed yet
       daysElapsed = 0;
     } else {
-      // Current month — days so far (today's day-of-month)
       daysElapsed = Number(today.slice(-2));
     }
 
@@ -54,10 +56,25 @@ export function MonthView() {
     return null;
   }
 
+  const transactions = txQuery.data ?? [];
+  const income = incomeQuery.data ?? [];
+  const savings = savingsQuery.data ?? [];
+
+  const hasAnyData =
+    transactions.length > 0 || income.length > 0 || savings.length > 0;
+
+  // Sums for variance, computed in dollars. The variance helper itself
+  // converts to cents internally — we don't need to here.
+  const incomeTotal = income.reduce((sum, e) => sum + Number(e.amount), 0);
+  const savingsTotal = savings.reduce((sum, e) => sum + Number(e.amount), 0);
+
+  // The full summary calc — pass to the card only when there are transactions
   const summary =
-    transactions && transactions.length > 0
+    transactions.length > 0
       ? calculateMonthSummary(transactions, monthMeta)
       : null;
+
+  const expensesTotal = summary?.totalExpenses ?? 0;
 
   return (
     <div className="space-y-6">
@@ -65,22 +82,38 @@ export function MonthView() {
 
       {isLoading ? (
         <div className="space-y-3">
+          <Skeleton className="h-32 w-full" />
           <Skeleton className="h-48 w-full" />
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-32 w-full" />
         </div>
-      ) : summary ? (
-        <MonthSummaryCard yearMonth={yearMonth} summary={summary} />
-      ) : (
+      ) : !hasAnyData ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            <p>No transactions logged this month yet.</p>
+            <p>No activity logged this month yet.</p>
             <p className="mt-1 text-sm">
-              Switch to the Day view to start logging.
+              Log expenses from the Day view, or add income and savings below.
             </p>
+            {/* The Income/Savings sections render below the empty state too,
+                so the user has the Add buttons available. */}
           </CardContent>
         </Card>
+      ) : (
+        <>
+          <VarianceCard
+            income={incomeTotal}
+            expenses={expensesTotal}
+            savings={savingsTotal}
+          />
+          {summary && (
+            <MonthSummaryCard yearMonth={yearMonth} summary={summary} />
+          )}
+        </>
       )}
+
+      {/* Income and Savings sections always render so Add buttons are
+          accessible even when the month is empty. */}
+      <IncomeSection budgetId={budgetId} yearMonth={yearMonth} />
+      <SavingsSection budgetId={budgetId} yearMonth={yearMonth} />
     </div>
   );
 }
