@@ -15,6 +15,8 @@ export const trendsKeys = {
   byBudget: (budgetId: string) => ["trends", budgetId] as const,
   monthlyTotals: (budgetId: string, from: string, to: string) =>
     ["trends", budgetId, "monthly", from, to] as const,
+  monthlyCategoryTotals: (budgetId: string, from: string, to: string) =>
+    ["trends", budgetId, "monthly-by-category", from, to] as const,
   earliest: (budgetId: string) =>
     ["trends", budgetId, "earliest"] as const,
 };
