@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { transactionKeys } from "./transaction-keys";
+import { trendsKeys } from "./trends-keys";
 
 // ----------------------------------------------------------------------------
 // Create
@@ -49,6 +50,10 @@ export function useCreateTransaction() {
       // every day/month query for this budget.
       queryClient.invalidateQueries({
         queryKey: transactionKeys.byBudget(variables.budgetId),
+      });
+      // Trends aggregations also need to refresh when transactions change.
+      queryClient.invalidateQueries({
+        queryKey: trendsKeys.byBudget(variables.budgetId),
       });
     },
   });
@@ -102,6 +107,10 @@ export function useUpdateTransaction() {
       queryClient.invalidateQueries({
         queryKey: transactionKeys.byBudget(variables.budgetId),
       });
+      // Trends aggregations also need to refresh when transactions change.
+      queryClient.invalidateQueries({
+        queryKey: trendsKeys.byBudget(variables.budgetId),
+      });
     },
   });
 }
@@ -130,6 +139,10 @@ export function useDeleteTransaction() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: transactionKeys.byBudget(variables.budgetId),
+      });
+      // Trends aggregations also need to refresh when transactions change.
+      queryClient.invalidateQueries({
+        queryKey: trendsKeys.byBudget(variables.budgetId),
       });
     },
   });

@@ -16,6 +16,7 @@ import { Manage } from "@/routes/manage";
 import { NotFound } from "@/routes/not-found";
 import { MonthView } from "@/routes/month-view";
 import { MonthRedirect } from "@/routes/month-redirect";
+import { Trends } from "@/routes/trends";
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
                   <Route path="manage" element={<Manage />} />
                   <Route path="month" element={<MonthRedirect />} />
                   <Route path="month/:yearMonth" element={<MonthView />} /> 
+                  <Route path="trends" element={<Trends />} />
                 </Route>
               </Route>
 
