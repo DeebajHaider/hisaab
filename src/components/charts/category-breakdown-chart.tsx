@@ -105,4 +105,3 @@ function BreakdownTooltip({ active, payload }: TooltipProps<number, string>) {
     </div>
   );
 }
-
