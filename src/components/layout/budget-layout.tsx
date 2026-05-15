@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
-import { ArrowLeft, Calendar, Settings, Menu, CalendarRange, TrendingUp } from "lucide-react";
+import { ArrowLeft, Calendar, Settings, Menu, CalendarRange, TrendingUp, Users } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -133,6 +133,11 @@ function SidebarNav({ budgetId }: { budgetId: string }) {
         to={`/app/budgets/${budgetId}/trends`}
         icon={<TrendingUp className="w-4 h-4" />}
         label="Trends"
+      />
+      <NavItem
+        to={`/app/budgets/${budgetId}/members`}
+        icon={<Users className="w-4 h-4" />}
+        label="Members"
       />
       <NavItem
         to={`/app/budgets/${budgetId}/manage`}
