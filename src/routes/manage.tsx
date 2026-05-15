@@ -8,6 +8,7 @@ import { useItems } from "@/queries/use-items";
 import { groupItemsByCategory } from "@/lib/format/tree-sort";
 import { CategoryTree } from "@/components/manage/category-tree";
 import { CategoryFormDialog } from "@/components/manage/category-form-dialog";
+import { PersonList } from "@/components/manage/person-list";
 
 export function Manage() {
   const { budgetId } = useParams<{ budgetId: string }>();
@@ -23,20 +24,27 @@ export function Manage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-      <Header budgetId={budgetId} />
+      {/* Section 1: Categories & items */}
+      <section>
+        <Header budgetId={budgetId} />
 
-      {isLoading && <ManageSkeleton />}
-      {error && <ErrorState message={(error as Error).message} />}
-      {!isLoading && !error && categories.length === 0 && (
-        <EmptyState budgetId={budgetId} />
-      )}
-      {!isLoading && !error && categories.length > 0 && (
-        <CategoryTree
-          budgetId={budgetId}
-          categories={categories}
-          groups={groupItemsByCategory(categories, items)}
-        />
-      )}
+        {isLoading && <ManageSkeleton />}
+        {error && <ErrorState message={(error as Error).message} />}
+        {!isLoading && !error && categories.length === 0 && (
+          <EmptyState budgetId={budgetId} />
+        )}
+        {!isLoading && !error && categories.length > 0 && (
+          <CategoryTree
+            budgetId={budgetId}
+            categories={categories}
+            groups={groupItemsByCategory(categories, items)}
+          />
+        )}
+      </section>
+
+      {/* Section 2: People — independent query, renders regardless of
+          categories state so the user can set up either order. */}
+      <PersonList budgetId={budgetId} />
     </div>
   );
 }
@@ -137,3 +145,4 @@ function EmptyState({ budgetId }: { budgetId: string }) {
     </div>
   );
 }
+
