@@ -1,89 +1,74 @@
 import {
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
   type TooltipProps,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { CategoryBreakdownRow } from "@/lib/calculations/category-breakdown";
 
 interface CategoryBreakdownChartProps {
   breakdown: CategoryBreakdownRow[];
+  /** Color map (category name -> CSS color) — shared with the donut. */
+  colors: Record<string, string>;
 }
 
 /**
  * Horizontal bar chart showing spending per category for a single month.
- * Each bar is labeled with the category name and percent share of the total;
- * hover shows the precise amount.
+ * Bars are colored per category using the shared palette so colors stay
+ * consistent with the donut chart beside it and the trends page.
  *
- * Horizontal layout chosen because category names can be long (e.g.,
- * "Pocket Money", "Doctor visits") and vertical bars would force rotation
- * or truncation. Height scales with the number of categories so the bars
- * stay readable regardless of how many we have.
+ * Each bar is labeled with the category name (on the Y axis) and its
+ * percent share (to the right of the bar). Hover shows the precise amount.
  */
-export function CategoryBreakdownChart({ breakdown }: CategoryBreakdownChartProps) {
-  // Defensive: parent should gate on length > 0, but don't crash if not.
+export function CategoryBreakdownChart({
+  breakdown,
+  colors,
+}: CategoryBreakdownChartProps) {
   if (breakdown.length === 0) {
     return null;
   }
 
-  // ~40px per bar plus padding for axis and chart margins.
   const chartHeight = breakdown.length * 40 + 40;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base font-medium text-muted-foreground">
-          Spending by category
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={chartHeight}>
-          <BarChart
-            data={breakdown}
-            layout="vertical"
-            margin={{ top: 8, right: 56, bottom: 8, left: 8 }}
-          >
-            <XAxis type="number" hide />
-            <YAxis
-              type="category"
-              dataKey="categoryName"
-              tickLine={false}
-              axisLine={false}
-              width={120}
-              tick={{ fontSize: 13 }}
+    <ResponsiveContainer width="100%" height={chartHeight}>
+      <BarChart
+        data={breakdown}
+        layout="vertical"
+        margin={{ top: 8, right: 64, bottom: 8, left: 8 }}
+      >
+        <XAxis type="number" hide />
+        <YAxis
+          type="category"
+          dataKey="categoryName"
+          tickLine={false}
+          axisLine={false}
+          width={120}
+          tick={{ fontSize: 13 }}
+        />
+        <Tooltip content={<BreakdownTooltip />} cursor={{ fill: "transparent" }} />
+        <Bar dataKey="total" radius={[0, 4, 4, 0]} label={<PercentLabel />}>
+          {breakdown.map((row) => (
+            <Cell
+              key={row.categoryName}
+              fill={colors[row.categoryName] ?? "var(--muted-foreground)"}
             />
-            <Tooltip content={<BreakdownTooltip />} cursor={{ fill: "transparent" }} />
-            <Bar
-              dataKey="total"
-              fill="var(--color-teal-600)"
-              radius={[0, 4, 4, 0]}
-              label={<PercentLabel />}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
   );
 }
 
-/**
- * Renders the percent share as a label just outside the right edge of each bar.
- * Recharts passes geometry (x, y, width, height) plus the data row to label
- * components — we extract the percent and place it.
- */
 function PercentLabel(props: {
   x?: number;
   y?: number;
   width?: number;
   height?: number;
-  value?: number;
-  index?: number;
-  // The data row is passed when you use a custom label component; typed loosely
-  // because Recharts' types are inexact here.
   payload?: CategoryBreakdownRow;
 }) {
   const { x = 0, y = 0, width = 0, height = 0, payload } = props;
@@ -102,14 +87,7 @@ function PercentLabel(props: {
   );
 }
 
-/**
- * Tooltip shown on hover. Renders the category name, amount, and percent
- * in a small popover styled to match the rest of the app.
- */
-function BreakdownTooltip({
-  active,
-  payload,
-}: TooltipProps<number, string>) {
+function BreakdownTooltip({ active, payload }: TooltipProps<number, string>) {
   if (!active || !payload || payload.length === 0) return null;
   const row = payload[0].payload as CategoryBreakdownRow;
 
@@ -117,6 +95,7 @@ function BreakdownTooltip({
     <div className="rounded-md border bg-popover px-3 py-2 text-popover-foreground shadow-md">
       <p className="text-sm font-medium">{row.categoryName}</p>
       <p className="text-sm tabular-nums">
+        Rs{" "}
         {row.total.toLocaleString(undefined, {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,

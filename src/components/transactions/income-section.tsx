@@ -120,7 +120,7 @@ function IncomeRow({
           maximumFractionDigits: 2,
         })}
       </p>
-      <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100">
         <Button
           variant="ghost"
           size="icon"

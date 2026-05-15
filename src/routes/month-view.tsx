@@ -19,7 +19,7 @@ import {
   lastDayOfMonth,
 } from "@/lib/format/year-month";
 import { todayISO } from "@/lib/format/date";
-import { CategoryBreakdownChart } from "@/components/charts/category-breakdown-chart";
+import { CategoryBreakdownCard } from "@/components/charts/category-breakdown-card";
 import { getCategoryBreakdown } from "@/lib/calculations/category-breakdown";
 
 export function MonthView() {
@@ -87,9 +87,11 @@ export function MonthView() {
 
       {isLoading ? (
         <div className="space-y-3">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-48 w-full" />
-          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-[176px] w-full" />  {/* variance card */}
+          <Skeleton className="h-[260px] w-full" />  {/* summary card */}
+          <Skeleton className="h-[360px] w-full" />  {/* breakdown card */}
+          <Skeleton className="h-[180px] w-full" />  {/* income section */}
+          <Skeleton className="h-[180px] w-full" />  {/* savings section */}
         </div>
       ) : !hasAnyData ? (
         <Card>
@@ -113,7 +115,10 @@ export function MonthView() {
             <MonthSummaryCard yearMonth={yearMonth} summary={summary} />
           )}
           {breakdown.length > 0 && (
-            <CategoryBreakdownChart breakdown={breakdown} />
+            <CategoryBreakdownCard
+              breakdown={breakdown}
+              total={summary.totalExpenses}
+            />
           )}
         </>
       )}

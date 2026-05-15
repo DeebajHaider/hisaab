@@ -42,43 +42,45 @@ export function MonthlyTotalsChart({ data }: MonthlyTotalsChartProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={320}>
-          <LineChart
-            data={data}
-            margin={{ top: 8, right: 16, bottom: 8, left: 8 }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              vertical={false}
-              className="stroke-border"
-            />
-            <XAxis
-              dataKey="yearMonth"
-              tickLine={false}
-              axisLine={false}
-              tick={{ fontSize: 12 }}
-              interval={interval}
-              tickFormatter={formatXAxisTick}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tick={{ fontSize: 12 }}
-              tickFormatter={(v: number) => formatYAxisTick(v)}
-              domain={[0, "auto"]}
-              width={64}
-            />
-            <Tooltip content={<TrendTooltip />} cursor={{ strokeDasharray: "3 3" }} />
-            <Line
-              type="monotone"
-              dataKey="total"
-              stroke="var(--color-teal-600)"
-              strokeWidth={2}
-              dot={{ r: 3, fill: "var(--color-teal-600)" }}
-              activeDot={{ r: 5 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <div className="h-80 sm:h-80 md:h-[320px]"></div>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={data}
+              margin={{ top: 8, right: 16, bottom: 8, left: 8 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                className="stroke-border"
+              />
+              <XAxis
+                dataKey="yearMonth"
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 12 }}
+                interval={interval}
+                tickFormatter={formatXAxisTick}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 12 }}
+                tickFormatter={(v: number) => formatYAxisTick(v)}
+                domain={[0, "auto"]}
+                width={64}
+              />
+              <Tooltip content={<TrendTooltip />} cursor={{ strokeDasharray: "3 3" }} />
+              <Line
+                type="monotone"
+                dataKey="total"
+                stroke="var(--color-teal-600)"
+                strokeWidth={2}
+                dot={{ r: 3, fill: "var(--color-teal-600)" }}
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );

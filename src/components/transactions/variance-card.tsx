@@ -61,7 +61,7 @@ export function VarianceCard({ income, expenses, savings }: VarianceCardProps) {
         </div>
 
         <div className="border-t pt-3">
-          <div className="grid grid-cols-3 gap-2 text-center text-sm">
+          <div className="grid grid-cols-1 gap-2 text-center text-sm sm:grid-cols-3">
             <div>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Income
