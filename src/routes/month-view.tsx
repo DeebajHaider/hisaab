@@ -19,6 +19,8 @@ import {
   lastDayOfMonth,
 } from "@/lib/format/year-month";
 import { todayISO } from "@/lib/format/date";
+import { CategoryBreakdownChart } from "@/components/charts/category-breakdown-chart";
+import { getCategoryBreakdown } from "@/lib/calculations/category-breakdown";
 
 export function MonthView() {
   const { budgetId, yearMonth } = useParams<{
@@ -74,6 +76,9 @@ export function MonthView() {
       ? calculateMonthSummary(transactions, monthMeta)
       : null;
 
+  const breakdown =
+    transactions.length > 0 ? getCategoryBreakdown(transactions) : [];
+
   const expensesTotal = summary?.totalExpenses ?? 0;
 
   return (
@@ -106,6 +111,9 @@ export function MonthView() {
           />
           {summary && (
             <MonthSummaryCard yearMonth={yearMonth} summary={summary} />
+          )}
+          {breakdown.length > 0 && (
+            <CategoryBreakdownChart breakdown={breakdown} />
           )}
         </>
       )}
