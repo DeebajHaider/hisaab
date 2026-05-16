@@ -17,17 +17,26 @@ import { NotFound } from "@/routes/not-found";
 import { MonthView } from "@/routes/month-view";
 import { MonthRedirect } from "@/routes/month-redirect";
 import { Trends } from "@/routes/trends";
+import { InviteAccept } from "@/routes/invite-accept";
+import { Members } from "@/routes/members";
 
 function App() {
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <BrowserRouter>
+        {/* BrowserRouter must wrap AuthProvider — the provider now uses
+            useNavigate to redirect to / on sign-out. */}
+        <BrowserRouter>
+          <AuthProvider>
             <Routes>
               {/* Public */}
               <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<AuthPage />} />
+
+              {/* Invite acceptance — public route, but content branches on
+                  auth state inside the component. Signed-out users get
+                  bounced to /auth with the token stashed. */}
+              <Route path="/invite/:token" element={<InviteAccept />} />
 
               {/* Protected app — outer layout */}
               <Route
@@ -40,21 +49,21 @@ function App() {
               >
                 <Route index element={<BudgetsHome />} />
 
-                {/* Budget detail — inner layout with sidebar */}
                 <Route path="budgets/:budgetId" element={<BudgetLayout />}>
                   <Route index element={<BudgetRedirect />} />
                   <Route path="day/:date" element={<DayView />} />
                   <Route path="manage" element={<Manage />} />
                   <Route path="month" element={<MonthRedirect />} />
-                  <Route path="month/:yearMonth" element={<MonthView />} /> 
+                  <Route path="month/:yearMonth" element={<MonthView />} />
                   <Route path="trends" element={<Trends />} />
+                  <Route path="members" element={<Members />} />
                 </Route>
               </Route>
 
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
-        </AuthProvider>
+          </AuthProvider>
+        </BrowserRouter>
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </ThemeProvider>
@@ -62,3 +71,4 @@ function App() {
 }
 
 export default App;
+

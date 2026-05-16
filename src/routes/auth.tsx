@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,16 +13,33 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getPendingInvite } from "@/lib/pending-invite";
 
 type Mode = "sign-in" | "sign-up";
 
 export function AuthPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // After a successful sign-in/sign-up, decide where to send the user.
+  // Pending invite token in sessionStorage takes priority — that's the
+  // whole point of the stash.
+  const redirectAfterAuth = () => {
+    const pendingToken = getPendingInvite();
+    if (pendingToken) {
+      // Don't clear sessionStorage here — the /invite/:token page is
+      // responsible for clearing after it consumes the token. If we
+      // clear here, a refresh on the invite page would lose the context.
+      navigate(`/invite/${pendingToken}`, { replace: true });
+    } else {
+      navigate("/app", { replace: true });
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -35,21 +53,33 @@ export function AuthPage() {
           password,
         });
         if (error) throw error;
-        // Successful sign-in. AuthProvider will pick up the session change
-        // automatically; we just navigate to home.
-        navigate("/app", { replace: true });
+        // Clear cache before navigating. Belt-and-suspenders against the
+        // case where the previous session expired silently and left
+        // stale data in the cache.
+        queryClient.clear();
+        redirectAfterAuth();
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
         if (error) throw error;
-        // Depending on Supabase project settings, signup may require email
-        // confirmation. We'll handle that case below.
-        setError(
-          "Check your email for a confirmation link, then come back and sign in.",
-        );
-        setMode("sign-in");
+
+        // If email confirmation is OFF in Supabase project settings, signUp
+        // returns a session immediately and the user is logged in. If it's
+        // ON, no session is returned and they need to confirm via email
+        // first. data.session is the discriminator.
+        if (data.session) {
+          queryClient.clear();
+          redirectAfterAuth();
+        } else {
+          setError(
+            "Check your email for a confirmation link, then come back and sign in.",
+          );
+          setMode("sign-in");
+        }
       }
     } catch (err) {
-      // Supabase errors come with a `message` field that's safe to show.
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setSubmitting(false);
@@ -126,3 +156,4 @@ export function AuthPage() {
     </div>
   );
 }
+

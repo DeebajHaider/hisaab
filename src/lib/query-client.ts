@@ -11,6 +11,11 @@ export const queryClient = new QueryClient({
       staleTime: 30 * 1000,
       // Retry once on failure. The default of 3 is overkill for our case.
       retry: 1,
+      // Refetch when the browser tab/window regains focus. If a family
+      // member switches away to do something else and comes back, any
+      // data older than staleTime refetches automatically. Cheap safety
+      // net against stale shared-budget data without full realtime.
+      refetchOnWindowFocus: true,
     },
   },
 });

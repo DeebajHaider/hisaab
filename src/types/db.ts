@@ -39,6 +39,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      budget_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          budget_id: string
+          created_at: string
+          id: string
+          invited_by: string
+          role: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          budget_id: string
+          created_at?: string
+          id?: string
+          invited_by?: string
+          role: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          budget_id?: string
+          created_at?: string
+          id?: string
+          invited_by?: string
+          role?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_invites_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_members: {
         Row: {
           budget_id: string
@@ -79,7 +120,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by: string
+          created_by?: string
           currency?: string
           id?: string
           is_shared?: boolean
@@ -148,7 +189,7 @@ export type Database = {
           amount: number
           budget_id: string
           created_at?: string
-          created_by: string
+          created_by?: string
           date: string
           id?: string
           notes?: string | null
@@ -244,6 +285,27 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email: string
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       savings_entries: {
         Row: {
           amount: number
@@ -259,7 +321,7 @@ export type Database = {
           amount: number
           budget_id: string
           created_at?: string
-          created_by: string
+          created_by?: string
           date: string
           id?: string
           name: string
@@ -305,7 +367,7 @@ export type Database = {
           budget_id: string
           category_id: string
           created_at?: string
-          created_by: string
+          created_by?: string
           date: string
           id?: string
           item_id: string
@@ -364,6 +426,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invite: { Args: { invite_token: string }; Returns: string }
+      get_budget_member_profiles: {
+        Args: { p_budget_id: string }
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
       has_budget_role: {
         Args: { b_id: string; min_role: string }
         Returns: boolean
@@ -377,6 +447,17 @@ export type Database = {
         Args: { item_category_id: string }
         Returns: boolean
       }
+      lookup_invite: {
+        Args: { invite_token: string }
+        Returns: {
+          accepted_at: string
+          already_member: boolean
+          budget_id: string
+          budget_name: string
+          role: string
+        }[]
+      }
+      shares_budget_with: { Args: { other_user_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
