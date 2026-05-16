@@ -74,21 +74,46 @@ export function TransactionEntryForm({
   const recent = recentQuery.data ?? [];
   const people = peopleQuery.data ?? [];
 
+  // selectedItem resolves from the items query by id. In edit mode the
+  // items query may not have loaded on first render — and even once loaded,
+  // the joined item on the transaction lacks category_id. So we keep the
+  // resolution simple: look it up in the items list. The category is
+  // derived separately below with its own fallback.
   const selectedItem = useMemo(
     () => items.find((i) => i.id === selectedItemId) ?? null,
     [items, selectedItemId],
   );
 
-  const selectedCategoryId = selectedItem?.category_id ?? null;
-  const selectedCategory = useMemo(
-    () =>
-      selectedCategoryId
-        ? categories.find((c) => c.id === selectedCategoryId) ?? null
-        : null,
-    [categories, selectedCategoryId],
-  );
+  // The selected category. Three sources, in priority order:
+  //   1. The category of the resolved item (create mode, normal path).
+  //   2. The browse-mode category dropdown selection.
+  //   3. The category embedded on the existing transaction (edit mode,
+  //      before the items/categories queries have resolved — or as a
+  //      permanent fallback since transaction.category carries everything
+  //      we need).
+  // This is what makes the edit dialog show the right category immediately
+  // instead of "Pick a category" until the items query lands.
+  const selectedCategoryId =
+    selectedItem?.category_id ?? browseCategoryId ?? existing?.category_id ?? null;
 
-  const effectiveCategoryId = selectedCategoryId ?? browseCategoryId;
+  const selectedCategory = useMemo(() => {
+    if (!selectedCategoryId) return null;
+    // Prefer the live categories list (fresh tracks_person, name, etc.).
+    const fromList =
+      categories.find((c) => c.id === selectedCategoryId) ?? null;
+    if (fromList) return fromList;
+    // Fallback: the category embedded on the existing transaction. Shaped
+    // as { id, name, tracks_person } — enough for the form's needs.
+    if (existing?.category && existing.category.id === selectedCategoryId) {
+      return existing.category as unknown as (typeof categories)[number];
+    }
+    return null;
+  }, [categories, selectedCategoryId, existing]);
+
+  // selectedCategoryId already incorporates browseCategoryId and the
+  // existing-transaction fallback, so this is just an alias now. Kept as a
+  // named value because the JSX references it in several places.
+  const effectiveCategoryId = selectedCategoryId;
 
   const itemsInCategory = useMemo(
     () =>
