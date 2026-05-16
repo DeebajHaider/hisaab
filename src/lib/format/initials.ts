@@ -1,6 +1,6 @@
 interface InitialsInput {
-  displayName?: string;
-  email?: string;
+  displayName?: string | null;
+  email?: string | null;
 }
 
 /**

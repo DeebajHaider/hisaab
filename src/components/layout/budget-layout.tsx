@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
-import { ArrowLeft, Calendar, Settings, Menu, CalendarRange, TrendingUp } from "lucide-react";
+import { ArrowLeft, Calendar, Settings, Menu, CalendarRange, TrendingUp, Users } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -118,28 +118,41 @@ function SidebarNav({ budgetId }: { budgetId: string }) {
   const today = todayISO();
 
   return (
-    <nav className="flex-1 p-2 flex flex-col gap-1">
-      <NavItem
-        to={`/app/budgets/${budgetId}/day/${today}`}
-        icon={<Calendar className="w-4 h-4" />}
-        label="Day view"
-      />
-      <NavItem
-        to={`/app/budgets/${budgetId}/month`}
-        icon={<CalendarRange className="w-4 h-4" />}
-        label="Month"
-      />
-      <NavItem
-        to={`/app/budgets/${budgetId}/trends`}
-        icon={<TrendingUp className="w-4 h-4" />}
-        label="Trends"
-      />
-      <NavItem
-        to={`/app/budgets/${budgetId}/manage`}
-        icon={<Settings className="w-4 h-4" />}
-        label="Manage"
-      />
-    </nav>
+    <>
+      <nav className="flex-1 p-2 flex flex-col gap-1">
+        <NavItem
+          to={`/app/budgets/${budgetId}/day/${today}`}
+          icon={<Calendar className="w-4 h-4" />}
+          label="Day view"
+        />
+        <NavItem
+          to={`/app/budgets/${budgetId}/month`}
+          icon={<CalendarRange className="w-4 h-4" />}
+          label="Month"
+        />
+        <NavItem
+          to={`/app/budgets/${budgetId}/trends`}
+          icon={<TrendingUp className="w-4 h-4" />}
+          label="Trends"
+        />
+        <NavItem
+          to={`/app/budgets/${budgetId}/members`}
+          icon={<Users className="w-4 h-4" />}
+          label="Members"
+        />
+        <NavItem
+          to={`/app/budgets/${budgetId}/manage`}
+          icon={<Settings className="w-4 h-4" />}
+          label="Manage"
+        />
+      </nav>
+      {/* Honesty note: the app isn't live-updating. Sets expectations for
+          shared budgets so a stale screen doesn't mislead anyone. */}
+      <p className="px-3 py-3 text-[11px] leading-snug text-muted-foreground border-t border-border/40">
+        Updates aren't live. Data refreshes when you return to the tab or
+        every 30 seconds as you navigate.
+      </p>
+    </>
   );
 }
 

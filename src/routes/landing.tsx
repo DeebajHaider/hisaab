@@ -18,8 +18,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/lib/theme-provider";
+import { useEffect } from "react";
+import { clearPendingInvite } from "@/lib/pending-invite";
 
 export function Landing() {
+  // Defensive sweep: if someone abandoned an invite flow and ended up
+  // back on the landing page, drop the stale token. Prevents it from
+  // attaching to whoever signs in next on this tab.
+  useEffect(() => {
+    clearPendingInvite();
+  }, []);
+  
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />

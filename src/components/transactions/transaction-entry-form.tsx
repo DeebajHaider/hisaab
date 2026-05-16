@@ -25,26 +25,11 @@ import type { TransactionWithRelations } from "@/queries/use-transactions";
 interface TransactionEntryFormProps {
   budgetId: string;
   date: string;
-  // If provided, the form is in "edit" mode — pre-filled and updates instead of creating
   existing?: TransactionWithRelations | null;
-  // Called after successful save (create or update). Useful for closing a dialog in edit mode.
   onSaved?: () => void;
-  // Called when the user wants to cancel an in-progress edit. Only relevant in edit mode.
   onCancel?: () => void;
 }
 
-/**
- * Self-contained form for logging a new transaction.
- *
- * Three input modes for picking an item, all kept in sync via selectedItemId:
- *   1. Search box (typing, autocomplete dropdown)
- *   2. Category dropdown + item dropdown (browse mode)
- *
- * The selected item determines:
- *   - Default mode (lump vs rate × qty)
- *   - Default rate (pre-fills the rate field)
- *   - Whether the person picker shows (depends on category.tracks_person)
- */
 export function TransactionEntryForm({
   budgetId,
   date,
@@ -66,9 +51,14 @@ export function TransactionEntryForm({
   const [amount, setAmount] = useState("");
   const [personId, setPersonId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Browse-mode category — tracks what the user has selected in the category
+  // dropdown when they haven't picked an item yet. Once an item is picked,
+  // effectiveCategoryId resolves via selectedItem.category_id and this
+  // becomes a fallback.
+  const [browseCategoryId, setBrowseCategoryId] = useState<string | null>(null);
 
   const createMutation = useCreateTransaction();
   const updateMutation = useUpdateTransaction();
@@ -84,27 +74,47 @@ export function TransactionEntryForm({
   const recent = recentQuery.data ?? [];
   const people = peopleQuery.data ?? [];
 
+  // selectedItem resolves from the items query by id. In edit mode the
+  // items query may not have loaded on first render — and even once loaded,
+  // the joined item on the transaction lacks category_id. So we keep the
+  // resolution simple: look it up in the items list. The category is
+  // derived separately below with its own fallback.
   const selectedItem = useMemo(
     () => items.find((i) => i.id === selectedItemId) ?? null,
     [items, selectedItemId],
   );
 
-  const selectedCategoryId = selectedItem?.category_id ?? null;
-  const selectedCategory = useMemo(
-    () =>
-      selectedCategoryId
-        ? categories.find((c) => c.id === selectedCategoryId) ?? null
-        : null,
-    [categories, selectedCategoryId],
-  );
+  // The selected category. Three sources, in priority order:
+  //   1. The category of the resolved item (create mode, normal path).
+  //   2. The browse-mode category dropdown selection.
+  //   3. The category embedded on the existing transaction (edit mode,
+  //      before the items/categories queries have resolved — or as a
+  //      permanent fallback since transaction.category carries everything
+  //      we need).
+  // This is what makes the edit dialog show the right category immediately
+  // instead of "Pick a category" until the items query lands.
+  const selectedCategoryId =
+    selectedItem?.category_id ?? browseCategoryId ?? existing?.category_id ?? null;
 
-  // For the browse-mode category dropdown, we need a "currently chosen category"
-  // even when no item is selected (so the user can pick a category, then pick an item).
-  // We track this separately from selectedCategoryId.
-  const [browseCategoryId, setBrowseCategoryId] = useState<string | null>(null);
-  const effectiveCategoryId = selectedCategoryId ?? browseCategoryId;
+  const selectedCategory = useMemo(() => {
+    if (!selectedCategoryId) return null;
+    // Prefer the live categories list (fresh tracks_person, name, etc.).
+    const fromList =
+      categories.find((c) => c.id === selectedCategoryId) ?? null;
+    if (fromList) return fromList;
+    // Fallback: the category embedded on the existing transaction. Shaped
+    // as { id, name, tracks_person } — enough for the form's needs.
+    if (existing?.category && existing.category.id === selectedCategoryId) {
+      return existing.category as unknown as (typeof categories)[number];
+    }
+    return null;
+  }, [categories, selectedCategoryId, existing]);
 
-  // Items in the currently-chosen category — the "browse" list
+  // selectedCategoryId already incorporates browseCategoryId and the
+  // existing-transaction fallback, so this is just an alias now. Kept as a
+  // named value because the JSX references it in several places.
+  const effectiveCategoryId = selectedCategoryId;
+
   const itemsInCategory = useMemo(
     () =>
       effectiveCategoryId
@@ -113,45 +123,43 @@ export function TransactionEntryForm({
     [items, effectiveCategoryId],
   );
 
-  // Search results — only computed when search is open
   const searchResults = useMemo(
     () => rankItems({ query: searchQuery, items, recent, limit: 8 }),
     [searchQuery, items, recent],
   );
 
-  // Pre-fill the form when entering edit mode (or when the existing transaction changes)
-useEffect(() => {
-  if (existing) {
-    setSelectedItemId(existing.item_id);
-    setMode(existing.rate !== null && existing.qty !== null ? "rate_qty" : "lump");
-    setRate(existing.rate !== null ? String(existing.rate) : "");
-    setQty(existing.qty !== null ? String(existing.qty) : "");
-    setAmount(String(existing.amount));
-    setPersonId(existing.person_id);
-    setNotes(existing.notes ?? "");
-    setSearchQuery("");
-    setBrowseCategoryId(existing.category_id);
-  }
-  // We intentionally don't reset state when going from edit to create — let
-  // the parent handle that by remounting the form (e.g., via key prop).
-}, [existing]);
-
-  // --- Effects: when an item is selected, apply its defaults
+  // --- Edit-mode pre-fill
+  // Pre-fills state from the existing transaction. Runs once per existing
+  // transaction. Importantly, we do NOT trigger the "apply item defaults"
+  // logic from here — those defaults should overwrite values only when the
+  // USER picks an item, not when the form is initializing.
   useEffect(() => {
-    if (!selectedItem) return;
-    setMode((selectedItem.default_mode as "lump" | "rate_qty") ?? "lump");
-    if (selectedItem.default_rate !== null) {
-      setRate(String(selectedItem.default_rate));
+    if (existing) {
+      setSelectedItemId(existing.item_id);
+      setMode(
+        existing.rate !== null && existing.qty !== null ? "rate_qty" : "lump",
+      );
+      setRate(existing.rate !== null ? String(existing.rate) : "");
+      setQty(existing.qty !== null ? String(existing.qty) : "");
+      setAmount(String(existing.amount));
+      setPersonId(existing.person_id);
+      setNotes(existing.notes ?? "");
+      setSearchQuery("");
+      setBrowseCategoryId(existing.category_id);
     }
-    setBrowseCategoryId(selectedItem.category_id);
-  }, [selectedItem]);
+  }, [existing]);
 
-  // --- Effects: auto-compute amount in rate_qty mode
+  // --- Auto-compute amount in rate_qty mode
   useEffect(() => {
     if (mode !== "rate_qty") return;
     const r = Number(rate);
     const q = Number(qty);
-    if (rate.trim() === "" || qty.trim() === "" || Number.isNaN(r) || Number.isNaN(q)) {
+    if (
+      rate.trim() === "" ||
+      qty.trim() === "" ||
+      Number.isNaN(r) ||
+      Number.isNaN(q)
+    ) {
       setAmount("");
       return;
     }
@@ -159,11 +167,37 @@ useEffect(() => {
   }, [mode, rate, qty]);
 
   // --- Handlers
+  // pickItem is the single entry point for user-driven item selection.
+  // Applying item defaults inline here (rather than in an effect on
+  // [selectedItem]) means defaults only get applied when the USER picks
+  // an item — not when the form initializes from an existing transaction.
+  // This is the fix for the silent-data-corruption bug where editing a
+  // transaction would overwrite mode/rate with the item's defaults.
   const pickItem = (id: string) => {
-    console.log('[pickItem] called with id:', id);
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+
     setSelectedItemId(id);
-    setSearchOpen(false);
     setSearchQuery("");
+
+    // Apply the item's defaults. This is the right place for it — the user
+    // is intentionally picking a new item and expects its defaults to load.
+    const itemMode = (item.default_mode as "lump" | "rate_qty") ?? "lump";
+    setMode(itemMode);
+    if (item.default_rate !== null) {
+      setRate(String(item.default_rate));
+    } else {
+      setRate("");
+    }
+
+    // Reset numeric fields that don't carry across items.
+    setQty("");
+    setAmount("");
+
+    // Keep browseCategoryId synced so the category Select shows the right
+    // value even if the user came in via search (where they didn't touch
+    // the category dropdown).
+    setBrowseCategoryId(item.category_id);
   };
 
   const clearItem = () => {
@@ -183,8 +217,7 @@ useEffect(() => {
     setPersonId(null);
     setNotes("");
     setError(null);
-    // Keep the browse category — the user is likely to enter several items in a row
-    // from the same category.
+    setSearchQuery("");
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -197,7 +230,11 @@ useEffect(() => {
     }
 
     const parsedAmount = Number(amount);
-    if (amount.trim() === "" || Number.isNaN(parsedAmount) || parsedAmount < 0) {
+    if (
+      amount.trim() === "" ||
+      Number.isNaN(parsedAmount) ||
+      parsedAmount < 0
+    ) {
       setError("Amount must be a non-negative number");
       return;
     }
@@ -242,7 +279,6 @@ useEffect(() => {
           notes: trimmedNotes,
         });
         resetForm();
-        // Refocus search for rapid sequential entry — only when creating
         searchInputRef.current?.focus();
       }
       onSaved?.();
@@ -259,23 +295,19 @@ useEffect(() => {
     return <NoSetup />;
   }
 
-  console.log('[render] selectedItemId:', selectedItemId, 'searchQuery:', searchQuery);
   return (
     <section>
       <h2 className="text-sm font-medium text-muted-foreground mb-2 px-1">
         {isEditing ? "Edit transaction" : "Add a transaction"}
       </h2>
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-lg border border-border/60 bg-card p-4 space-y-4"
-    >
-      {/* Search */}
-      <div className="space-y-2">
-        <Label htmlFor="search-input">Add items</Label>
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-lg border border-border/60 bg-card p-4 space-y-4"
+      >
         {/* Search */}
         <div className="space-y-2">
-        <Label htmlFor="search-input">Search items</Label>
-        <SearchCombobox
+          <Label htmlFor="search-input">Search items</Label>
+          <SearchCombobox
             items={searchResults}
             selectedId={selectedItemId}
             selectedName={selectedItem?.name ?? existing?.item?.name ?? null}
@@ -284,299 +316,260 @@ useEffect(() => {
             onPick={pickItem}
             onClear={clearItem}
             inputRef={searchInputRef}
-        />
-        </div>
-      </div>
-
-      <div className="text-xs text-muted-foreground text-center">— or browse —</div>
-
-      {/* Category + Item dropdowns */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label htmlFor="category-select">Category</Label>
-          <Select
-            value={effectiveCategoryId ?? ""}
-            onValueChange={(v) => {
-              setBrowseCategoryId(v);
-              // If the currently selected item is not in this category, clear it
-              if (selectedItem && selectedItem.category_id !== v) {
-                setSelectedItemId(null);
-              }
-            }}
-          >
-            <SelectTrigger id="category-select">
-              <SelectValue placeholder="Pick a category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="item-select">Item</Label>
-          <Select
-            value={selectedItemId ?? ""}
-            onValueChange={pickItem}
-            disabled={!effectiveCategoryId}
-          >
-            <SelectTrigger id="item-select">
-              <SelectValue
-                placeholder={
-                  effectiveCategoryId
-                    ? itemsInCategory.length === 0
-                      ? "No items in this category"
-                      : "Pick an item"
-                    : "Pick a category first"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {itemsInCategory.map((item) => (
-                <SelectItem key={item.id} value={item.id}>
-                  {item.name}
-                  {item.unit && (
-                    <span className="text-muted-foreground"> · {item.unit}</span>
-                  )}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Mode toggle */}
-      <div className="flex items-center gap-2 pt-2 border-t border-border/40">
-        <Label className="text-xs">Mode:</Label>
-        <div className="flex rounded-md overflow-hidden border border-border/60">
-          <button
-            type="button"
-            onClick={() => setMode("lump")}
-            className={`px-3 py-1 text-xs ${
-              mode === "lump"
-                ? "bg-teal-600 text-white"
-                : "bg-background hover:bg-muted"
-            }`}
-          >
-            Lump
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("rate_qty")}
-            className={`px-3 py-1 text-xs ${
-              mode === "rate_qty"
-                ? "bg-teal-600 text-white"
-                : "bg-background hover:bg-muted"
-            }`}
-          >
-            Rate × Qty
-          </button>
-        </div>
-      </div>
-
-      {/* Rate, Qty, Amount */}
-      <div className="grid grid-cols-3 gap-3">
-        {mode === "rate_qty" && (
-          <>
-            <div className="space-y-1">
-              <Label htmlFor="rate-input" className="text-xs">Rate</Label>
-              <Input
-                id="rate-input"
-                type="number"
-                value={rate}
-                onChange={(e) => setRate(e.target.value)}
-                min={0}
-                step="0.01"
-                placeholder="0"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="qty-input" className="text-xs">
-                Qty {selectedItem?.unit && `(${selectedItem.unit})`}
-              </Label>
-              <Input
-                id="qty-input"
-                type="number"
-                value={qty}
-                onChange={(e) => setQty(e.target.value)}
-                min={0}
-                step="0.001"
-                placeholder="0"
-              />
-            </div>
-          </>
-        )}
-        <div
-          className={`space-y-1 ${
-            mode === "rate_qty" ? "" : "col-span-3"
-          }`}
-        >
-          <Label htmlFor="amount-input" className="text-xs">
-            Amount
-          </Label>
-          <Input
-            id="amount-input"
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            min={0}
-            step="0.01"
-            placeholder="0.00"
-            readOnly={mode === "rate_qty"}
-            className={mode === "rate_qty" ? "bg-muted/50" : ""}
-            required
           />
         </div>
-      </div>
 
-      {/* Person picker — only when category requires it */}
-      {selectedCategory?.tracks_person && (
-        <div className="space-y-2">
-          <Label htmlFor="person-select">Person</Label>
-          <Select
-            value={personId ?? ""}
-            onValueChange={setPersonId}
-          >
-            <SelectTrigger id="person-select">
-              <SelectValue placeholder="Pick a person" />
-            </SelectTrigger>
-            <SelectContent>
-              {people.length === 0 && (
-                <div className="px-2 py-3 text-xs text-muted-foreground">
-                  No people defined for this budget. Add some in Manage.
-                </div>
-              )}
-              {people.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="text-xs text-muted-foreground text-center">
+          — or browse —
         </div>
-      )}
 
-      {/* Notes */}
-      <div className="space-y-2">
-        <Label htmlFor="notes-input" className="text-xs">
-          Notes (optional)
-        </Label>
-        <Textarea
-          id="notes-input"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={2}
-          placeholder=""
-          className="text-sm"
-        />
-      </div>
+        {/* Category + Item dropdowns */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="category-select">Category</Label>
+            <Select
+              value={effectiveCategoryId ?? ""}
+              onValueChange={(v) => {
+                setBrowseCategoryId(v);
+                if (selectedItem && selectedItem.category_id !== v) {
+                  setSelectedItemId(null);
+                }
+              }}
+            >
+              <SelectTrigger id="category-select">
+                <SelectValue placeholder="Pick a category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      {error && (
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
-      )}
+          <div className="space-y-2">
+            <Label htmlFor="item-select">Item</Label>
+            <Select
+              value={selectedItemId ?? ""}
+              onValueChange={pickItem}
+              disabled={!effectiveCategoryId}
+            >
+              <SelectTrigger id="item-select">
+                {/* SelectValue children act as a fallback display when the
+                    selected value doesn't match a mounted SelectItem child.
+                    This makes the search-then-display path work: even when
+                    the user picks via search, the trigger shows the item
+                    name immediately, regardless of whether SelectContent
+                    has been opened (and thus mounted) yet. */}
+                <SelectValue
+                  placeholder={
+                    effectiveCategoryId
+                      ? itemsInCategory.length === 0
+                        ? "No items in this category"
+                        : "Pick an item"
+                      : "Pick a category first"
+                  }
+                >
+                  {selectedItem?.name}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {itemsInCategory.map((item) => (
+                  <SelectItem key={item.id} value={item.id}>
+                    {item.name}
+                    {item.unit && (
+                      <span className="text-muted-foreground">
+                        {" "}
+                        · {item.unit}
+                      </span>
+                    )}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
-      <div className="flex justify-end gap-2 pt-2 border-t border-border/40">
-        {isEditing ? (
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onCancel}
-            disabled={mutationPending}
-          >
-            Cancel
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={resetForm}
-            disabled={mutationPending}
-          >
-            Reset
-          </Button>
-        )}
-        <Button
-          type="submit"
-          className="bg-teal-600 hover:bg-teal-700 text-white"
-          disabled={
-            mutationPending ||
-            !selectedItem ||
-            !amount.trim() ||
-            (selectedCategory?.tracks_person && !personId)
-          }
-        >
-          {mutationPending ? (
+        {/* Mode toggle */}
+        <div className="flex items-center gap-2 pt-2 border-t border-border/40">
+          <Label className="text-xs">Mode:</Label>
+          <div className="flex rounded-md overflow-hidden border border-border/60">
+            <button
+              type="button"
+              onClick={() => setMode("lump")}
+              className={`px-3 py-1 text-xs ${
+                mode === "lump"
+                  ? "bg-teal-600 text-white"
+                  : "bg-background hover:bg-muted"
+              }`}
+            >
+              Lump
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("rate_qty")}
+              className={`px-3 py-1 text-xs ${
+                mode === "rate_qty"
+                  ? "bg-teal-600 text-white"
+                  : "bg-background hover:bg-muted"
+              }`}
+            >
+              Rate × Qty
+            </button>
+          </div>
+        </div>
+
+        {/* Rate, Qty, Amount */}
+        <div className="grid grid-cols-3 gap-3">
+          {mode === "rate_qty" && (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Saving...
+              <div className="space-y-1">
+                <Label htmlFor="rate-input" className="text-xs">
+                  Rate
+                </Label>
+                <Input
+                  id="rate-input"
+                  type="number"
+                  value={rate}
+                  onChange={(e) => setRate(e.target.value)}
+                  min={0}
+                  step="0.01"
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="qty-input" className="text-xs">
+                  Qty {selectedItem?.unit && `(${selectedItem.unit})`}
+                </Label>
+                <Input
+                  id="qty-input"
+                  type="number"
+                  value={qty}
+                  onChange={(e) => setQty(e.target.value)}
+                  min={0}
+                  step="0.001"
+                  placeholder="0"
+                />
+              </div>
             </>
-          ) : isEditing ? (
-            "Save changes"
+          )}
+          <div
+            className={`space-y-1 ${mode === "rate_qty" ? "" : "col-span-3"}`}
+          >
+            <Label htmlFor="amount-input" className="text-xs">
+              Amount
+            </Label>
+            <Input
+              id="amount-input"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              min={0}
+              step="0.01"
+              placeholder="0.00"
+              readOnly={mode === "rate_qty"}
+              className={mode === "rate_qty" ? "bg-muted/50" : ""}
+              required
+            />
+          </div>
+        </div>
+
+        {/* Person picker — only when category requires it */}
+        {selectedCategory?.tracks_person && (
+          <div className="space-y-2">
+            <Label htmlFor="person-select">Person</Label>
+            <Select value={personId ?? ""} onValueChange={setPersonId}>
+              <SelectTrigger id="person-select">
+                <SelectValue placeholder="Pick a person" />
+              </SelectTrigger>
+              <SelectContent>
+                {people.length === 0 && (
+                  <div className="px-2 py-3 text-xs text-muted-foreground">
+                    No people defined for this budget. Add some in Manage.
+                  </div>
+                )}
+                {people.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Notes */}
+        <div className="space-y-2">
+          <Label htmlFor="notes-input" className="text-xs">
+            Notes (optional)
+          </Label>
+          <Textarea
+            id="notes-input"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            placeholder=""
+            className="text-sm"
+          />
+        </div>
+
+        {error && (
+          <p className="text-sm text-destructive" role="alert">
+            {error}
+          </p>
+        )}
+
+        <div className="flex justify-end gap-2 pt-2 border-t border-border/40">
+          {isEditing ? (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onCancel}
+              disabled={mutationPending}
+            >
+              Cancel
+            </Button>
           ) : (
-            "Save & next"
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={resetForm}
+              disabled={mutationPending}
+            >
+              Reset
+            </Button>
           )}
-        </Button>
-      </div>
-    </form>
-  </section>
-  );
-}
-
-// ----------------------------------------------------------------------------
-// Search dropdown content
-// ----------------------------------------------------------------------------
-function SearchDropdown({
-  results,
-  selectedId,
-  onPick,
-}: {
-  results: ItemWithCategory[];
-  selectedId: string | null;
-  onPick: (id: string) => void;
-}) {
-  if (results.length === 0) {
-    return (
-      <div className="px-3 py-4 text-sm text-muted-foreground text-center">
-        No matching items.
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-h-72 overflow-y-auto py-1">
-      {results.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          onClick={() => onPick(item.id)}
-          className={`w-full text-left px-3 py-1.5 text-sm hover:bg-muted/60 flex items-center gap-2 ${
-            item.id === selectedId ? "bg-muted/40" : ""
-          }`}
-        >
-          <span className="font-medium truncate">{item.name}</span>
-          <span className="text-xs text-muted-foreground truncate">
-            {item.category?.name}
-            {item.unit && ` · ${item.unit}`}
-          </span>
-          {item.id === selectedId && (
-            <Check className="w-3.5 h-3.5 ml-auto text-teal-600 dark:text-teal-400" />
-          )}
-        </button>
-      ))}
-    </div>
+          <Button
+            type="submit"
+            className="bg-teal-600 hover:bg-teal-700 text-white"
+            disabled={
+              mutationPending ||
+              !selectedItem ||
+              !amount.trim() ||
+              (selectedCategory?.tracks_person && !personId)
+            }
+          >
+            {mutationPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : isEditing ? (
+              "Save changes"
+            ) : (
+              "Save & next"
+            )}
+          </Button>
+        </div>
+      </form>
+    </section>
   );
 }
 
 // ----------------------------------------------------------------------------
 // SearchCombobox — custom search input with keyboard-navigable dropdown
-// Built without Popover to avoid click-outside flicker and have full control
-// over focus + keyboard.
 // ----------------------------------------------------------------------------
 function SearchCombobox({
   items,
@@ -602,12 +595,10 @@ function SearchCombobox({
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Reset highlight when results change
   useEffect(() => {
     setHighlightIdx(0);
   }, [items]);
 
-  // Close when clicking outside the container
   useEffect(() => {
     if (!open) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -622,8 +613,6 @@ function SearchCombobox({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
-  // The display value: when an item is selected and the user hasn't started a
-  // new query, show the selected name. Otherwise show what they're typing.
   const displayValue = query !== "" ? query : selectedName ?? "";
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -646,7 +635,6 @@ function SearchCombobox({
     }
   };
 
-  // Keep the highlighted row visible when navigating with keys
   useEffect(() => {
     if (!open || !listRef.current) return;
     const highlighted = listRef.current.querySelector<HTMLElement>(
@@ -665,9 +653,14 @@ function SearchCombobox({
         value={displayValue}
         onChange={(e) => {
           onQueryChange(e.target.value);
+          // Open on typing — the user is actively searching.
           setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
+        // Note: deliberately no onFocus={() => setOpen(true)} here.
+        // Auto-opening on focus was causing the dropdown to reappear after
+        // submit (when we refocus the input for rapid entry), showing the
+        // full unfiltered item list overlaying the form. Users can open the
+        // dropdown by typing or pressing ArrowDown.
         onKeyDown={handleKeyDown}
         className="pl-9 pr-9"
         autoComplete="off"
@@ -702,8 +695,6 @@ function SearchCombobox({
                 key={item.id}
                 type="button"
                 data-idx={idx}
-                // Use onMouseDown rather than onClick so the click registers
-                // before the input's blur fires.
                 onMouseDown={(e) => {
                   e.preventDefault();
                   onPick(item.id);
