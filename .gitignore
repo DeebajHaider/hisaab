@@ -11,6 +11,9 @@ node_modules
 dist
 dist-ssr
 *.local
+scripts
+csvs
+
 
 # Environment variables — NEVER commit secrets
 .env
