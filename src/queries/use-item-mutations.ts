@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import type { Database } from "@/types/db";
 
 interface CreateItemInput {
   budgetId: string;        // for cache invalidation
@@ -60,7 +61,7 @@ export function useUpdateItem() {
 
   return useMutation({
     mutationFn: async (input: UpdateItemInput) => {
-      const dbPatch: Record<string, unknown> = {};
+      const dbPatch: Database["public"]["Tables"]["items"]["Update"] = {};
       if (input.patch.name !== undefined) dbPatch.name = input.patch.name;
       if (input.patch.categoryId !== undefined) dbPatch.category_id = input.patch.categoryId;
       if (input.patch.unit !== undefined) dbPatch.unit = input.patch.unit;

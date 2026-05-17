@@ -28,7 +28,12 @@ export function useBudgetInvites(budgetId: string | undefined) {
         .is("accepted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      // The DB column is text with a CHECK constraint; Supabase types it as
+      // plain string. We know the constraint guarantees editor|viewer.
+      return (data ?? []).map((row) => ({
+        ...row,
+        role: row.role as "editor" | "viewer",
+      }));
     },
     enabled: !!budgetId,
   });

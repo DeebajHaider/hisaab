@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import type { Database } from "@/types/db";
 
 interface CreateCategoryInput {
   budgetId: string;
@@ -70,7 +71,7 @@ export function useUpdateCategory() {
     mutationFn: async (input: UpdateCategoryInput) => {
       // Translate camelCase keys to snake_case columns.
       // Doing this explicitly rather than spreading prevents accidental writes.
-      const dbPatch: Record<string, unknown> = {};
+      const dbPatch: Database["public"]["Tables"]["categories"]["Update"] = {};
       if (input.patch.name !== undefined) dbPatch.name = input.patch.name;
       if (input.patch.tracksPerson !== undefined) dbPatch.tracks_person = input.patch.tracksPerson;
       if (input.patch.color !== undefined) dbPatch.color = input.patch.color;

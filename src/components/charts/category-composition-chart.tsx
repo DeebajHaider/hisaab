@@ -7,7 +7,6 @@ import {
   CartesianGrid,
   Legend,
   ResponsiveContainer,
-  type TooltipProps,
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { CategoryMonthRow } from "@/lib/calculations/aggregate-by-category-month";
@@ -18,6 +17,19 @@ interface CategoryCompositionChartProps {
   /** All category names (chart shows all, regardless of comparison selection). */
   categories: string[];
   colors: Record<string, string>;
+}
+
+// Recharts passes active/payload/label to custom tooltip content, but the
+// exported TooltipProps type no longer surfaces them. This local shape
+// describes only what we read.
+interface ChartTooltipProps {
+  active?: boolean;
+  label?: string | number;
+  payload?: Array<{
+    value?: number | string;
+    dataKey?: string | number;
+    payload?: Record<string, unknown>;
+  }>;
 }
 
 /**
@@ -111,7 +123,7 @@ function CompositionTooltip({
   payload,
   label,
   colors,
-}: TooltipProps<number, string> & { colors: Record<string, string> }) {
+}: ChartTooltipProps & { colors: Record<string, string> }) {
   if (!active || !payload || payload.length === 0) return null;
 
   // Filter out zero entries and sort by value descending.

@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import type { Budget } from "@/queries/use-budgets";
 
 interface CreateBudgetInput {
   name: string;

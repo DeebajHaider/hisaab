@@ -6,7 +6,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  type TooltipProps,
 } from "recharts";
 import type { CategoryBreakdownRow } from "@/lib/calculations/category-breakdown";
 
@@ -14,6 +13,19 @@ interface CategoryBreakdownChartProps {
   breakdown: CategoryBreakdownRow[];
   /** Color map (category name -> CSS color) — shared with the donut. */
   colors: Record<string, string>;
+}
+
+// Recharts passes active/payload/label to custom tooltip content, but the
+// exported TooltipProps type no longer surfaces them. This local shape
+// describes only what we read.
+interface ChartTooltipProps {
+  active?: boolean;
+  label?: string | number;
+  payload?: Array<{
+    value?: number | string;
+    dataKey?: string | number;
+    payload?: Record<string, unknown>;
+  }>;
 }
 
 /**
@@ -87,9 +99,9 @@ function PercentLabel(props: {
   );
 }
 
-function BreakdownTooltip({ active, payload }: TooltipProps<number, string>) {
+function BreakdownTooltip({ active, payload }: ChartTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
-  const row = payload[0].payload as CategoryBreakdownRow;
+  const row = payload[0].payload as unknown as CategoryBreakdownRow;
 
   return (
     <div className="rounded-md border bg-popover px-3 py-2 text-popover-foreground shadow-md">

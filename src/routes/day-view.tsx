@@ -50,7 +50,6 @@ export function DayView() {
 
       <EditTransactionDialog
         budgetId={budgetId}
-        date={date}
         transaction={editing}
         onClose={() => setEditing(null)}
       />

@@ -114,7 +114,7 @@ export function MonthView() {
           {summary && (
             <MonthSummaryCard yearMonth={yearMonth} summary={summary} />
           )}
-          {breakdown.length > 0 && (
+          {summary && breakdown.length > 0 && (
             <CategoryBreakdownCard
               breakdown={breakdown}
               total={summary.totalExpenses}

@@ -6,7 +6,6 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
-  type TooltipProps,
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CategoryMultiSelect } from "@/components/trends/category-multi-select";
@@ -22,6 +21,19 @@ interface CategoryComparisonChartProps {
   /** Color map (name -> CSS color). */
   colors: Record<string, string>;
   onToggleCategory: (name: string) => void;
+}
+
+// Recharts passes active/payload/label to custom tooltip content, but the
+// exported TooltipProps type no longer surfaces them. This local shape
+// describes only what we read.
+interface ChartTooltipProps {
+  active?: boolean;
+  label?: string | number;
+  payload?: Array<{
+    value?: number | string;
+    dataKey?: string | number;
+    payload?: Record<string, unknown>;
+  }>;
 }
 
 export function CategoryComparisonChart({
@@ -118,7 +130,7 @@ function ComparisonTooltip({
   payload,
   label,
   colors,
-}: TooltipProps<number, string> & { colors: Record<string, string> }) {
+}: ChartTooltipProps & { colors: Record<string, string> }) {
   if (!active || !payload || payload.length === 0) return null;
 
   // Sort entries by value desc so the largest mover is at the top

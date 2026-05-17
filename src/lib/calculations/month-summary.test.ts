@@ -129,7 +129,6 @@ describe("calculateMonthSummary — largest category", () => {
     // counted in totals.
     const result = calculateMonthSummary(
       [
-        // @ts-expect-error — testing defensive behavior with invalid shape
         tx({ amount: 50, category: null }),
         tx({ amount: 30, category: { name: "Groceries", tracks_person: false } }),
       ],

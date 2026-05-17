@@ -56,7 +56,6 @@ describe("getCategoryBreakdown", () => {
 
   it("ignores transactions with no category", () => {
     const result = getCategoryBreakdown([
-      // @ts-expect-error — testing defensive behavior
       tx({ amount: 50, category: null }),
       tx({ amount: 100, category: { name: "Groceries" } }),
     ]);

@@ -1,8 +1,5 @@
-import {
-  buildImportPlan,
-  TEMPLATE_CSV_SAMPLE,
-  type ImportError,
-} from "./template-import";
+import { buildImportPlan, TEMPLATE_CSV_SAMPLE } from "./template-import";
+import { parseCSV } from "./csv-parser";
 
 describe("buildImportPlan", () => {
   describe("happy path", () => {
@@ -214,7 +211,6 @@ describe("TEMPLATE_CSV_SAMPLE", () => {
   it("parses without errors", () => {
     // Sanity check: the example CSV we ship should be valid against our own parser
     // We import parseCSV here to keep the test self-contained.
-    const { parseCSV } = require("./csv-parser.ts");
     const parsed = parseCSV(TEMPLATE_CSV_SAMPLE);
     const result = buildImportPlan(parsed);
     expect(result.errors).toEqual([]);

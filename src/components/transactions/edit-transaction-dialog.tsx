@@ -10,7 +10,6 @@ import type { TransactionWithRelations } from "@/queries/use-transactions";
 
 interface EditTransactionDialogProps {
   budgetId: string;
-  date: string;
   // The transaction being edited. null = closed.
   transaction: TransactionWithRelations | null;
   onClose: () => void;
@@ -22,7 +21,6 @@ interface EditTransactionDialogProps {
  */
 export function EditTransactionDialog({
   budgetId,
-  date,
   transaction,
   onClose,
 }: EditTransactionDialogProps) {

@@ -26,12 +26,6 @@ export interface BuildPlanResult {
 }
 
 const REQUIRED_COLUMNS = ["category", "item"] as const;
-const OPTIONAL_COLUMNS = [
-  "unit",
-  "default_rate",
-  "default_mode",
-  "tracks_person",
-] as const;
 
 /**
  * Convert a parsed CSV into a structured ImportPlan, collecting all errors.

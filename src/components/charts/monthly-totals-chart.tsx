@@ -6,7 +6,6 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
-  type TooltipProps,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { MonthlyTotal } from "@/lib/calculations/aggregate-by-month";
@@ -14,6 +13,19 @@ import { formatMonthLabel } from "@/lib/format/year-month";
 
 interface MonthlyTotalsChartProps {
   data: MonthlyTotal[];
+}
+
+// Recharts passes active/payload/label to custom tooltip content, but the
+// exported TooltipProps type no longer surfaces them. This local shape
+// describes only what we read.
+interface ChartTooltipProps {
+  active?: boolean;
+  label?: string | number;
+  payload?: Array<{
+    value?: number | string;
+    dataKey?: string | number;
+    payload?: Record<string, unknown>;
+  }>;
 }
 
 /**
@@ -106,9 +118,9 @@ function formatYAxisTick(amount: number): string {
   return amount.toString();
 }
 
-function TrendTooltip({ active, payload }: TooltipProps<number, string>) {
+function TrendTooltip({ active, payload }: ChartTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
-  const row = payload[0].payload as MonthlyTotal;
+  const row = payload[0].payload as unknown as MonthlyTotal;
 
   return (
     <div className="rounded-md border bg-popover px-3 py-2 text-popover-foreground shadow-md">

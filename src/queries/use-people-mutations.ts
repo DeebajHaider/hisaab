@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { peopleKeys } from "./people-keys";
+import type { Database } from "@/types/db";
 
 // ---------- Create person ----------
 
@@ -42,7 +43,7 @@ export function useUpdatePerson() {
     mutationFn: async ({ id, patch }: UpdatePersonVars) => {
       // Explicit field translation, no spreading — typos on the patch
       // object would otherwise go undetected.
-      const dbPatch: Record<string, unknown> = {};
+      const dbPatch: Database["public"]["Tables"]["people"]["Update"] = {};
       if (patch.name !== undefined) dbPatch.name = patch.name;
 
       const { error } = await supabase

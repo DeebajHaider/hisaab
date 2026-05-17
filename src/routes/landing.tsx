@@ -1,11 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  BarChart3,
-  PieChart,
-  TrendingUp,
-  Users,
   Wallet,
-  LineChart,
   Sun,
   Moon,
   Monitor,

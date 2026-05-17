@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { incomeKeys } from "./income-keys";
+import type { Database } from "@/types/db";
 
 // ----------------------------------------------------------------------------
 // Create
@@ -60,7 +61,7 @@ export function useUpdateIncome() {
 
   return useMutation({
     mutationFn: async (input: UpdateIncomeInput) => {
-      const dbPatch: Record<string, unknown> = {};
+      const dbPatch: Database["public"]["Tables"]["income_entries"]["Update"] = {};
       if (input.patch.source !== undefined) dbPatch.source = input.patch.source;
       if (input.patch.amount !== undefined) dbPatch.amount = input.patch.amount;
       if (input.patch.date !== undefined) dbPatch.date = input.patch.date;

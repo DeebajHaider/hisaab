@@ -28,7 +28,7 @@ interface SavingsFormDialogProps {
   budgetId: string;
   yearMonth: YearMonth;
   existing?: SavingsEntry;
-  trigger: ReactNode;
+  trigger?: ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }

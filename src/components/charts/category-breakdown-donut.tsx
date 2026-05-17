@@ -4,7 +4,6 @@ import {
   Cell,
   Tooltip,
   ResponsiveContainer,
-  type TooltipProps,
 } from "recharts";
 import type { CategoryBreakdownRow } from "@/lib/calculations/category-breakdown";
 
@@ -12,6 +11,19 @@ interface CategoryBreakdownDonutProps {
   breakdown: CategoryBreakdownRow[];
   total: number;
   colors: Record<string, string>;
+}
+
+// Recharts passes active/payload/label to custom tooltip content, but the
+// exported TooltipProps type no longer surfaces them. This local shape
+// describes only what we read.
+interface ChartTooltipProps {
+  active?: boolean;
+  label?: string | number;
+  payload?: Array<{
+    value?: number | string;
+    dataKey?: string | number;
+    payload?: Record<string, unknown>;
+  }>;
 }
 
 /**
@@ -68,10 +80,10 @@ export function CategoryBreakdownDonut({
   );
 }
 
-function DonutTooltip({ active, payload }: TooltipProps<number, string>) {
+function DonutTooltip({ active, payload }: ChartTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
   const slice = payload[0];
-  const row = slice.payload as CategoryBreakdownRow;
+  const row = slice.payload as unknown as CategoryBreakdownRow;
 
   return (
     <div className="rounded-md border bg-popover px-3 py-2 text-popover-foreground shadow-md">

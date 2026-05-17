@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { transactionKeys } from "./transaction-keys";
 import { trendsKeys } from "./trends-keys";
+import type { Database } from "@/types/db";
 
 // ----------------------------------------------------------------------------
 // Create
@@ -84,7 +85,7 @@ export function useUpdateTransaction() {
   return useMutation({
     mutationFn: async (input: UpdateTransactionInput) => {
       // Translate camelCase keys to snake_case columns explicitly.
-      const dbPatch: Record<string, unknown> = {};
+      const dbPatch: Database["public"]["Tables"]["transactions"]["Update"] = {};
       if (input.patch.categoryId !== undefined) dbPatch.category_id = input.patch.categoryId;
       if (input.patch.itemId !== undefined) dbPatch.item_id = input.patch.itemId;
       if (input.patch.date !== undefined) dbPatch.date = input.patch.date;

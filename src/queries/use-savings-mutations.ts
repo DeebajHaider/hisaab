@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { savingsKeys } from "./savings-keys";
+import type { Database } from "@/types/db";
 
 interface CreateSavingsInput {
   budgetId: string;
@@ -46,7 +47,7 @@ export function useUpdateSavings() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: UpdateSavingsInput) => {
-      const dbPatch: Record<string, unknown> = {};
+      const dbPatch: Database["public"]["Tables"]["savings_entries"]["Update"] = {};
       if (input.patch.name !== undefined) dbPatch.name = input.patch.name;
       if (input.patch.amount !== undefined) dbPatch.amount = input.patch.amount;
       if (input.patch.date !== undefined) dbPatch.date = input.patch.date;
