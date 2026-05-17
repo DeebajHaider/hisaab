@@ -212,7 +212,11 @@ describe("buildTransactionImportPlan — name resolution", () => {
     expect(result.errors).toEqual([]);
     expect(result.plan!.categoriesToCreate).toEqual([]);
     expect(result.plan!.itemsToCreate).toEqual([
-      { name: "Bread", categoryName: "Groceries", default_mode: "lump" },
+      {
+        name: "Bread",
+        categoryRef: { kind: "existing", id: "cat-groc" },
+        default_mode: "lump",
+      },
     ]);
   });
 
@@ -235,7 +239,11 @@ describe("buildTransactionImportPlan — name resolution", () => {
     const result = buildTransactionImportPlan(parsed, POPULATED_CONTEXT);
     expect(result.errors).toEqual([]);
     expect(result.plan!.itemsToCreate).toEqual([
-      { name: "Diesel", categoryName: "Vehicle", default_mode: "rate_qty" },
+      {
+        name: "Diesel",
+        categoryRef: { kind: "existing", id: "cat-veh" },
+        default_mode: "rate_qty",
+      },
     ]);
   });
 
@@ -255,6 +263,22 @@ describe("buildTransactionImportPlan — name resolution", () => {
     expect(result.errors).toEqual([]);
     expect(result.plan!.itemsToCreate).toHaveLength(2);
     expect(result.plan!.categoriesToCreate).toHaveLength(2);
+  });
+
+  it("gives a new-category item a 'new' categoryRef carrying the category name", () => {
+    // Dining is brand-new; its item Pizza must reference the category by
+    // name (no id exists yet), so the mutation can wire it after creating
+    // the category.
+    const parsed = parseCSV(csv("2026-02-01,Dining,Pizza,800,,,"));
+    const result = buildTransactionImportPlan(parsed, POPULATED_CONTEXT);
+    expect(result.errors).toEqual([]);
+    expect(result.plan!.itemsToCreate).toEqual([
+      {
+        name: "Pizza",
+        categoryRef: { kind: "new", name: "Dining" },
+        default_mode: "lump",
+      },
+    ]);
   });
 
   it("does not duplicate a new category referenced by many rows", () => {

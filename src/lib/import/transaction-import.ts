@@ -55,7 +55,13 @@ export interface CategoryToCreate {
 /** An item to auto-create; needs its parent category created first. */
 export interface ItemToCreate {
   name: string;
-  categoryName: string; // parent — resolved to id at insert time
+  /**
+   * Parent category. An "existing" ref carries the real category id; a "new"
+   * ref carries the name of a category also being created this import. The
+   * mutation hook resolves a "new" ref via the ids it captures when it
+   * inserts the new categories — it never has to re-query.
+   */
+  categoryRef: Ref;
   default_mode: "lump" | "rate_qty";
 }
 
@@ -152,7 +158,7 @@ export function buildTransactionImportPlan(
   // the inferred default_mode).
   const newItems = new Map<
     string,
-    { name: string; categoryName: string; sawRateQty: boolean }
+    { name: string; categoryRef: Ref; sawRateQty: boolean }
   >();
 
   const transactions: PlannedTransaction[] = [];
@@ -160,10 +166,13 @@ export function buildTransactionImportPlan(
   /**
    * Record a to-be-created item (idempotently) and return its Ref. Tracks
    * whether any row for the item used rate+qty, to infer default_mode later.
+   * The parent `categoryRef` is stored so the mutation hook can resolve the
+   * parent without re-querying — an existing parent carries its id, a new
+   * one its name.
    */
   function recordNewItem(
     catNorm: string,
-    categoryName: string,
+    categoryRef: Ref,
     itemNorm: string,
     itemName: string,
     rate: number | null,
@@ -172,12 +181,11 @@ export function buildTransactionImportPlan(
     const key = `${catNorm}::${itemNorm}`;
     const existing = newItems.get(key);
     if (existing) {
-      // A later row might be the one that reveals rate_qty usage.
       if (rate !== null && qty !== null) existing.sawRateQty = true;
     } else {
       newItems.set(key, {
         name: itemName,
-        categoryName,
+        categoryRef,
         sawRateQty: rate !== null && qty !== null,
       });
     }
@@ -291,7 +299,7 @@ export function buildTransactionImportPlan(
       } else {
         itemRef = recordNewItem(
           catNorm,
-          categoryName,
+          categoryRef,
           itemNorm,
           itemName,
           rate,
@@ -302,7 +310,7 @@ export function buildTransactionImportPlan(
       // Category is new -> item is necessarily new too.
       itemRef = recordNewItem(
         catNorm,
-        categoryName,
+        categoryRef,
         itemNorm,
         itemName,
         rate,
@@ -332,7 +340,7 @@ export function buildTransactionImportPlan(
   ].map((name) => ({ name }));
   const itemsToCreate: ItemToCreate[] = [...newItems.values()].map((it) => ({
     name: it.name,
-    categoryName: it.categoryName,
+    categoryRef: it.categoryRef,
     default_mode: it.sawRateQty ? "rate_qty" : "lump",
   }));
 
