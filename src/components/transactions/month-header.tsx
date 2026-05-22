@@ -1,10 +1,13 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { ExportTransactionsButton } from "@/components/manage/export-transactions-button";
 import {
   addMonths,
   currentYearMonth,
+  firstDayOfMonth,
   formatMonthLabel,
+  lastDayOfMonth,
   type YearMonth,
 } from "@/lib/format/year-month";
 
@@ -15,7 +18,8 @@ interface MonthHeaderProps {
 
 /**
  * Header for the Month view: prev / label / next, plus a "Current month"
- * shortcut shown when not already on the current month.
+ * shortcut shown when not already on the current month, and an export
+ * button that downloads this month's transactions as a CSV.
  *
  * Parallel in shape to DayHeader. Navigation is route-driven — clicking
  * a button updates the URL, which re-runs the query via useMonthTransactions.
@@ -52,11 +56,21 @@ export function MonthHeader({ budgetId, yearMonth }: MonthHeaderProps) {
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
-      {!isCurrent && (
-        <Button variant="ghost" size="sm" onClick={() => goTo(current)}>
-          Current month
-        </Button>
-      )}
+      <div className="flex items-center gap-2">
+        {!isCurrent && (
+          <Button variant="ghost" size="sm" onClick={() => goTo(current)}>
+            Current month
+          </Button>
+        )}
+        <ExportTransactionsButton
+          budgetId={budgetId}
+          from={firstDayOfMonth(yearMonth)}
+          to={lastDayOfMonth(yearMonth)}
+          filenameSuffix={yearMonth}
+          label="Export"
+        />
+      </div>
     </div>
   );
 }
+
