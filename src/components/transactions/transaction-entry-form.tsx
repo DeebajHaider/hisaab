@@ -109,6 +109,46 @@ export function TransactionEntryForm({
     [searchQuery, items, recent],
   );
 
+  // --- People for the picker (5.5 fix)
+  // usePeople returns only ACTIVE people. If the transaction being edited is
+  // assigned to a person who has since been archived, that person wouldn't
+  // appear in the list, so the dropdown couldn't show them as the current
+  // assignee. peopleForPicker augments the active list with the existing
+  // assignee when they're archived, marking them visibly so it's clear.
+  //
+  // Important: the archived person is shown ONLY because they're the current
+  // assignee — they're not a freely-pickable option. The submit button check
+  // below blocks switching FROM the original archived assignee to a different
+  // archived person, since other archived people are filtered out of the list.
+  // This preserves data fidelity (the existing assignment is shown) without
+  // undermining archive hygiene (you can't reassign to an archived person).
+  const peopleForPicker = useMemo(() => {
+    const list = people.map((p) => ({ ...p, isArchivedAssignee: false }));
+    const existingPersonId = existing?.person_id ?? null;
+    if (!existingPersonId) return list;
+    // Already in the active list? Nothing to do.
+    if (list.some((p) => p.id === existingPersonId)) return list;
+    // The existing assignee isn't active. Use the embedded person on the
+    // transaction (joined by useTransactions) to display them.
+    const archivedAssignee = existing?.person;
+    if (!archivedAssignee) return list;
+    return [
+      ...list,
+      {
+        id: archivedAssignee.id,
+        name: archivedAssignee.name,
+        isArchivedAssignee: true,
+      },
+    ];
+  }, [people, existing]);
+
+  // For the SelectValue children fallback — resolved person to display on
+  // the trigger, regardless of whether the dropdown content has been mounted.
+  const selectedPerson = useMemo(
+    () => peopleForPicker.find((p) => p.id === personId) ?? null,
+    [peopleForPicker, personId],
+  );
+
   // --- Edit-mode pre-fill
   useEffect(() => {
     if (existing) {
@@ -240,7 +280,7 @@ export function TransactionEntryForm({
           patch: {
             categoryId: selectedCategory.id,
             itemId: selectedItem.id,
-            date: editingDate, // <-- now editable in edit mode
+            date: editingDate,
             amount: parsedAmount,
             rate: parsedRate,
             qty: parsedQty,
@@ -253,7 +293,7 @@ export function TransactionEntryForm({
           budgetId,
           categoryId: selectedCategory.id,
           itemId: selectedItem.id,
-          date, // create mode: fixed by the route
+          date,
           amount: parsedAmount,
           rate: parsedRate,
           qty: parsedQty,
@@ -286,8 +326,7 @@ export function TransactionEntryForm({
         onSubmit={handleSubmit}
         className="rounded-lg border border-border/60 bg-card p-4 space-y-4"
       >
-        {/* Date — edit mode only. Sits at the top because changing a date is
-            often the primary reason a user opens the edit dialog. */}
+        {/* Date — edit mode only. */}
         {isEditing && (
           <div className="space-y-2">
             <Label>Date</Label>
@@ -465,23 +504,51 @@ export function TransactionEntryForm({
           </div>
         </div>
 
-        {/* Person picker — only when category requires it */}
+        {/* Person picker — only when category requires it. The 5.5 fix:
+            SelectValue children fallback so the trigger shows the assignee
+            even before the SelectContent has mounted, and peopleForPicker
+            so an archived current-assignee remains visible. */}
         {selectedCategory?.tracks_person && (
           <div className="space-y-2">
             <Label htmlFor="person-select">Person</Label>
-            <Select value={personId ?? ""} onValueChange={setPersonId}>
+            <Select
+              // Remounting on personId changes forces Radix to re-match its
+              // internal SelectItem lookup. Without this, when the form pre-fills
+              // personId in an effect AFTER the Select has mounted with value="",
+              // the trigger can stay blank because Radix's mount-time lookup ran
+              // against the empty value.
+              key={`person-${personId ?? "none"}`}
+              value={personId ?? ""}
+              onValueChange={setPersonId}
+            >
               <SelectTrigger id="person-select">
-                <SelectValue placeholder="Pick a person" />
+                <SelectValue placeholder="Pick a person">
+                  {selectedPerson && (
+                    <span>
+                      {selectedPerson.name}
+                      {selectedPerson.isArchivedAssignee && (
+                        <span className="text-muted-foreground text-xs ml-1">
+                          (archived)
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {people.length === 0 && (
+                {peopleForPicker.length === 0 && (
                   <div className="px-2 py-3 text-xs text-muted-foreground">
                     No people defined for this budget. Add some in Manage.
                   </div>
                 )}
-                {people.map((p) => (
+                {peopleForPicker.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.name}
+                    {p.isArchivedAssignee && (
+                      <span className="text-muted-foreground text-xs">
+                        {" "}· archived
+                      </span>
+                    )}
                   </SelectItem>
                 ))}
               </SelectContent>
