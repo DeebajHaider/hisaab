@@ -19,26 +19,20 @@ import { MonthRedirect } from "@/routes/month-redirect";
 import { Trends } from "@/routes/trends";
 import { InviteAccept } from "@/routes/invite-accept";
 import { Members } from "@/routes/members";
+import { Settings } from "@/routes/settings";
+import { Toaster } from "@/components/ui/sonner";
 
 function App() {
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        {/* BrowserRouter must wrap AuthProvider — the provider now uses
-            useNavigate to redirect to / on sign-out. */}
         <BrowserRouter>
           <AuthProvider>
             <Routes>
-              {/* Public */}
               <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<AuthPage />} />
-
-              {/* Invite acceptance — public route, but content branches on
-                  auth state inside the component. Signed-out users get
-                  bounced to /auth with the token stashed. */}
               <Route path="/invite/:token" element={<InviteAccept />} />
 
-              {/* Protected app — outer layout */}
               <Route
                 path="/app"
                 element={
@@ -48,6 +42,7 @@ function App() {
                 }
               >
                 <Route index element={<BudgetsHome />} />
+                <Route path="settings" element={<Settings />} />
 
                 <Route path="budgets/:budgetId" element={<BudgetLayout />}>
                   <Route index element={<BudgetRedirect />} />
@@ -64,6 +59,8 @@ function App() {
             </Routes>
           </AuthProvider>
         </BrowserRouter>
+        {/* Mounted once at app root. Renders nothing until toasts fire. */}
+        <Toaster />
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </ThemeProvider>

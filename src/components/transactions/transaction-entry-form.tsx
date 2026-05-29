@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { useCategories } from "@/queries/use-categories";
 import { useItems, type ItemWithCategory } from "@/queries/use-items";
 import { usePeople } from "@/queries/use-people";
@@ -24,6 +25,8 @@ import type { TransactionWithRelations } from "@/queries/use-transactions";
 
 interface TransactionEntryFormProps {
   budgetId: string;
+  /** Date in create mode is fixed by the route. In edit mode, this is the
+   *  initial date — the user can change it via the date picker. */
   date: string;
   existing?: TransactionWithRelations | null;
   onSaved?: () => void;
@@ -53,11 +56,10 @@ export function TransactionEntryForm({
   const [notes, setNotes] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // The date being edited. Only meaningful in edit mode — in create mode the
+  // route's date is used at submit time. Initialized in the pre-fill effect.
+  const [editingDate, setEditingDate] = useState<string>(date);
 
-  // Browse-mode category — tracks what the user has selected in the category
-  // dropdown when they haven't picked an item yet. Once an item is picked,
-  // effectiveCategoryId resolves via selectedItem.category_id and this
-  // becomes a fallback.
   const [browseCategoryId, setBrowseCategoryId] = useState<string | null>(null);
 
   const createMutation = useCreateTransaction();
@@ -74,45 +76,24 @@ export function TransactionEntryForm({
   const recent = recentQuery.data ?? [];
   const people = peopleQuery.data ?? [];
 
-  // selectedItem resolves from the items query by id. In edit mode the
-  // items query may not have loaded on first render — and even once loaded,
-  // the joined item on the transaction lacks category_id. So we keep the
-  // resolution simple: look it up in the items list. The category is
-  // derived separately below with its own fallback.
   const selectedItem = useMemo(
     () => items.find((i) => i.id === selectedItemId) ?? null,
     [items, selectedItemId],
   );
 
-  // The selected category. Three sources, in priority order:
-  //   1. The category of the resolved item (create mode, normal path).
-  //   2. The browse-mode category dropdown selection.
-  //   3. The category embedded on the existing transaction (edit mode,
-  //      before the items/categories queries have resolved — or as a
-  //      permanent fallback since transaction.category carries everything
-  //      we need).
-  // This is what makes the edit dialog show the right category immediately
-  // instead of "Pick a category" until the items query lands.
   const selectedCategoryId =
     selectedItem?.category_id ?? browseCategoryId ?? existing?.category_id ?? null;
 
   const selectedCategory = useMemo(() => {
     if (!selectedCategoryId) return null;
-    // Prefer the live categories list (fresh tracks_person, name, etc.).
-    const fromList =
-      categories.find((c) => c.id === selectedCategoryId) ?? null;
+    const fromList = categories.find((c) => c.id === selectedCategoryId) ?? null;
     if (fromList) return fromList;
-    // Fallback: the category embedded on the existing transaction. Shaped
-    // as { id, name, tracks_person } — enough for the form's needs.
     if (existing?.category && existing.category.id === selectedCategoryId) {
       return existing.category as unknown as (typeof categories)[number];
     }
     return null;
   }, [categories, selectedCategoryId, existing]);
 
-  // selectedCategoryId already incorporates browseCategoryId and the
-  // existing-transaction fallback, so this is just an alias now. Kept as a
-  // named value because the JSX references it in several places.
   const effectiveCategoryId = selectedCategoryId;
 
   const itemsInCategory = useMemo(
@@ -128,11 +109,47 @@ export function TransactionEntryForm({
     [searchQuery, items, recent],
   );
 
+  // --- People for the picker (5.5 fix)
+  // usePeople returns only ACTIVE people. If the transaction being edited is
+  // assigned to a person who has since been archived, that person wouldn't
+  // appear in the list, so the dropdown couldn't show them as the current
+  // assignee. peopleForPicker augments the active list with the existing
+  // assignee when they're archived, marking them visibly so it's clear.
+  //
+  // Important: the archived person is shown ONLY because they're the current
+  // assignee — they're not a freely-pickable option. The submit button check
+  // below blocks switching FROM the original archived assignee to a different
+  // archived person, since other archived people are filtered out of the list.
+  // This preserves data fidelity (the existing assignment is shown) without
+  // undermining archive hygiene (you can't reassign to an archived person).
+  const peopleForPicker = useMemo(() => {
+    const list = people.map((p) => ({ ...p, isArchivedAssignee: false }));
+    const existingPersonId = existing?.person_id ?? null;
+    if (!existingPersonId) return list;
+    // Already in the active list? Nothing to do.
+    if (list.some((p) => p.id === existingPersonId)) return list;
+    // The existing assignee isn't active. Use the embedded person on the
+    // transaction (joined by useTransactions) to display them.
+    const archivedAssignee = existing?.person;
+    if (!archivedAssignee) return list;
+    return [
+      ...list,
+      {
+        id: archivedAssignee.id,
+        name: archivedAssignee.name,
+        isArchivedAssignee: true,
+      },
+    ];
+  }, [people, existing]);
+
+  // For the SelectValue children fallback — resolved person to display on
+  // the trigger, regardless of whether the dropdown content has been mounted.
+  const selectedPerson = useMemo(
+    () => peopleForPicker.find((p) => p.id === personId) ?? null,
+    [peopleForPicker, personId],
+  );
+
   // --- Edit-mode pre-fill
-  // Pre-fills state from the existing transaction. Runs once per existing
-  // transaction. Importantly, we do NOT trigger the "apply item defaults"
-  // logic from here — those defaults should overwrite values only when the
-  // USER picks an item, not when the form is initializing.
   useEffect(() => {
     if (existing) {
       setSelectedItemId(existing.item_id);
@@ -146,6 +163,7 @@ export function TransactionEntryForm({
       setNotes(existing.notes ?? "");
       setSearchQuery("");
       setBrowseCategoryId(existing.category_id);
+      setEditingDate(existing.date);
     }
   }, [existing]);
 
@@ -167,12 +185,6 @@ export function TransactionEntryForm({
   }, [mode, rate, qty]);
 
   // --- Handlers
-  // pickItem is the single entry point for user-driven item selection.
-  // Applying item defaults inline here (rather than in an effect on
-  // [selectedItem]) means defaults only get applied when the USER picks
-  // an item — not when the form initializes from an existing transaction.
-  // This is the fix for the silent-data-corruption bug where editing a
-  // transaction would overwrite mode/rate with the item's defaults.
   const pickItem = (id: string) => {
     const item = items.find((i) => i.id === id);
     if (!item) return;
@@ -180,8 +192,6 @@ export function TransactionEntryForm({
     setSelectedItemId(id);
     setSearchQuery("");
 
-    // Apply the item's defaults. This is the right place for it — the user
-    // is intentionally picking a new item and expects its defaults to load.
     const itemMode = (item.default_mode as "lump" | "rate_qty") ?? "lump";
     setMode(itemMode);
     if (item.default_rate !== null) {
@@ -190,13 +200,8 @@ export function TransactionEntryForm({
       setRate("");
     }
 
-    // Reset numeric fields that don't carry across items.
     setQty("");
     setAmount("");
-
-    // Keep browseCategoryId synced so the category Select shows the right
-    // value even if the user came in via search (where they didn't touch
-    // the category dropdown).
     setBrowseCategoryId(item.category_id);
   };
 
@@ -218,6 +223,17 @@ export function TransactionEntryForm({
     setNotes("");
     setError(null);
     setSearchQuery("");
+  };
+
+  // Strict YYYY-MM-DD check, used in edit mode only. Mirrors the importer's
+  // validity rule: not just well-formed, but a real calendar date.
+  const isRealISODate = (s: string) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (!m) return false;
+    const [y, mo, d] = m.slice(1).map(Number);
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) return false;
+    const dt = new Date(y, mo - 1, d);
+    return dt.getFullYear() === y && dt.getMonth() === mo - 1 && dt.getDate() === d;
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -244,6 +260,12 @@ export function TransactionEntryForm({
       return;
     }
 
+    // Edit mode: the date may have been changed via the picker. Validate it.
+    if (isEditing && !isRealISODate(editingDate)) {
+      setError("Pick a valid date");
+      return;
+    }
+
     const parsedRate =
       mode === "rate_qty" && rate.trim() !== "" ? Number(rate) : null;
     const parsedQty =
@@ -258,7 +280,7 @@ export function TransactionEntryForm({
           patch: {
             categoryId: selectedCategory.id,
             itemId: selectedItem.id,
-            date,
+            date: editingDate,
             amount: parsedAmount,
             rate: parsedRate,
             qty: parsedQty,
@@ -304,6 +326,18 @@ export function TransactionEntryForm({
         onSubmit={handleSubmit}
         className="rounded-lg border border-border/60 bg-card p-4 space-y-4"
       >
+        {/* Date — edit mode only. */}
+        {isEditing && (
+          <div className="space-y-2">
+            <Label>Date</Label>
+            <DatePicker
+              value={editingDate}
+              onChange={setEditingDate}
+              ariaLabel="Change date"
+            />
+          </div>
+        )}
+
         {/* Search */}
         <div className="space-y-2">
           <Label htmlFor="search-input">Search items</Label>
@@ -357,12 +391,6 @@ export function TransactionEntryForm({
               disabled={!effectiveCategoryId}
             >
               <SelectTrigger id="item-select">
-                {/* SelectValue children act as a fallback display when the
-                    selected value doesn't match a mounted SelectItem child.
-                    This makes the search-then-display path work: even when
-                    the user picks via search, the trigger shows the item
-                    name immediately, regardless of whether SelectContent
-                    has been opened (and thus mounted) yet. */}
                 <SelectValue
                   placeholder={
                     effectiveCategoryId
@@ -476,23 +504,51 @@ export function TransactionEntryForm({
           </div>
         </div>
 
-        {/* Person picker — only when category requires it */}
+        {/* Person picker — only when category requires it. The 5.5 fix:
+            SelectValue children fallback so the trigger shows the assignee
+            even before the SelectContent has mounted, and peopleForPicker
+            so an archived current-assignee remains visible. */}
         {selectedCategory?.tracks_person && (
           <div className="space-y-2">
             <Label htmlFor="person-select">Person</Label>
-            <Select value={personId ?? ""} onValueChange={setPersonId}>
+            <Select
+              // Remounting on personId changes forces Radix to re-match its
+              // internal SelectItem lookup. Without this, when the form pre-fills
+              // personId in an effect AFTER the Select has mounted with value="",
+              // the trigger can stay blank because Radix's mount-time lookup ran
+              // against the empty value.
+              key={`person-${personId ?? "none"}`}
+              value={personId ?? ""}
+              onValueChange={setPersonId}
+            >
               <SelectTrigger id="person-select">
-                <SelectValue placeholder="Pick a person" />
+                <SelectValue placeholder="Pick a person">
+                  {selectedPerson && (
+                    <span>
+                      {selectedPerson.name}
+                      {selectedPerson.isArchivedAssignee && (
+                        <span className="text-muted-foreground text-xs ml-1">
+                          (archived)
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {people.length === 0 && (
+                {peopleForPicker.length === 0 && (
                   <div className="px-2 py-3 text-xs text-muted-foreground">
                     No people defined for this budget. Add some in Manage.
                   </div>
                 )}
-                {people.map((p) => (
+                {peopleForPicker.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.name}
+                    {p.isArchivedAssignee && (
+                      <span className="text-muted-foreground text-xs">
+                        {" "}· archived
+                      </span>
+                    )}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -653,14 +709,8 @@ function SearchCombobox({
         value={displayValue}
         onChange={(e) => {
           onQueryChange(e.target.value);
-          // Open on typing — the user is actively searching.
           setOpen(true);
         }}
-        // Note: deliberately no onFocus={() => setOpen(true)} here.
-        // Auto-opening on focus was causing the dropdown to reappear after
-        // submit (when we refocus the input for rapid entry), showing the
-        // full unfiltered item list overlaying the form. Users can open the
-        // dropdown by typing or pressing ArrowDown.
         onKeyDown={handleKeyDown}
         className="pl-9 pr-9"
         autoComplete="off"
@@ -744,3 +794,4 @@ function NoSetup() {
     </div>
   );
 }
+

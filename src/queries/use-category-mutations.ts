@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/types/db";
+import { toast } from "sonner";
 
 interface CreateCategoryInput {
   budgetId: string;
@@ -45,6 +46,13 @@ export function useCreateCategory() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["categories", variables.budgetId],
+      });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't create category.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
       });
     },
   });
@@ -93,7 +101,14 @@ export function useUpdateCategory() {
         queryKey: ["items", variables.budgetId],
       });
     },
-  });
+    onError: (error, _variables) => {
+    // Errors deserve longer than the 4s default — give the user time to read.
+    toast.error("Couldn't update category.", {
+      description: error instanceof Error ? error.message : "Unknown error.",
+      duration: 6000,
+    });
+  }
+});
 }
 
 interface ArchiveCategoryInput {
@@ -134,11 +149,19 @@ export function useArchiveCategory() {
       }
     },
     onSuccess: (_, variables) => {
+      toast.success("Category archived.");
       queryClient.invalidateQueries({
         queryKey: ["categories", variables.budgetId],
       });
       queryClient.invalidateQueries({
         queryKey: ["items", variables.budgetId],
+      });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't archive category.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
       });
     },
   });

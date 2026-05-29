@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { memberKeys } from "./member-keys";
+import { toast } from "sonner";
+
 
 // ---------- Change role ----------
 
@@ -22,7 +24,15 @@ export function useUpdateMemberRole() {
       if (error) throw error;
     },
     onSuccess: (_data, { budgetId }) => {
+      toast.success("Role updated.");
       qc.invalidateQueries({ queryKey: memberKeys.byBudget(budgetId) });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't update role.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
     },
   });
 }
@@ -63,6 +73,13 @@ export function useRemoveMember() {
       // If the current user just left the budget, the budgets list
       // changes too. Broad invalidation handles both cases.
       qc.invalidateQueries({ queryKey: ["budgets"] });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't remove member.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
     },
   });
 }

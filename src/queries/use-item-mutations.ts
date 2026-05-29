@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/types/db";
+import { toast } from "sonner";
+
 
 interface CreateItemInput {
   budgetId: string;        // for cache invalidation
@@ -38,6 +40,13 @@ export function useCreateItem() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["items", variables.budgetId],
+      });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't create item.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
       });
     },
   });
@@ -81,6 +90,13 @@ export function useUpdateItem() {
         queryKey: ["items", variables.budgetId],
       });
     },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't update item.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
+    },
   });
 }
 
@@ -103,8 +119,16 @@ export function useArchiveItem() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
+      toast.success("Item archived.");
       queryClient.invalidateQueries({
         queryKey: ["items", variables.budgetId],
+      });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't archive item.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
       });
     },
   });
