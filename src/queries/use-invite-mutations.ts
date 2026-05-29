@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { inviteKeys } from "./invite-keys";
+import { toast } from "sonner";
+
 
 // ---------- Create invite ----------
 
@@ -21,7 +23,15 @@ export function useCreateInvite() {
       if (error) throw error;
     },
     onSuccess: (_data, { budgetId }) => {
+      toast.success("Invite created.");
       qc.invalidateQueries({ queryKey: inviteKeys.byBudget(budgetId) });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't create Invite", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
     },
   });
 }
@@ -44,7 +54,15 @@ export function useRevokeInvite() {
       if (error) throw error;
     },
     onSuccess: (_data, { budgetId }) => {
+      toast.success("Invite revoked.");
       qc.invalidateQueries({ queryKey: inviteKeys.byBudget(budgetId) });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't revoke invite.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
     },
   });
 }
@@ -76,10 +94,18 @@ export function useAcceptInvite() {
       return data as string;
     },
     onSuccess: () => {
+      toast.success("Invite accepted.");
       // We don't know which budget was joined until we've awaited the result,
       // so the caller invalidates targeted keys. We do a broad invalidation
       // of budgets list so the new one appears in the BudgetsHome.
       qc.invalidateQueries({ queryKey: ["budgets"] });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't accept invite", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
     },
   });
 }

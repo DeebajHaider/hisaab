@@ -2,6 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { incomeKeys } from "./income-keys";
 import type { Database } from "@/types/db";
+import { toast } from "sonner";
+
 
 // ----------------------------------------------------------------------------
 // Create
@@ -36,6 +38,13 @@ export function useCreateIncome() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: incomeKeys.byBudget(variables.budgetId),
+      });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't create income entry.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
       });
     },
   });
@@ -78,6 +87,13 @@ export function useUpdateIncome() {
         queryKey: incomeKeys.byBudget(variables.budgetId),
       });
     },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't update income entry.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
+    },
   });
 }
 
@@ -104,6 +120,13 @@ export function useDeleteIncome() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: incomeKeys.byBudget(variables.budgetId),
+      });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't delete income entry.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
       });
     },
   });

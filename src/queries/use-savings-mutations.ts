@@ -2,6 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { savingsKeys } from "./savings-keys";
 import type { Database } from "@/types/db";
+import { toast } from "sonner";
+
 
 interface CreateSavingsInput {
   budgetId: string;
@@ -27,6 +29,13 @@ export function useCreateSavings() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: savingsKeys.byBudget(variables.budgetId),
+      });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't create savings entry.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
       });
     },
   });
@@ -64,6 +73,13 @@ export function useUpdateSavings() {
         queryKey: savingsKeys.byBudget(variables.budgetId),
       });
     },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't update savings entry.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
+    },
   });
 }
 
@@ -83,8 +99,16 @@ export function useDeleteSavings() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
+      toast.success("Savings entry deleted.");
       queryClient.invalidateQueries({
         queryKey: savingsKeys.byBudget(variables.budgetId),
+      });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't delete savings entry.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
       });
     },
   });

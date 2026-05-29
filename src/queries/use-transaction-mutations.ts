@@ -3,6 +3,8 @@ import { supabase } from "@/lib/supabase";
 import { transactionKeys } from "./transaction-keys";
 import { trendsKeys } from "./trends-keys";
 import type { Database } from "@/types/db";
+import { toast } from "sonner";
+
 
 // ----------------------------------------------------------------------------
 // Create
@@ -47,6 +49,7 @@ export function useCreateTransaction() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
+      toast.success("Transaction created.");
       // Invalidate the budget-scoped transactions root, which cascades to
       // every day/month query for this budget.
       queryClient.invalidateQueries({
@@ -55,6 +58,13 @@ export function useCreateTransaction() {
       // Trends aggregations also need to refresh when transactions change.
       queryClient.invalidateQueries({
         queryKey: trendsKeys.byBudget(variables.budgetId),
+      });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't create transaction.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
       });
     },
   });
@@ -103,6 +113,7 @@ export function useUpdateTransaction() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
+      toast.success("Transaction updated.");
       // Date may have changed — invalidate the whole budget's transactions
       // rather than trying to figure out the old and new days.
       queryClient.invalidateQueries({
@@ -111,6 +122,13 @@ export function useUpdateTransaction() {
       // Trends aggregations also need to refresh when transactions change.
       queryClient.invalidateQueries({
         queryKey: trendsKeys.byBudget(variables.budgetId),
+      });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't update transaction.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
       });
     },
   });
@@ -138,12 +156,20 @@ export function useDeleteTransaction() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
+      toast.success("Transaction deleted.");
       queryClient.invalidateQueries({
         queryKey: transactionKeys.byBudget(variables.budgetId),
       });
       // Trends aggregations also need to refresh when transactions change.
       queryClient.invalidateQueries({
         queryKey: trendsKeys.byBudget(variables.budgetId),
+      });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't delete transaction.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
       });
     },
   });

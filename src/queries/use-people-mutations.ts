@@ -2,6 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { peopleKeys } from "./people-keys";
 import type { Database } from "@/types/db";
+import { toast } from "sonner";
+
 
 // ---------- Create person ----------
 
@@ -25,6 +27,13 @@ export function useCreatePerson() {
       // people lists refetch. Cheaper than figuring out which one is
       // currently mounted.
       qc.invalidateQueries({ queryKey: peopleKeys.byBudget(budgetId) });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't create person.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
     },
   });
 }
@@ -55,6 +64,13 @@ export function useUpdatePerson() {
     onSuccess: (_data, { budgetId }) => {
       qc.invalidateQueries({ queryKey: peopleKeys.byBudget(budgetId) });
     },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't update person.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
+    },
   });
 }
 
@@ -80,7 +96,15 @@ export function useArchivePerson() {
       if (error) throw error;
     },
     onSuccess: (_data, { budgetId }) => {
+      toast.success("Person archived.");
       qc.invalidateQueries({ queryKey: peopleKeys.byBudget(budgetId) });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't archive person.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
     },
   });
 }

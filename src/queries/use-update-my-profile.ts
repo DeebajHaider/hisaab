@@ -2,6 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { profileKeys } from "./profile-keys";
 import { memberKeys } from "./member-keys";
+import { toast } from "sonner";
+
 
 interface UpdateMyProfileInput {
   /**
@@ -40,11 +42,19 @@ export function useUpdateMyProfile() {
       if (error) throw error;
     },
     onSuccess: () => {
+      toast.success("Profile updated");
       queryClient.invalidateQueries({ queryKey: profileKeys.me() });
       // Member lists across all budgets embed profile display names via the
       // client-side merge in useBudgetMembers. Invalidate the root so any
       // open member list refreshes its display names.
       queryClient.invalidateQueries({ queryKey: memberKeys.all });
+    },
+    onError: (error, _variables) => {
+      // Errors deserve longer than the 4s default — give the user time to read.
+      toast.error("Couldn't update profile", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
     },
   });
 }

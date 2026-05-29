@@ -20,6 +20,7 @@ import { Trends } from "@/routes/trends";
 import { InviteAccept } from "@/routes/invite-accept";
 import { Members } from "@/routes/members";
 import { Settings } from "@/routes/settings";
+import { Toaster } from "@/components/ui/sonner";
 
 function App() {
   return (
@@ -28,12 +29,10 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <Routes>
-              {/* Public */}
               <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/invite/:token" element={<InviteAccept />} />
 
-              {/* Protected app — outer layout */}
               <Route
                 path="/app"
                 element={
@@ -60,6 +59,8 @@ function App() {
             </Routes>
           </AuthProvider>
         </BrowserRouter>
+        {/* Mounted once at app root. Renders nothing until toasts fire. */}
+        <Toaster />
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </ThemeProvider>
