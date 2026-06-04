@@ -1,0 +1,167 @@
+import { Pencil, Archive, ArchiveRestore } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { HoldingFormDialog } from "@/components/portfolio/holding-form-dialog";
+import { ArchiveConfirmDialog } from "@/components/manage/archive-confirm-dialog";
+import { useSetHoldingArchived } from "@/queries/use-holding-mutations";
+import { calculateHoldingProfit } from "@/lib/calculations/holding-profit";
+import type { AssetClass } from "@/queries/use-asset-classes";
+import type { Holding } from "@/queries/use-holdings";
+import type { HoldingGroup } from "@/lib/format/group-holdings";
+
+// PKR shows as "Rs"; everything else shows its code. Keeps mixed-currency lists
+// honest — no hidden conversion.
+function formatAmount(value: number, currency: string): string {
+  const num = value.toLocaleString("en-PK", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+  return `${currency === "PKR" ? "Rs" : currency} ${num}`;
+}
+
+interface HoldingGroupSectionProps {
+  portfolioId: string;
+  assetClasses: AssetClass[]; // active classes, for the edit form picker
+  group: HoldingGroup;
+}
+
+export function HoldingGroupSection({
+  portfolioId,
+  assetClasses,
+  group,
+}: HoldingGroupSectionProps) {
+  return (
+    <div>
+      <h2 className="text-sm font-semibold text-muted-foreground mb-2">
+        {group.assetClass.name}
+        {group.assetClass.is_archived && " (archived)"}
+      </h2>
+      <div className="space-y-2">
+        {group.holdings.map((h) => (
+          <HoldingRow
+            key={h.id}
+            portfolioId={portfolioId}
+            assetClasses={assetClasses}
+            holding={h}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HoldingRow({
+  portfolioId,
+  assetClasses,
+  holding,
+}: {
+  portfolioId: string;
+  assetClasses: AssetClass[];
+  holding: Holding;
+}) {
+  const setArchived = useSetHoldingArchived();
+  const archived = holding.is_archived;
+  const profit = calculateHoldingProfit(
+    holding.original_investment,
+    holding.current_value,
+  );
+  const gain = profit.amount >= 0;
+  const sign = gain ? "+" : "−";
+
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-card px-3 py-2.5 hover:bg-muted/30 transition-colors">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <span
+            className={`font-medium truncate ${
+              archived ? "text-muted-foreground line-through" : ""
+            }`}
+          >
+            {holding.name}
+          </span>
+          {holding.ticker && (
+            <span className="text-xs text-muted-foreground">{holding.ticker}</span>
+          )}
+          {archived && (
+            <Badge variant="secondary" className="text-xs font-normal">
+              Archived
+            </Badge>
+          )}
+        </div>
+        <div className="text-xs text-muted-foreground mt-0.5">
+          Invested {formatAmount(holding.original_investment, holding.currency)}
+        </div>
+      </div>
+
+      <div className="ml-auto text-right tabular-nums">
+        <div className="font-medium">
+          {formatAmount(holding.current_value, holding.currency)}
+        </div>
+        <div
+          className={`text-xs ${
+            gain
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-red-600 dark:text-red-400"
+          }`}
+        >
+          {sign}
+          {formatAmount(Math.abs(profit.amount), holding.currency)} ({sign}
+          {Math.abs(profit.percent).toFixed(2)}%)
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1">
+        {archived ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-8 h-8"
+            disabled={setArchived.isPending}
+            onClick={() =>
+              setArchived.mutate({
+                id: holding.id,
+                portfolioId,
+                isArchived: false,
+              })
+            }
+          >
+            <ArchiveRestore className="w-3.5 h-3.5" />
+            <span className="sr-only">Restore {holding.name}</span>
+          </Button>
+        ) : (
+          <>
+            <HoldingFormDialog
+              portfolioId={portfolioId}
+              assetClasses={assetClasses}
+              existing={holding}
+              trigger={
+                <Button variant="ghost" size="icon" className="w-8 h-8">
+                  <Pencil className="w-3.5 h-3.5" />
+                  <span className="sr-only">Edit {holding.name}</span>
+                </Button>
+              }
+            />
+            <ArchiveConfirmDialog
+              name={holding.name}
+              kind="holding"
+              isPending={setArchived.isPending}
+              onConfirm={() =>
+                setArchived.mutate({
+                  id: holding.id,
+                  portfolioId,
+                  isArchived: true,
+                })
+              }
+              trigger={
+                <Button variant="ghost" size="icon" className="w-8 h-8">
+                  <Archive className="w-3.5 h-3.5" />
+                  <span className="sr-only">Archive {holding.name}</span>
+                </Button>
+              }
+            />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

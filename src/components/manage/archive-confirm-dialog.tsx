@@ -12,10 +12,8 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface ArchiveConfirmDialogProps {
-  // What's being archived (e.g., "Groceries", "Flour", "Stocks")
   name: string;
-  // Display variant — affects the warning text
-  kind: "category" | "item" | "asset class";
+  kind: "category" | "item" | "asset class" | "holding";
   trigger: ReactNode;
   onConfirm: () => void;
   isPending?: boolean;
@@ -28,12 +26,12 @@ const DESCRIPTIONS: Record<ArchiveConfirmDialogProps["kind"], string> = {
     "This item will be hidden when logging new transactions. Past transactions referencing it will still display correctly. You can unarchive it later.",
   "asset class":
     "This asset class will be hidden when adding new holdings. Existing holdings keep their grouping. You can unarchive it later.",
+  holding:
+    "This holding will be hidden from your active list, but its records and value history are kept. You can unarchive it later.",
 };
 
 /**
- * Confirmation dialog before archiving a category, item, or asset class.
- * Uses AlertDialog (more modal/disruptive than Dialog) since this is a
- * destructive-feeling action.
+ * Confirmation dialog before archiving a category, item, asset class, or holding.
  */
 export function ArchiveConfirmDialog({
   name,

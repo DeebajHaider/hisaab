@@ -1,0 +1,287 @@
+import { useState, useEffect, type FormEvent, type ReactNode } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  useCreateHolding,
+  useUpdateHolding,
+} from "@/queries/use-holding-mutations";
+import type { AssetClass } from "@/queries/use-asset-classes";
+import type { Holding } from "@/queries/use-holdings";
+
+const CURRENCIES = ["PKR", "USD", "EUR", "GBP", "AED", "SAR"];
+
+interface HoldingFormDialogProps {
+  portfolioId: string;
+  // Active asset classes for the picker.
+  assetClasses: AssetClass[];
+  // Pre-select a class (e.g. "Add holding" under a group).
+  defaultAssetClassId?: string;
+  // Edit mode when provided.
+  existing?: Holding;
+  trigger: ReactNode;
+}
+
+export function HoldingFormDialog({
+  portfolioId,
+  assetClasses,
+  defaultAssetClassId,
+  existing,
+  trigger,
+}: HoldingFormDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [ticker, setTicker] = useState("");
+  const [assetClassId, setAssetClassId] = useState("");
+  const [currency, setCurrency] = useState("PKR");
+  const [originalInvestment, setOriginalInvestment] = useState("");
+  const [currentValue, setCurrentValue] = useState(""); // create only
+  const [notes, setNotes] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const createMutation = useCreateHolding();
+  const updateMutation = useUpdateHolding();
+  const isEditing = !!existing;
+
+  useEffect(() => {
+    if (open) {
+      setName(existing?.name ?? "");
+      setTicker(existing?.ticker ?? "");
+      setAssetClassId(
+        existing?.asset_class_id ?? defaultAssetClassId ?? assetClasses[0]?.id ?? "",
+      );
+      setCurrency(existing?.currency ?? "PKR");
+      setOriginalInvestment(
+        existing ? String(existing.original_investment) : "",
+      );
+      setCurrentValue("");
+      setNotes(existing?.notes ?? "");
+      setError(null);
+    }
+  }, [open, existing, defaultAssetClassId, assetClasses]);
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setError("Name is required");
+      return;
+    }
+    if (!assetClassId) {
+      setError("Pick an asset class");
+      return;
+    }
+
+    const orig = Number(originalInvestment);
+    if (originalInvestment.trim() === "" || Number.isNaN(orig) || orig < 0) {
+      setError("Enter what you invested (a non-negative number)");
+      return;
+    }
+
+    try {
+      if (isEditing) {
+        await updateMutation.mutateAsync({
+          id: existing.id,
+          portfolioId,
+          assetClassId,
+          name: trimmedName,
+          ticker: ticker.trim() || null,
+          currency,
+          originalInvestment: orig,
+          notes: notes.trim() || null,
+        });
+      } else {
+        // Current value defaults to the invested amount if left blank.
+        let cur = orig;
+        if (currentValue.trim() !== "") {
+          const parsed = Number(currentValue);
+          if (Number.isNaN(parsed) || parsed < 0) {
+            setError("Current value must be a non-negative number");
+            return;
+          }
+          cur = parsed;
+        }
+        await createMutation.mutateAsync({
+          portfolioId,
+          assetClassId,
+          name: trimmedName,
+          ticker: ticker.trim() || null,
+          currency,
+          originalInvestment: orig,
+          currentValue: cur,
+          notes: notes.trim() || null,
+        });
+      }
+      setOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{isEditing ? "Edit holding" : "New holding"}</DialogTitle>
+          <DialogDescription>
+            {isEditing
+              ? "Update this holding's details. To change its current value, use Update value on the holding."
+              : "Something you own — a stock, fund, property, or anything else."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="holding-name">Name</Label>
+            <Input
+              id="holding-name"
+              placeholder="e.g. HUBCO"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              maxLength={100}
+              autoFocus
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="holding-ticker">Ticker (optional)</Label>
+              <Input
+                id="holding-ticker"
+                placeholder="HUBC"
+                value={ticker}
+                onChange={(e) => setTicker(e.target.value)}
+                maxLength={20}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="holding-currency">Currency</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger id="holding-currency">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="holding-class">Asset class</Label>
+            <Select value={assetClassId} onValueChange={setAssetClassId}>
+              <SelectTrigger id="holding-class">
+                <SelectValue placeholder="Pick an asset class" />
+              </SelectTrigger>
+              <SelectContent>
+                {assetClasses.map((ac) => (
+                  <SelectItem key={ac.id} value={ac.id}>
+                    {ac.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="holding-invested">Invested</Label>
+              <Input
+                id="holding-invested"
+                type="number"
+                placeholder="25000"
+                value={originalInvestment}
+                onChange={(e) => setOriginalInvestment(e.target.value)}
+                min={0}
+                step="0.01"
+                required
+              />
+            </div>
+            {!isEditing && (
+              <div className="space-y-2">
+                <Label htmlFor="holding-current">Current value</Label>
+                <Input
+                  id="holding-current"
+                  type="number"
+                  placeholder="Same as invested"
+                  value={currentValue}
+                  onChange={(e) => setCurrentValue(e.target.value)}
+                  min={0}
+                  step="0.01"
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="holding-notes">Notes (optional)</Label>
+            <Textarea
+              id="holding-notes"
+              placeholder="Anything worth remembering"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+            />
+          </div>
+
+          {error && (
+            <p className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          )}
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-teal-600 hover:bg-teal-700 text-white"
+              disabled={isPending || !name.trim() || !assetClassId}
+            >
+              {isPending
+                ? isEditing
+                  ? "Saving..."
+                  : "Creating..."
+                : isEditing
+                  ? "Save"
+                  : "Create"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
