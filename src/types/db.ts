@@ -39,6 +39,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      asset_classes: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_archived: boolean
+          name: string
+          portfolio_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          name: string
+          portfolio_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          name?: string
+          portfolio_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_classes_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_invites: {
         Row: {
           accepted_at: string | null
@@ -174,6 +209,114 @@ export type Database = {
           },
         ]
       }
+      holding_value_history: {
+        Row: {
+          as_of: string
+          created_at: string
+          created_by: string
+          holding_id: string
+          id: string
+          portfolio_id: string
+          value: number
+        }
+        Insert: {
+          as_of?: string
+          created_at?: string
+          created_by?: string
+          holding_id: string
+          id?: string
+          portfolio_id: string
+          value: number
+        }
+        Update: {
+          as_of?: string
+          created_at?: string
+          created_by?: string
+          holding_id?: string
+          id?: string
+          portfolio_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "holding_value_history_holding_id_fkey"
+            columns: ["holding_id"]
+            isOneToOne: false
+            referencedRelation: "holdings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "holding_value_history_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      holdings: {
+        Row: {
+          asset_class_id: string
+          created_at: string
+          created_by: string
+          currency: string
+          current_value: number
+          current_value_at: string | null
+          id: string
+          is_archived: boolean
+          name: string
+          notes: string | null
+          original_investment: number
+          portfolio_id: string
+          ticker: string | null
+        }
+        Insert: {
+          asset_class_id: string
+          created_at?: string
+          created_by?: string
+          currency?: string
+          current_value?: number
+          current_value_at?: string | null
+          id?: string
+          is_archived?: boolean
+          name: string
+          notes?: string | null
+          original_investment?: number
+          portfolio_id: string
+          ticker?: string | null
+        }
+        Update: {
+          asset_class_id?: string
+          created_at?: string
+          created_by?: string
+          currency?: string
+          current_value?: number
+          current_value_at?: string | null
+          id?: string
+          is_archived?: boolean
+          name?: string
+          notes?: string | null
+          original_investment?: number
+          portfolio_id?: string
+          ticker?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "holdings_asset_class_id_fkey"
+            columns: ["asset_class_id"]
+            isOneToOne: false
+            referencedRelation: "asset_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "holdings_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       income_entries: {
         Row: {
           amount: number
@@ -284,6 +427,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      portfolios: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -457,6 +621,7 @@ export type Database = {
           role: string
         }[]
       }
+      owns_portfolio: { Args: { p_id: string }; Returns: boolean }
       shares_budget_with: { Args: { other_user_id: string }; Returns: boolean }
     }
     Enums: {
