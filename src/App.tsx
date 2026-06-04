@@ -21,6 +21,8 @@ import { InviteAccept } from "@/routes/invite-accept";
 import { Members } from "@/routes/members";
 import { Settings } from "@/routes/settings";
 import { Toaster } from "@/components/ui/sonner";
+import { PortfoliosHome } from "@/routes/portfolios-home";
+import { PortfolioDetail } from "@/routes/portfolio-detail";
 
 function App() {
   return (
@@ -52,6 +54,11 @@ function App() {
                   <Route path="month/:yearMonth" element={<MonthView />} />
                   <Route path="trends" element={<Trends />} />
                   <Route path="members" element={<Members />} />
+                </Route>
+
+                <Route path="portfolio">
+                  <Route index element={<PortfoliosHome />} />
+                  <Route path=":portfolioId" element={<PortfolioDetail />} />
                 </Route>
               </Route>
 

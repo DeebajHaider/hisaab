@@ -12,17 +12,26 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface ArchiveConfirmDialogProps {
-  // What's being archived (e.g., "Groceries" or "Flour")
+  // What's being archived (e.g., "Groceries", "Flour", "Stocks")
   name: string;
-  // Display variant: "category" or "item" — affects the warning text
-  kind: "category" | "item";
+  // Display variant — affects the warning text
+  kind: "category" | "item" | "asset class";
   trigger: ReactNode;
   onConfirm: () => void;
   isPending?: boolean;
 }
 
+const DESCRIPTIONS: Record<ArchiveConfirmDialogProps["kind"], string> = {
+  category:
+    "The category will be hidden from the entry form, but past transactions will still show its name. You can unarchive it later.",
+  item:
+    "This item will be hidden when logging new transactions. Past transactions referencing it will still display correctly. You can unarchive it later.",
+  "asset class":
+    "This asset class will be hidden when adding new holdings. Existing holdings keep their grouping. You can unarchive it later.",
+};
+
 /**
- * Confirmation dialog before archiving a category or item.
+ * Confirmation dialog before archiving a category, item, or asset class.
  * Uses AlertDialog (more modal/disruptive than Dialog) since this is a
  * destructive-feeling action.
  */
@@ -39,11 +48,7 @@ export function ArchiveConfirmDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Archive “{name}”?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {kind === "category"
-              ? "The category will be hidden from the entry form, but past transactions will still show its name. You can unarchive it later."
-              : "This item will be hidden when logging new transactions. Past transactions referencing it will still display correctly. You can unarchive it later."}
-          </AlertDialogDescription>
+          <AlertDialogDescription>{DESCRIPTIONS[kind]}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>

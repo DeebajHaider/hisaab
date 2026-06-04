@@ -1,4 +1,4 @@
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { Wallet, Sun, Moon, Monitor, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getInitials } from "@/lib/format/initials";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/avatar";
 import { useTheme } from "@/lib/theme-provider";
 import { useAuth } from "@/lib/auth-context";
+
 
 /**
  * Shell for all protected app pages.
@@ -38,16 +39,49 @@ function AppHeader() {
   return (
     <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-40">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        <Link to="/app" className="flex items-center gap-2">
-          <Wallet className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-          <span className="font-semibold tracking-tight">Hisaab</span>
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link to="/app" className="flex items-center gap-2">
+            <Wallet className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            <span className="font-semibold tracking-tight">Hisaab</span>
+          </Link>
+          <SectionNav />
+        </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <UserMenu />
         </div>
       </div>
     </header>
+  );
+}
+
+function SectionNav() {
+  // Two top-level sections. We compute active state from the path rather than
+  // leaning on NavLink's matching, because "/app" is a prefix of
+  // "/app/portfolio" — a naive NavLink would light up Budgets on the
+  // Portfolio page. Budgets is active at /app and inside any budget;
+  // Portfolio is active anywhere under /app/portfolio.
+  const { pathname } = useLocation();
+  const inPortfolio = pathname.startsWith("/app/portfolio");
+  const inSettings = pathname.startsWith("/app/settings");
+  const inBudgets = !inPortfolio && !inSettings;
+
+  const cls = (active: boolean) =>
+    `rounded-md px-3 py-1.5 text-sm transition-colors ${
+      active
+        ? "bg-muted font-medium text-foreground"
+        : "text-muted-foreground hover:text-foreground"
+    }`;
+
+  return (
+    <nav className="flex items-center gap-1">
+      <Link to="/app" className={cls(inBudgets)}>
+        Budgets
+      </Link>
+      <Link to="/app/portfolio" className={cls(inPortfolio)}>
+        Portfolio
+      </Link>
+    </nav>
   );
 }
 
@@ -119,3 +153,4 @@ function UserMenu() {
     </DropdownMenu>
   );
 }
+
