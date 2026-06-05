@@ -23,6 +23,7 @@ import {
   useCreateHolding,
   useUpdateHolding,
 } from "@/queries/use-holding-mutations";
+import { todayISO } from "@/lib/format/date";
 import type { AssetClass } from "@/queries/use-asset-classes";
 import type { Holding } from "@/queries/use-holdings";
 
@@ -59,12 +60,14 @@ export function HoldingFormDialog({
   const [currency, setCurrency] = useState("PKR");
   const [originalInvestment, setOriginalInvestment] = useState("");
   const [currentValue, setCurrentValue] = useState(""); // create only
+  const [asOf, setAsOf] = useState(todayISO()); // create only
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const createMutation = useCreateHolding();
   const updateMutation = useUpdateHolding();
   const isEditing = !!existing;
+  const today = todayISO();
 
   useEffect(() => {
     if (open) {
@@ -76,10 +79,11 @@ export function HoldingFormDialog({
       setCurrency(existing?.currency ?? "PKR");
       setOriginalInvestment(existing ? String(existing.original_investment) : "");
       setCurrentValue("");
+      setAsOf(today);
       setNotes(existing?.notes ?? "");
       setError(null);
     }
-  }, [open, existing, defaultAssetClassId, assetClasses]);
+  }, [open, existing, defaultAssetClassId, assetClasses, today]);
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
@@ -125,6 +129,10 @@ export function HoldingFormDialog({
           }
           cur = parsed;
         }
+        if (asOf > today) {
+          setError("The date can't be in the future");
+          return;
+        }
         await createMutation.mutateAsync({
           portfolioId,
           assetClassId,
@@ -133,6 +141,7 @@ export function HoldingFormDialog({
           currency,
           originalInvestment: orig,
           currentValue: cur,
+          asOf,
           notes: notes.trim() || null,
         });
       }
@@ -249,6 +258,23 @@ export function HoldingFormDialog({
               </div>
             )}
           </div>
+
+          {!isEditing && (
+            <div className="space-y-2">
+              <Label htmlFor="holding-date">As of date</Label>
+              <Input
+                id="holding-date"
+                type="date"
+                value={asOf}
+                max={today}
+                onChange={(e) => setAsOf(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                When this value is from. Back-date it to when you actually started
+                this holding.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="holding-notes">Notes (optional)</Label>

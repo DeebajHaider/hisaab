@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { todayISO } from "@/lib/format/date";
 import { holdingKeys } from "./holding-keys";
+import { holdingHistoryKeys } from "./holding-history-keys";
 
 interface CreateHoldingInput {
   portfolioId: string;
@@ -12,6 +13,7 @@ interface CreateHoldingInput {
   currency: string;
   originalInvestment: number;
   currentValue: number;
+  asOf: string; // YYYY-MM-DD — the date this initial value is from
   notes?: string | null;
 }
 
@@ -32,7 +34,7 @@ export function useCreateHolding() {
           currency: input.currency,
           original_investment: input.originalInvestment,
           current_value: input.currentValue,
-          current_value_at: new Date().toISOString(),
+          current_value_at: input.asOf,
           notes: input.notes ?? null,
         })
         .select()
@@ -45,7 +47,7 @@ export function useCreateHolding() {
           holding_id: holding.id,
           portfolio_id: input.portfolioId,
           value: input.currentValue,
-          as_of: todayISO(),
+          as_of: input.asOf,
         });
       if (histError) throw histError;
     },
@@ -101,8 +103,10 @@ export function useUpdateHolding() {
   });
 }
 
-// "Update value" — set what the holding is worth now. Invested is untouched.
-// Logs a value-history point so the progression graph (6.7) builds up over time.
+// "Update value" — record what the holding is worth as of a date. Always logs a
+// value-history point. Only updates the holding's cached current value when the
+// point is the newest one (setAsCurrent), so back-filling an older date doesn't
+// rewrite what it's worth today.
 export function useUpdateHoldingValue() {
   const qc = useQueryClient();
   return useMutation({
@@ -110,19 +114,22 @@ export function useUpdateHoldingValue() {
       id,
       portfolioId,
       currentValue,
+      asOf,
+      setAsCurrent,
     }: {
       id: string;
       portfolioId: string;
       currentValue: number;
+      asOf: string;
+      setAsCurrent: boolean;
     }) => {
-      const { error } = await supabase
-        .from("holdings")
-        .update({
-          current_value: currentValue,
-          current_value_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-      if (error) throw error;
+      if (setAsCurrent) {
+        const { error } = await supabase
+          .from("holdings")
+          .update({ current_value: currentValue, current_value_at: asOf })
+          .eq("id", id);
+        if (error) throw error;
+      }
 
       const { error: histError } = await supabase
         .from("holding_value_history")
@@ -130,13 +137,16 @@ export function useUpdateHoldingValue() {
           holding_id: id,
           portfolio_id: portfolioId,
           value: currentValue,
-          as_of: todayISO(),
+          as_of: asOf,
         });
       if (histError) throw histError;
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({
         queryKey: holdingKeys.allForPortfolio(vars.portfolioId),
+      });
+      qc.invalidateQueries({
+        queryKey: holdingHistoryKeys.forHolding(vars.id),
       });
     },
     onError: (e: unknown) => {
@@ -145,9 +155,9 @@ export function useUpdateHoldingValue() {
   });
 }
 
-// "Add or withdraw" — a capital change. The UI computes the new invested and
-// current value (via applyAddInvestment / applyWithdrawal) and passes them here.
-// Logs a value-history point for the new value.
+// "Add or withdraw" — a capital change, dated today (a present action). The UI
+// computes the new invested and current value; today is always the newest point
+// so it updates the cached current value too.
 export function useAdjustHoldingInvestment() {
   const qc = useQueryClient();
   return useMutation({
@@ -162,12 +172,13 @@ export function useAdjustHoldingInvestment() {
       invested: number;
       currentValue: number;
     }) => {
+      const asOf = todayISO();
       const { error } = await supabase
         .from("holdings")
         .update({
           original_investment: invested,
           current_value: currentValue,
-          current_value_at: new Date().toISOString(),
+          current_value_at: asOf,
         })
         .eq("id", id);
       if (error) throw error;
@@ -178,13 +189,16 @@ export function useAdjustHoldingInvestment() {
           holding_id: id,
           portfolio_id: portfolioId,
           value: currentValue,
-          as_of: todayISO(),
+          as_of: asOf,
         });
       if (histError) throw histError;
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({
         queryKey: holdingKeys.allForPortfolio(vars.portfolioId),
+      });
+      qc.invalidateQueries({
+        queryKey: holdingHistoryKeys.forHolding(vars.id),
       });
     },
     onError: (e: unknown) => {
