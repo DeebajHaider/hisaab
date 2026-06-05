@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
-import { ArrowLeft, Coins, Settings, Menu } from "lucide-react";
+import { ArrowLeft, LayoutDashboard, Coins, Settings, Menu } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,12 +11,6 @@ import {
 } from "@/components/ui/sheet";
 import { usePortfolio } from "@/queries/use-portfolio";
 
-/**
- * Layout for everything under /app/portfolio/:portfolioId.
- * Sidebar nav on desktop, drawer on mobile — mirrors BudgetLayout.
- * No "updates aren't live" note here: a portfolio is single-user, so there's
- * no one else's edits to miss.
- */
 export function PortfolioLayout() {
   const { portfolioId } = useParams<{ portfolioId: string }>();
   const { data: portfolio, isLoading } = usePortfolio(portfolioId);
@@ -99,6 +93,11 @@ function SidebarNav({ portfolioId }: { portfolioId: string }) {
   return (
     <nav className="flex-1 p-2 flex flex-col gap-1">
       <NavItem
+        to={`/app/portfolio/${portfolioId}/overview`}
+        icon={<LayoutDashboard className="w-4 h-4" />}
+        label="Overview"
+      />
+      <NavItem
         to={`/app/portfolio/${portfolioId}/holdings`}
         icon={<Coins className="w-4 h-4" />}
         label="Holdings"
@@ -145,6 +144,7 @@ function PortfolioLayoutSkeleton() {
         <Skeleton className="h-4 w-24" />
         <Skeleton className="h-6 w-40" />
         <div className="flex flex-col gap-2 mt-4">
+          <Skeleton className="h-9 w-full" />
           <Skeleton className="h-9 w-full" />
           <Skeleton className="h-9 w-full" />
         </div>

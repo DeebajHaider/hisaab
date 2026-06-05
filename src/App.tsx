@@ -25,6 +25,7 @@ import { PortfoliosHome } from "@/routes/portfolios-home";
 import { PortfolioLayout } from "@/components/layout/portfolio-layout";
 import { PortfolioHoldings } from "@/routes/portfolio-holdings";
 import { PortfolioManage } from "@/routes/portfolio-manage";
+import { PortfolioOverview } from "@/routes/portfolio-overview";  
 
 function App() {
   return (
@@ -61,7 +62,8 @@ function App() {
                 <Route path="portfolio">
                   <Route index element={<PortfoliosHome />} />
                   <Route path=":portfolioId" element={<PortfolioLayout />}>
-                    <Route index element={<Navigate to="holdings" replace />} />
+                    <Route index element={<Navigate to="overview" replace />} />
+                    <Route path="overview" element={<PortfolioOverview />} />
                     <Route path="holdings" element={<PortfolioHoldings />} />
                     <Route path="manage" element={<PortfolioManage />} />
                   </Route>
