@@ -14,9 +14,13 @@ import {
 interface ArchiveConfirmDialogProps {
   name: string;
   kind: "category" | "item" | "asset class" | "holding";
-  trigger: ReactNode;
   onConfirm: () => void;
   isPending?: boolean;
+  // Uncontrolled: pass a trigger. Controlled: pass open + onOpenChange (e.g. when
+  // opened from a dropdown menu item).
+  trigger?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const DESCRIPTIONS: Record<ArchiveConfirmDialogProps["kind"], string> = {
@@ -30,19 +34,18 @@ const DESCRIPTIONS: Record<ArchiveConfirmDialogProps["kind"], string> = {
     "This holding will be hidden from your active list, but its records and value history are kept. You can unarchive it later.",
 };
 
-/**
- * Confirmation dialog before archiving a category, item, asset class, or holding.
- */
 export function ArchiveConfirmDialog({
   name,
   kind,
-  trigger,
   onConfirm,
   isPending,
+  trigger,
+  open,
+  onOpenChange,
 }: ArchiveConfirmDialogProps) {
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      {trigger && <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Archive “{name}”?</AlertDialogTitle>

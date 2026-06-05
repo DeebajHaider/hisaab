@@ -19,12 +19,9 @@ export function useCreateHolding() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreateHoldingInput) => {
-      // .select() is SAFE here, unlike on the budget side. The no-.select() rule
-      // existed because budget creation fired a trigger that wrote membership in
-      // the same statement the RETURNING clause's SELECT policy tried to read.
-      // Holdings have no such trigger, and the parent portfolio already exists and
-      // is owned by us — so owns_portfolio() is already true. We need the new id to
-      // seed the first value-history point, so returning the row is the clean way.
+      // .select() is SAFE here: holdings have no membership-creating trigger and
+      // the parent portfolio already exists and is owned, so owns_portfolio() is
+      // already true. We need the new id to seed the first value-history point.
       const { data: holding, error } = await supabase
         .from("holdings")
         .insert({
@@ -42,7 +39,6 @@ export function useCreateHolding() {
         .single();
       if (error) throw error;
 
-      // Seed value history so the progression graph (6.7) has a starting point.
       const { error: histError } = await supabase
         .from("holding_value_history")
         .insert({
@@ -66,7 +62,7 @@ export function useCreateHolding() {
 
 interface UpdateHoldingInput {
   id: string;
-  portfolioId: string; // for invalidation
+  portfolioId: string;
   assetClassId: string;
   name: string;
   ticker?: string | null;
@@ -75,9 +71,8 @@ interface UpdateHoldingInput {
   notes?: string | null;
 }
 
-// Edits the holding's *details*. Current value is intentionally NOT here — that
-// gets its own "update value" action in 6.4, kept separate so the app can tell
-// "I'm fixing details" apart from "the value moved."
+// Edits the holding's details (and corrects the invested figure if it was
+// mis-entered). Does NOT touch current value — that's Update value below.
 export function useUpdateHolding() {
   const qc = useQueryClient();
   return useMutation({
@@ -102,6 +97,98 @@ export function useUpdateHolding() {
     },
     onError: (e: unknown) => {
       toast.error(e instanceof Error ? e.message : "Couldn't update holding");
+    },
+  });
+}
+
+// "Update value" — set what the holding is worth now. Invested is untouched.
+// Logs a value-history point so the progression graph (6.7) builds up over time.
+export function useUpdateHoldingValue() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      portfolioId,
+      currentValue,
+    }: {
+      id: string;
+      portfolioId: string;
+      currentValue: number;
+    }) => {
+      const { error } = await supabase
+        .from("holdings")
+        .update({
+          current_value: currentValue,
+          current_value_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+      if (error) throw error;
+
+      const { error: histError } = await supabase
+        .from("holding_value_history")
+        .insert({
+          holding_id: id,
+          portfolio_id: portfolioId,
+          value: currentValue,
+          as_of: todayISO(),
+        });
+      if (histError) throw histError;
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({
+        queryKey: holdingKeys.allForPortfolio(vars.portfolioId),
+      });
+    },
+    onError: (e: unknown) => {
+      toast.error(e instanceof Error ? e.message : "Couldn't update value");
+    },
+  });
+}
+
+// "Add or withdraw" — a capital change. The UI computes the new invested and
+// current value (via applyAddInvestment / applyWithdrawal) and passes them here.
+// Logs a value-history point for the new value.
+export function useAdjustHoldingInvestment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      portfolioId,
+      invested,
+      currentValue,
+    }: {
+      id: string;
+      portfolioId: string;
+      invested: number;
+      currentValue: number;
+    }) => {
+      const { error } = await supabase
+        .from("holdings")
+        .update({
+          original_investment: invested,
+          current_value: currentValue,
+          current_value_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+      if (error) throw error;
+
+      const { error: histError } = await supabase
+        .from("holding_value_history")
+        .insert({
+          holding_id: id,
+          portfolio_id: portfolioId,
+          value: currentValue,
+          as_of: todayISO(),
+        });
+      if (histError) throw histError;
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({
+        queryKey: holdingKeys.allForPortfolio(vars.portfolioId),
+      });
+    },
+    onError: (e: unknown) => {
+      toast.error(e instanceof Error ? e.message : "Couldn't adjust investment");
     },
   });
 }

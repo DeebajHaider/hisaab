@@ -1,27 +1,34 @@
-import { Pencil, Archive, ArchiveRestore } from "lucide-react";
+import { useState } from "react";
+import {
+  MoreVertical,
+  RefreshCw,
+  ArrowLeftRight,
+  Pencil,
+  Archive,
+  ArchiveRestore,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { HoldingFormDialog } from "@/components/portfolio/holding-form-dialog";
+import { UpdateValueDialog } from "@/components/portfolio/update-value-dialog";
+import { AdjustInvestmentDialog } from "@/components/portfolio/adjust-investment-dialog";
 import { ArchiveConfirmDialog } from "@/components/manage/archive-confirm-dialog";
 import { useSetHoldingArchived } from "@/queries/use-holding-mutations";
 import { calculateHoldingProfit } from "@/lib/calculations/holding-profit";
+import { formatMoney } from "@/lib/format/money";
 import type { AssetClass } from "@/queries/use-asset-classes";
 import type { Holding } from "@/queries/use-holdings";
 import type { HoldingGroup } from "@/lib/format/group-holdings";
 
-// PKR shows as "Rs"; everything else shows its code. Keeps mixed-currency lists
-// honest — no hidden conversion.
-function formatAmount(value: number, currency: string): string {
-  const num = value.toLocaleString("en-PK", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  });
-  return `${currency === "PKR" ? "Rs" : currency} ${num}`;
-}
-
 interface HoldingGroupSectionProps {
   portfolioId: string;
-  assetClasses: AssetClass[]; // active classes, for the edit form picker
+  assetClasses: AssetClass[];
   group: HoldingGroup;
 }
 
@@ -50,6 +57,8 @@ export function HoldingGroupSection({
   );
 }
 
+type RowAction = null | "value" | "adjust" | "edit" | "archive";
+
 function HoldingRow({
   portfolioId,
   assetClasses,
@@ -60,6 +69,9 @@ function HoldingRow({
   holding: Holding;
 }) {
   const setArchived = useSetHoldingArchived();
+  const [action, setAction] = useState<RowAction>(null);
+  const close = () => setAction(null);
+
   const archived = holding.is_archived;
   const profit = calculateHoldingProfit(
     holding.original_investment,
@@ -89,13 +101,13 @@ function HoldingRow({
           )}
         </div>
         <div className="text-xs text-muted-foreground mt-0.5">
-          Invested {formatAmount(holding.original_investment, holding.currency)}
+          Invested {formatMoney(holding.original_investment, holding.currency)}
         </div>
       </div>
 
       <div className="ml-auto text-right tabular-nums">
         <div className="font-medium">
-          {formatAmount(holding.current_value, holding.currency)}
+          {formatMoney(holding.current_value, holding.currency)}
         </div>
         <div
           className={`text-xs ${
@@ -105,7 +117,7 @@ function HoldingRow({
           }`}
         >
           {sign}
-          {formatAmount(Math.abs(profit.amount), holding.currency)} ({sign}
+          {formatMoney(Math.abs(profit.amount), holding.currency)} ({sign}
           {Math.abs(profit.percent).toFixed(2)}%)
         </div>
       </div>
@@ -129,39 +141,67 @@ function HoldingRow({
             <span className="sr-only">Restore {holding.name}</span>
           </Button>
         ) : (
-          <>
-            <HoldingFormDialog
-              portfolioId={portfolioId}
-              assetClasses={assetClasses}
-              existing={holding}
-              trigger={
-                <Button variant="ghost" size="icon" className="w-8 h-8">
-                  <Pencil className="w-3.5 h-3.5" />
-                  <span className="sr-only">Edit {holding.name}</span>
-                </Button>
-              }
-            />
-            <ArchiveConfirmDialog
-              name={holding.name}
-              kind="holding"
-              isPending={setArchived.isPending}
-              onConfirm={() =>
-                setArchived.mutate({
-                  id: holding.id,
-                  portfolioId,
-                  isArchived: true,
-                })
-              }
-              trigger={
-                <Button variant="ghost" size="icon" className="w-8 h-8">
-                  <Archive className="w-3.5 h-3.5" />
-                  <span className="sr-only">Archive {holding.name}</span>
-                </Button>
-              }
-            />
-          </>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="w-8 h-8">
+                <MoreVertical className="w-4 h-4" />
+                <span className="sr-only">Actions for {holding.name}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setAction("value")}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Update value
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setAction("adjust")}>
+                <ArrowLeftRight className="w-4 h-4 mr-2" />
+                Add or withdraw
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setAction("edit")}>
+                <Pencil className="w-4 h-4 mr-2" />
+                Edit details
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive"
+                onSelect={() => setAction("archive")}
+              >
+                <Archive className="w-4 h-4 mr-2" />
+                Archive
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
+
+      {/* Controlled dialogs, driven by the row menu */}
+      <UpdateValueDialog
+        holding={holding}
+        open={action === "value"}
+        onOpenChange={(o) => !o && close()}
+      />
+      <AdjustInvestmentDialog
+        holding={holding}
+        open={action === "adjust"}
+        onOpenChange={(o) => !o && close()}
+      />
+      <HoldingFormDialog
+        portfolioId={portfolioId}
+        assetClasses={assetClasses}
+        existing={holding}
+        open={action === "edit"}
+        onOpenChange={(o) => !o && close()}
+      />
+      <ArchiveConfirmDialog
+        name={holding.name}
+        kind="holding"
+        isPending={setArchived.isPending}
+        open={action === "archive"}
+        onOpenChange={(o) => !o && close()}
+        onConfirm={() => {
+          setArchived.mutate({ id: holding.id, portfolioId, isArchived: true });
+          close();
+        }}
+      />
     </div>
   );
 }

@@ -30,13 +30,14 @@ const CURRENCIES = ["PKR", "USD", "EUR", "GBP", "AED", "SAR"];
 
 interface HoldingFormDialogProps {
   portfolioId: string;
-  // Active asset classes for the picker.
   assetClasses: AssetClass[];
-  // Pre-select a class (e.g. "Add holding" under a group).
   defaultAssetClassId?: string;
-  // Edit mode when provided.
   existing?: Holding;
-  trigger: ReactNode;
+  // Uncontrolled (create button): pass trigger.
+  trigger?: ReactNode;
+  // Controlled (edit from the row menu): pass open + onOpenChange.
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function HoldingFormDialog({
@@ -45,8 +46,13 @@ export function HoldingFormDialog({
   defaultAssetClassId,
   existing,
   trigger,
+  open: openProp,
+  onOpenChange,
 }: HoldingFormDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
+
   const [name, setName] = useState("");
   const [ticker, setTicker] = useState("");
   const [assetClassId, setAssetClassId] = useState("");
@@ -68,9 +74,7 @@ export function HoldingFormDialog({
         existing?.asset_class_id ?? defaultAssetClassId ?? assetClasses[0]?.id ?? "",
       );
       setCurrency(existing?.currency ?? "PKR");
-      setOriginalInvestment(
-        existing ? String(existing.original_investment) : "",
-      );
+      setOriginalInvestment(existing ? String(existing.original_investment) : "");
       setCurrentValue("");
       setNotes(existing?.notes ?? "");
       setError(null);
@@ -112,7 +116,6 @@ export function HoldingFormDialog({
           notes: notes.trim() || null,
         });
       } else {
-        // Current value defaults to the invested amount if left blank.
         let cur = orig;
         if (currentValue.trim() !== "") {
           const parsed = Number(currentValue);
@@ -141,13 +144,13 @@ export function HoldingFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit holding" : "New holding"}</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit details" : "New holding"}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update this holding's details. To change its current value, use Update value on the holding."
+              ? "Update this holding's labels. To change what it's worth, use Update value; to record money in or out, use Add or withdraw."
               : "Something you own — a stock, fund, property, or anything else."}
           </DialogDescription>
         </DialogHeader>
@@ -212,7 +215,9 @@ export function HoldingFormDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="holding-invested">Invested</Label>
+              <Label htmlFor="holding-invested">
+                {isEditing ? "Amount invested (your cost)" : "Invested"}
+              </Label>
               <Input
                 id="holding-invested"
                 type="number"
@@ -223,6 +228,11 @@ export function HoldingFormDialog({
                 step="0.01"
                 required
               />
+              {isEditing && (
+                <p className="text-xs text-muted-foreground">
+                  Only change this to fix a mis-entry.
+                </p>
+              )}
             </div>
             {!isEditing && (
               <div className="space-y-2">
