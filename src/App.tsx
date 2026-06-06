@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { AuthProvider } from "@/lib/auth-context";
@@ -21,6 +21,11 @@ import { InviteAccept } from "@/routes/invite-accept";
 import { Members } from "@/routes/members";
 import { Settings } from "@/routes/settings";
 import { Toaster } from "@/components/ui/sonner";
+import { PortfoliosHome } from "@/routes/portfolios-home";
+import { PortfolioLayout } from "@/components/layout/portfolio-layout";
+import { PortfolioHoldings } from "@/routes/portfolio-holdings";
+import { PortfolioManage } from "@/routes/portfolio-manage";
+import { PortfolioOverview } from "@/routes/portfolio-overview";  
 
 function App() {
   return (
@@ -52,6 +57,16 @@ function App() {
                   <Route path="month/:yearMonth" element={<MonthView />} />
                   <Route path="trends" element={<Trends />} />
                   <Route path="members" element={<Members />} />
+                </Route>
+
+                <Route path="portfolio">
+                  <Route index element={<PortfoliosHome />} />
+                  <Route path=":portfolioId" element={<PortfolioLayout />}>
+                    <Route index element={<Navigate to="overview" replace />} />
+                    <Route path="overview" element={<PortfolioOverview />} />
+                    <Route path="holdings" element={<PortfolioHoldings />} />
+                    <Route path="manage" element={<PortfolioManage />} />
+                  </Route>
                 </Route>
               </Route>
 

@@ -12,38 +12,44 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface ArchiveConfirmDialogProps {
-  // What's being archived (e.g., "Groceries" or "Flour")
   name: string;
-  // Display variant: "category" or "item" — affects the warning text
-  kind: "category" | "item";
-  trigger: ReactNode;
+  kind: "category" | "item" | "asset class" | "holding";
   onConfirm: () => void;
   isPending?: boolean;
+  // Uncontrolled: pass a trigger. Controlled: pass open + onOpenChange (e.g. when
+  // opened from a dropdown menu item).
+  trigger?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-/**
- * Confirmation dialog before archiving a category or item.
- * Uses AlertDialog (more modal/disruptive than Dialog) since this is a
- * destructive-feeling action.
- */
+const DESCRIPTIONS: Record<ArchiveConfirmDialogProps["kind"], string> = {
+  category:
+    "The category will be hidden from the entry form, but past transactions will still show its name. You can unarchive it later.",
+  item:
+    "This item will be hidden when logging new transactions. Past transactions referencing it will still display correctly. You can unarchive it later.",
+  "asset class":
+    "This asset class will be hidden when adding new holdings. Existing holdings keep their grouping. You can unarchive it later.",
+  holding:
+    "This holding will be hidden from your active list, but its records and value history are kept. You can unarchive it later.",
+};
+
 export function ArchiveConfirmDialog({
   name,
   kind,
-  trigger,
   onConfirm,
   isPending,
+  trigger,
+  open,
+  onOpenChange,
 }: ArchiveConfirmDialogProps) {
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      {trigger && <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Archive “{name}”?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {kind === "category"
-              ? "The category will be hidden from the entry form, but past transactions will still show its name. You can unarchive it later."
-              : "This item will be hidden when logging new transactions. Past transactions referencing it will still display correctly. You can unarchive it later."}
-          </AlertDialogDescription>
+          <AlertDialogDescription>{DESCRIPTIONS[kind]}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
