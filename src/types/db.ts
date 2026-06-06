@@ -591,6 +591,22 @@ export type Database = {
     }
     Functions: {
       accept_invite: { Args: { invite_token: string }; Returns: string }
+      budget_monthly_category_totals: {
+        Args: { b_id: string; end_date: string; start_date: string }
+        Returns: {
+          category_id: string
+          category_name: string
+          total: number
+          year_month: string
+        }[]
+      }
+      budget_monthly_totals: {
+        Args: { b_id: string; end_date: string; start_date: string }
+        Returns: {
+          total: number
+          year_month: string
+        }[]
+      }
       get_budget_member_profiles: {
         Args: { p_budget_id: string }
         Returns: {

@@ -6,19 +6,16 @@ import {
   lastDayOfMonth,
   type YearMonth,
 } from "@/lib/format/year-month";
-import {
-  aggregateByCategoryAndMonth,
-  type AggregateResult,
-} from "@/lib/calculations/aggregate-by-category-month";
+import { pivotCategoryTotals } from "@/lib/calculations/pivot-category-totals";
 
 /**
- * Fetch transactions in a budget across a YearMonth range, joining
- * category names, and aggregate into Recharts-friendly rows.
+ * Fetch monthly spending totals broken down by category via server-side
+ * aggregation, returning Recharts-wide rows for the comparison and
+ * composition charts.
  *
- * Backs both the category comparison and composition charts on the
- * Trends page — one query, two visualisations. Cache key is separate
- * from useMonthlyTotals (3.5) because the SELECT shape differs (this
- * one includes the category join) and they're consumed differently.
+ * The SQL function aggregates to narrow rows (one per yearMonth × category);
+ * pivotCategoryTotals() reshapes them into the wide format Recharts expects,
+ * with one key per category name.
  */
 export function useMonthlyCategoryTotals(
   budgetId: string | undefined,
@@ -31,26 +28,29 @@ export function useMonthlyCategoryTotals(
         ? trendsKeys.monthlyCategoryTotals(budgetId, from, to)
         : ["trends", "noop"],
     enabled: !!budgetId && !!from && !!to,
-    queryFn: async (): Promise<AggregateResult> => {
+    queryFn: async () => {
       const start = firstDayOfMonth(from!);
       const end = lastDayOfMonth(to!);
 
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("date, amount, category:categories(name)")
-        .eq("budget_id", budgetId!)
-        .gte("date", start)
-        .lte("date", end);
+      const { data, error } = await supabase.rpc(
+        "budget_monthly_category_totals",
+        {
+          b_id: budgetId!,
+          start_date: start,
+          end_date: end,
+        },
+      );
 
       if (error) throw error;
-      return aggregateByCategoryAndMonth(
-        (data ?? []) as unknown as Array<{
-          date: string;
-          amount: number;
-          category: { name: string } | null;
-        }>,
+
+      return pivotCategoryTotals(
+        (data ?? []).map((row) => ({
+          yearMonth: row.year_month,
+          categoryId: row.category_id,
+          categoryName: row.category_name,
+          total: Number(row.total),
+        })),
       );
     },
   });
 }
-
