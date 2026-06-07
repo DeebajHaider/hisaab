@@ -317,9 +317,61 @@ export function Settings() {
         </form>
       </section>
 
+      {/* ── Sessions ─────────────────────────────────────────────── */}
+      <SessionsSection />
+
       {/* ── Danger zone ──────────────────────────────────────────── */}
       <DangerZone email={profileQuery.data?.email ?? null} />
     </div>
+  );
+}
+
+// ─── Sessions ─────────────────────────────────────────────────────────────────
+
+function SessionsSection() {
+  const navigate = useNavigate();
+  const [pending, setPending] = useState(false);
+
+  const handleSignOutAll = async () => {
+    setPending(true);
+    try {
+      // scope: 'global' revokes all refresh tokens for this user,
+      // invalidating every active session including the current one.
+      await supabase.auth.signOut({ scope: "global" });
+      navigate("/auth", { replace: true });
+    } catch (err) {
+      toast.error("Couldn't sign out.", {
+        description: err instanceof Error ? err.message : "Unknown error.",
+        duration: 6000,
+      });
+      setPending(false);
+    }
+  };
+
+  return (
+    <section className="rounded-lg border border-border/60 bg-card p-5 sm:p-6">
+      <header className="mb-4">
+        <h2 className="text-base font-medium">Sessions</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Revoke access on all devices, including this one. Sign back in on
+          any device you want to keep using.
+        </p>
+      </header>
+      <Button
+        variant="outline"
+        onClick={handleSignOutAll}
+        disabled={pending}
+      >
+        {pending ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Signing out...
+          </>
+        ) : (
+          "Sign out of all devices"
+        )}
+      </Button>
+    </section>
   );
 }
 
@@ -334,7 +386,6 @@ function DangerZone({ email }: { email: string | null }) {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const hasSharedBudgets = (sharedBudgetsQuery.data?.length ?? 0) > 0;
-  // Case-insensitive match — email addresses are case-insensitive.
   const emailMatches =
     !!email &&
     confirmEmail.trim().toLowerCase() === email.toLowerCase();
@@ -351,8 +402,6 @@ function DangerZone({ email }: { email: string | null }) {
     try {
       const { error } = await supabase.rpc("delete_own_account");
       if (error) throw error;
-      // Best-effort signout — the auth record is now deleted, so this
-      // call may be a no-op, but it clears the local session state.
       await supabase.auth.signOut().catch(() => {});
       navigate("/", { replace: true });
     } catch (err) {
