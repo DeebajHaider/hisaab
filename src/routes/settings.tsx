@@ -1,13 +1,26 @@
 import { useState, useEffect, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
 import { useMyProfile } from "@/queries/use-my-profile";
 import { useUpdateMyProfile } from "@/queries/use-update-my-profile";
+import {
+  useOwnedSharedBudgets,
+  type OwnedSharedBudget,
+} from "@/queries/use-owned-shared-budgets";
 
 const MAX_DISPLAY_NAME_LENGTH = 80;
 
@@ -81,9 +94,6 @@ export function Settings() {
 
     setPasswordPending(true);
     try {
-      // Verify the current password before updating. signInWithPassword
-      // returns an error if the credentials are wrong without changing
-      // anything — safe to call during an active session.
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password: currentPassword,
@@ -306,9 +316,193 @@ export function Settings() {
           </div>
         </form>
       </section>
+
+      {/* ── Danger zone ──────────────────────────────────────────── */}
+      <DangerZone email={profileQuery.data?.email ?? null} />
     </div>
   );
 }
+
+// ─── Danger zone ──────────────────────────────────────────────────────────────
+
+function DangerZone({ email }: { email: string | null }) {
+  const navigate = useNavigate();
+  const sharedBudgetsQuery = useOwnedSharedBudgets();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const hasSharedBudgets = (sharedBudgetsQuery.data?.length ?? 0) > 0;
+  // Case-insensitive match — email addresses are case-insensitive.
+  const emailMatches =
+    !!email &&
+    confirmEmail.trim().toLowerCase() === email.toLowerCase();
+
+  const closeDialog = () => {
+    setDialogOpen(false);
+    setConfirmEmail("");
+    setDeleteError(null);
+  };
+
+  const handleDelete = async () => {
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      const { error } = await supabase.rpc("delete_own_account");
+      if (error) throw error;
+      // Best-effort signout — the auth record is now deleted, so this
+      // call may be a no-op, but it clears the local session state.
+      await supabase.auth.signOut().catch(() => {});
+      navigate("/", { replace: true });
+    } catch (err) {
+      setDeleteError(
+        err instanceof Error ? err.message : "Something went wrong.",
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <section className="rounded-lg border border-destructive/30 bg-card p-5 sm:p-6">
+      <header className="mb-4">
+        <h2 className="text-base font-medium text-destructive">Danger zone</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Permanent actions that cannot be undone.
+        </p>
+      </header>
+
+      {sharedBudgetsQuery.isLoading ? (
+        <Skeleton className="h-9 w-36" />
+      ) : hasSharedBudgets ? (
+        <BlockedDeletion budgets={sharedBudgetsQuery.data!} />
+      ) : (
+        <Button
+          variant="outline"
+          className="border-destructive/50 text-destructive hover:bg-destructive/5 hover:text-destructive"
+          onClick={() => setDialogOpen(true)}
+        >
+          Delete account
+        </Button>
+      )}
+
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) closeDialog();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete your account</DialogTitle>
+            <DialogDescription>
+              This permanently removes your account and everything you own.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 text-sm">
+            <ul className="space-y-1 text-muted-foreground list-disc list-inside">
+              <li>Your account and sign-in credentials</li>
+              <li>All portfolios, holdings, and their full history</li>
+              <li>
+                All budgets you own, including every transaction, income
+                entry, savings entry, category, and item within them
+              </li>
+            </ul>
+            <p className="text-xs text-muted-foreground">
+              Transactions you logged in budgets owned by others will remain
+              but will no longer show your name.
+            </p>
+            <p className="font-medium">This cannot be undone.</p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="confirm-delete-email" className="text-xs">
+              Type your email address to confirm
+            </Label>
+            <Input
+              id="confirm-delete-email"
+              type="email"
+              value={confirmEmail}
+              onChange={(e) => {
+                setConfirmEmail(e.target.value);
+                setDeleteError(null);
+              }}
+              placeholder={email ?? "your@email.com"}
+              autoComplete="off"
+            />
+          </div>
+
+          {deleteError && (
+            <p className="text-sm text-destructive" role="alert">
+              {deleteError}
+            </p>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={closeDialog}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={!emailMatches || deleting}
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete account"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
+}
+
+function BlockedDeletion({ budgets }: { budgets: OwnedSharedBudget[] }) {
+  return (
+    <div className="space-y-3">
+      <div className="rounded-md border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/20 p-3">
+        <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+          Transfer ownership before deleting
+        </p>
+        <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+          You own{" "}
+          {budgets.length === 1
+            ? "a shared budget"
+            : `${budgets.length} shared budgets`}{" "}
+          with other members. Transfer ownership to another member in each
+          budget first.
+        </p>
+      </div>
+      <ul className="space-y-1.5">
+        {budgets.map((b) => (
+          <li key={b.budget_id}>
+            <Link
+              to={`/app/budgets/${b.budget_id}/members`}
+              className="text-sm text-teal-600 dark:text-teal-400 hover:underline underline-offset-2"
+            >
+              {b.budget_name} → Members
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// ─── Skeletons ────────────────────────────────────────────────────────────────
 
 function ProfileSkeleton() {
   return (

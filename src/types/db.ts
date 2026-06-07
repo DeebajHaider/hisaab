@@ -147,7 +147,7 @@ export type Database = {
       budgets: {
         Row: {
           created_at: string
-          created_by: string
+          created_by: string | null
           currency: string
           id: string
           is_shared: boolean
@@ -155,7 +155,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           currency?: string
           id?: string
           is_shared?: boolean
@@ -163,7 +163,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           currency?: string
           id?: string
           is_shared?: boolean
@@ -322,7 +322,7 @@ export type Database = {
           amount: number
           budget_id: string
           created_at: string
-          created_by: string
+          created_by: string | null
           date: string
           id: string
           notes: string | null
@@ -332,7 +332,7 @@ export type Database = {
           amount: number
           budget_id: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           date: string
           id?: string
           notes?: string | null
@@ -342,7 +342,7 @@ export type Database = {
           amount?: number
           budget_id?: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           date?: string
           id?: string
           notes?: string | null
@@ -475,7 +475,7 @@ export type Database = {
           amount: number
           budget_id: string
           created_at: string
-          created_by: string
+          created_by: string | null
           date: string
           id: string
           name: string
@@ -485,7 +485,7 @@ export type Database = {
           amount: number
           budget_id: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           date: string
           id?: string
           name: string
@@ -495,7 +495,7 @@ export type Database = {
           amount?: number
           budget_id?: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           date?: string
           id?: string
           name?: string
@@ -517,7 +517,7 @@ export type Database = {
           budget_id: string
           category_id: string
           created_at: string
-          created_by: string
+          created_by: string | null
           date: string
           id: string
           item_id: string
@@ -531,7 +531,7 @@ export type Database = {
           budget_id: string
           category_id: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           date: string
           id?: string
           item_id: string
@@ -545,7 +545,7 @@ export type Database = {
           budget_id?: string
           category_id?: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           date?: string
           id?: string
           item_id?: string
