@@ -607,11 +607,19 @@ export type Database = {
           year_month: string
         }[]
       }
+      delete_own_account: { Args: never; Returns: undefined }
       get_budget_member_profiles: {
         Args: { p_budget_id: string }
         Returns: {
           email: string
           user_id: string
+        }[]
+      }
+      get_owned_shared_budgets: {
+        Args: never
+        Returns: {
+          budget_id: string
+          budget_name: string
         }[]
       }
       has_budget_role: {
@@ -639,6 +647,10 @@ export type Database = {
       }
       owns_portfolio: { Args: { p_id: string }; Returns: boolean }
       shares_budget_with: { Args: { other_user_id: string }; Returns: boolean }
+      transfer_budget_ownership: {
+        Args: { p_budget_id: string; p_new_owner_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
