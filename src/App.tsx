@@ -13,6 +13,7 @@ import { BudgetsHome } from "@/routes/budgets-home";
 import { BudgetRedirect } from "@/routes/budget-redirect";
 import { DayView } from "@/routes/day-view";
 import { Manage } from "@/routes/manage";
+import { BudgetSettings } from "@/routes/budget-settings";
 import { NotFound } from "@/routes/not-found";
 import { MonthView } from "@/routes/month-view";
 import { MonthRedirect } from "@/routes/month-redirect";
@@ -25,7 +26,7 @@ import { PortfoliosHome } from "@/routes/portfolios-home";
 import { PortfolioLayout } from "@/components/layout/portfolio-layout";
 import { PortfolioHoldings } from "@/routes/portfolio-holdings";
 import { PortfolioManage } from "@/routes/portfolio-manage";
-import { PortfolioOverview } from "@/routes/portfolio-overview";  
+import { PortfolioOverview } from "@/routes/portfolio-overview";
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
                   <Route index element={<BudgetRedirect />} />
                   <Route path="day/:date" element={<DayView />} />
                   <Route path="manage" element={<Manage />} />
+                  <Route path="settings" element={<BudgetSettings />} />
                   <Route path="month" element={<MonthRedirect />} />
                   <Route path="month/:yearMonth" element={<MonthView />} />
                   <Route path="trends" element={<Trends />} />
@@ -74,7 +76,6 @@ function App() {
             </Routes>
           </AuthProvider>
         </BrowserRouter>
-        {/* Mounted once at app root. Renders nothing until toasts fire. */}
         <Toaster />
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
@@ -83,4 +84,3 @@ function App() {
 }
 
 export default App;
-
