@@ -4,6 +4,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { queryClient } from "@/lib/query-client";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { AppLayout } from "@/components/layout/app-layout";
 import { BudgetLayout } from "@/components/layout/budget-layout";
@@ -33,48 +34,54 @@ function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <AuthProvider>
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/invite/:token" element={<InviteAccept />} />
+          {/* Catches render errors in the route tree and auth context.
+              Providers above this boundary (Theme, Query) are excluded
+              — they never crash in practice and need to stay alive for
+              the fallback UI to render correctly. */}
+          <ErrorBoundary>
+            <AuthProvider>
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/invite/:token" element={<InviteAccept />} />
 
-              <Route
-                path="/app"
-                element={
-                  <RequireAuth>
-                    <AppLayout />
-                  </RequireAuth>
-                }
-              >
-                <Route index element={<BudgetsHome />} />
-                <Route path="settings" element={<Settings />} />
+                <Route
+                  path="/app"
+                  element={
+                    <RequireAuth>
+                      <AppLayout />
+                    </RequireAuth>
+                  }
+                >
+                  <Route index element={<BudgetsHome />} />
+                  <Route path="settings" element={<Settings />} />
 
-                <Route path="budgets/:budgetId" element={<BudgetLayout />}>
-                  <Route index element={<BudgetRedirect />} />
-                  <Route path="day/:date" element={<DayView />} />
-                  <Route path="manage" element={<Manage />} />
-                  <Route path="settings" element={<BudgetSettings />} />
-                  <Route path="month" element={<MonthRedirect />} />
-                  <Route path="month/:yearMonth" element={<MonthView />} />
-                  <Route path="trends" element={<Trends />} />
-                  <Route path="members" element={<Members />} />
-                </Route>
+                  <Route path="budgets/:budgetId" element={<BudgetLayout />}>
+                    <Route index element={<BudgetRedirect />} />
+                    <Route path="day/:date" element={<DayView />} />
+                    <Route path="manage" element={<Manage />} />
+                    <Route path="settings" element={<BudgetSettings />} />
+                    <Route path="month" element={<MonthRedirect />} />
+                    <Route path="month/:yearMonth" element={<MonthView />} />
+                    <Route path="trends" element={<Trends />} />
+                    <Route path="members" element={<Members />} />
+                  </Route>
 
-                <Route path="portfolio">
-                  <Route index element={<PortfoliosHome />} />
-                  <Route path=":portfolioId" element={<PortfolioLayout />}>
-                    <Route index element={<Navigate to="overview" replace />} />
-                    <Route path="overview" element={<PortfolioOverview />} />
-                    <Route path="holdings" element={<PortfolioHoldings />} />
-                    <Route path="manage" element={<PortfolioManage />} />
+                  <Route path="portfolio">
+                    <Route index element={<PortfoliosHome />} />
+                    <Route path=":portfolioId" element={<PortfolioLayout />}>
+                      <Route index element={<Navigate to="overview" replace />} />
+                      <Route path="overview" element={<PortfolioOverview />} />
+                      <Route path="holdings" element={<PortfolioHoldings />} />
+                      <Route path="manage" element={<PortfolioManage />} />
+                    </Route>
                   </Route>
                 </Route>
-              </Route>
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AuthProvider>
+          </ErrorBoundary>
         </BrowserRouter>
         <Toaster />
         <ReactQueryDevtools initialIsOpen={false} />
