@@ -1,4 +1,4 @@
-import { useParams , useNavigate} from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Trash2, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
@@ -9,6 +9,7 @@ import {
 } from "@/queries/use-budget-members";
 import {
   useUpdateMemberRole,
+  useTransferOwnership,
   useRemoveMember,
 } from "@/queries/use-member-mutations";
 import { useBudgetInvites } from "@/queries/use-budget-invites";
@@ -30,10 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Avatar,
-  AvatarFallback,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,11 +52,7 @@ export function Members() {
 
   if (!budgetId || !user) return null;
 
-  // Find the current user's row to know if they're an owner.
-  // Drives most of the conditional rendering on this page.
-  const currentMember = membersQuery.data?.find(
-    (m) => m.user_id === user.id,
-  );
+  const currentMember = membersQuery.data?.find((m) => m.user_id === user.id);
   const isOwner = currentMember?.role === "owner";
 
   return (
@@ -71,7 +65,6 @@ export function Members() {
             <span className="font-medium">{budgetQuery.data?.name}</span>.
           </p>
         </div>
-        {/* Only owners can invite. Non-owners don't see this button at all. */}
         {isOwner && <InviteLinkDialog budgetId={budgetId} />}
       </div>
 
@@ -83,16 +76,13 @@ export function Members() {
         currentUserIsOwner={isOwner}
       />
 
-      {/* Pending invites — only owners see this section, since RLS
-          restricts SELECT on budget_invites to owners anyway. */}
       {isOwner && <PendingInvitesCard budgetId={budgetId} />}
     </div>
   );
 }
 
-// ----------------------------------------------------------------------------
-// Member list — one card listing all members with role + action affordances
-// ----------------------------------------------------------------------------
+// ─── Member list ──────────────────────────────────────────────────────────────
+
 function MemberList({
   budgetId,
   members,
@@ -137,9 +127,8 @@ function MemberList({
   );
 }
 
-// ----------------------------------------------------------------------------
-// Single member row — avatar, email, role badge / picker, action buttons
-// ----------------------------------------------------------------------------
+// ─── Single member row ────────────────────────────────────────────────────────
+
 function MemberRow({
   budgetId,
   member,
@@ -153,45 +142,51 @@ function MemberRow({
 }) {
   const navigate = useNavigate();
   const updateRole = useUpdateMemberRole();
+  const transferOwnership = useTransferOwnership();
   const removeMember = useRemoveMember();
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [confirmTransfer, setConfirmTransfer] = useState(false);
 
-  // Owner role is immutable in the UI per Phase 4 decision: only the
-  // creator stays owner, no promotion or demotion. Role picker only
-  // shows for editor/viewer rows when the viewer is an owner.
+  // Role picker: owner → editors/viewers can be changed by the current owner.
+  // The owner role itself is not in the picker — ownership is transferred via
+  // the dedicated "Make owner" action below, not a dropdown selection.
   const canChangeRole =
     viewerIsOwner && member.role !== "owner" && !isSelf;
 
-  // Removal rules:
-  //   - Owners can remove anyone except themselves (last-owner rule)
-  //   - Anyone can remove themselves (the "leave" path)
-  //   - Self-leave is blocked for owners by the same last-owner rule
-  const canRemoveOther = viewerIsOwner && !isSelf && member.role !== "owner";
+  // "Make owner" is a separate explicit action, kept distinct from role
+  // changes intentionally — it's irreversible from the current user's
+  // perspective and deserves its own confirmation.
+  const canTransferOwnership =
+    viewerIsOwner && member.role !== "owner" && !isSelf;
+
+  const canRemoveOther =
+    viewerIsOwner && !isSelf && member.role !== "owner";
   const canLeave = isSelf && member.role !== "owner";
 
   const handleRoleChange = async (newRole: "editor" | "viewer") => {
-    await updateRole.mutateAsync({
-      budgetId,
-      userId: member.user_id,
-      role: newRole,
-    });
+    await updateRole.mutateAsync({ budgetId, userId: member.user_id, role: newRole });
+  };
+
+  const handleTransfer = async () => {
+    try {
+      await transferOwnership.mutateAsync({
+        budgetId,
+        newOwnerId: member.user_id,
+      });
+      setConfirmTransfer(false);
+    } catch {
+      // Error surfaced via mutation toast; keep dialog open so the user
+      // sees the error message rather than having it disappear.
+    }
   };
 
   const handleRemove = async () => {
     try {
-      await removeMember.mutateAsync({
-        budgetId,
-        userId: member.user_id,
-      });
+      await removeMember.mutateAsync({ budgetId, userId: member.user_id });
       setConfirmRemove(false);
-      // If the current user just left the budget, they no longer have
-      // access. Navigate to /app before the page re-renders with empty
-      // member data (which would look like a broken state).
-      if (isSelf) {
-        navigate("/app", { replace: true });
-      }
+      if (isSelf) navigate("/app", { replace: true });
     } catch {
-      // Error rendered in the alert dialog below.
+      // surfaced in the alert dialog below
     }
   };
 
@@ -224,7 +219,6 @@ function MemberRow({
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
-        {/* Role: editable select for owners changing others, static badge otherwise */}
         {canChangeRole ? (
           <Select
             value={member.role}
@@ -243,7 +237,19 @@ function MemberRow({
           <RoleBadge role={member.role} />
         )}
 
-        {/* Remove / leave button */}
+        {/* "Make owner" — only the owner sees this, only for non-owner rows */}
+        {canTransferOwnership && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => setConfirmTransfer(true)}
+            disabled={transferOwnership.isPending}
+          >
+            Make owner
+          </Button>
+        )}
+
         {(canRemoveOther || canLeave) && (
           <Button
             size="icon"
@@ -263,6 +269,43 @@ function MemberRow({
         )}
       </div>
 
+      {/* ── Transfer ownership confirmation ─────────────────────────── */}
+      <AlertDialog open={confirmTransfer} onOpenChange={setConfirmTransfer}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Transfer ownership to {displayName}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              They'll become the owner of this budget. You'll become an editor
+              — you can still use the budget but won't be able to manage
+              members, transfer ownership again, or delete the budget.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {transferOwnership.isError && (
+            <p className="text-sm text-destructive" role="alert">
+              {transferOwnership.error instanceof Error
+                ? transferOwnership.error.message
+                : "Could not transfer ownership."}
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={transferOwnership.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleTransfer}
+              disabled={transferOwnership.isPending}
+            >
+              {transferOwnership.isPending
+                ? "Transferring..."
+                : "Transfer ownership"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Remove / leave confirmation ──────────────────────────────── */}
       <AlertDialog open={confirmRemove} onOpenChange={setConfirmRemove}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -305,8 +348,6 @@ function MemberRow({
 }
 
 function RoleBadge({ role }: { role: "owner" | "editor" | "viewer" }) {
-  // Owner uses the teal accent to match the brand. Editor/viewer are neutral
-  // since they're the common case and don't need visual emphasis.
   if (role === "owner") {
     return (
       <Badge className="bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/40">
@@ -321,16 +362,12 @@ function RoleBadge({ role }: { role: "owner" | "editor" | "viewer" }) {
   );
 }
 
-// ----------------------------------------------------------------------------
-// Pending invites card — owners only
-// ----------------------------------------------------------------------------
+// ─── Pending invites ──────────────────────────────────────────────────────────
+
 function PendingInvitesCard({ budgetId }: { budgetId: string }) {
   const invitesQuery = useBudgetInvites(budgetId);
   const revokeMutation = useRevokeInvite();
 
-  // Hide the card entirely when there are no pending invites and we're
-  // not loading. The Invite button at the top is the affordance to add
-  // one; no need for an empty-state card to scream "no pending invites".
   if (
     !invitesQuery.isPending &&
     (!invitesQuery.data || invitesQuery.data.length === 0)
@@ -367,10 +404,7 @@ function PendingInvitesCard({ budgetId }: { budgetId: string }) {
                     size="sm"
                     variant="ghost"
                     onClick={() =>
-                      revokeMutation.mutate({
-                        inviteId: invite.id,
-                        budgetId,
-                      })
+                      revokeMutation.mutate({ inviteId: invite.id, budgetId })
                     }
                     disabled={revokeMutation.isPending}
                   >
@@ -386,4 +420,3 @@ function PendingInvitesCard({ budgetId }: { budgetId: string }) {
     </Card>
   );
 }
-
