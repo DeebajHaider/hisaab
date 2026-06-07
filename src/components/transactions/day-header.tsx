@@ -12,11 +12,6 @@ interface DayHeaderProps {
   currency: string;
 }
 
-/**
- * Header for the day view: prev/next nav, friendly date label, day total.
- * Also offers a calendar popover for jumping to any date — important for
- * back-filling old transactions where stepping one day at a time is tedious.
- */
 export function DayHeader({ budgetId, date, total, currency }: DayHeaderProps) {
   const navigate = useNavigate();
   const prevDate = addDays(date, -1);
@@ -35,7 +30,8 @@ export function DayHeader({ budgetId, date, total, currency }: DayHeaderProps) {
           </Link>
         </Button>
 
-        <div className="px-2">
+        {/* Fixed width so the arrows don't shift as the day label changes. */}
+        <div className="w-32 px-2 text-center">
           <div className="font-semibold tracking-tight">
             {formatDayLabel(date)}
           </div>
@@ -48,7 +44,6 @@ export function DayHeader({ budgetId, date, total, currency }: DayHeaderProps) {
           </Link>
         </Button>
 
-        {/* Day picker — pops a calendar for non-adjacent jumps. */}
         <DatePicker
           value={date}
           onChange={goTo}
@@ -70,10 +65,13 @@ export function DayHeader({ budgetId, date, total, currency }: DayHeaderProps) {
       <div className="text-right">
         <div className="text-xs text-muted-foreground">Day total</div>
         <div className="text-lg font-semibold tabular-nums">
-          {currency} {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {currency}{" "}
+          {total.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
         </div>
       </div>
     </div>
   );
 }
-

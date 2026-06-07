@@ -35,38 +35,21 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-/**
- * Header for the Month view: prev / label / next, a "Current month" shortcut,
- * a month-and-year picker popover for non-adjacent jumps, and an export button.
- *
- * The picker is two dropdowns (month, year) rather than a calendar — month
- * granularity doesn't benefit from a day grid, and the dropdowns are far
- * more direct ("November 2024" is two clicks regardless of where you start).
- */
 export function MonthHeader({ budgetId, yearMonth }: MonthHeaderProps) {
   const navigate = useNavigate();
   const current = currentYearMonth();
   const isCurrent = yearMonth === current;
 
   const [y, m] = yearMonth.split("-").map(Number);
-  // Local working state for the picker — applied to the URL on change.
-  // Initialised from the current yearMonth; not synced afterwards, because
-  // when the user picks a month/year we navigate away and the component
-  // unmounts/remounts with the new yearMonth anyway.
   const [pickerYear, setPickerYear] = useState(y);
   const [pickerMonth, setPickerMonth] = useState(m);
 
   const goTo = (ym: YearMonth) =>
     navigate(`/app/budgets/${budgetId}/month/${ym}`);
 
-  /** Build "YYYY-MM" from year + month (1-12). */
   const buildYM = (year: number, month: number): YearMonth =>
     `${year}-${String(month).padStart(2, "0")}` as YearMonth;
 
-  // Year range: 10 years before the current display year, 1 year after.
-  // Plenty for backfilling history and a buffer for future planning. The
-  // currentYear() of "today" is included by construction since pickerYear
-  // is initialised from the viewed month.
   const todayYear = new Date().getFullYear();
   const minYear = Math.min(pickerYear, todayYear) - 10;
   const maxYear = Math.max(pickerYear, todayYear) + 1;
@@ -84,9 +67,12 @@ export function MonthHeader({ budgetId, yearMonth }: MonthHeaderProps) {
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <h2 className="text-xl font-semibold tabular-nums">
+
+        {/* Fixed width so the arrows don't shift as the month name changes. */}
+        <h2 className="w-48 text-center text-xl font-semibold tabular-nums">
           {formatMonthLabel(yearMonth)}
         </h2>
+
         <Button
           variant="outline"
           size="icon"
@@ -96,7 +82,6 @@ export function MonthHeader({ budgetId, yearMonth }: MonthHeaderProps) {
           <ChevronRight className="h-4 w-4" />
         </Button>
 
-        {/* Month-and-year picker popover */}
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="icon" aria-label="Pick a month">

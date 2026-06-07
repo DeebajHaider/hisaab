@@ -6,14 +6,15 @@ import {
   lastDayOfMonth,
   type YearMonth,
 } from "@/lib/format/year-month";
-import {
-  aggregateByMonth,
-  type MonthlyTotal,
-} from "@/lib/calculations/aggregate-by-month";
+import { type MonthlyTotal } from "@/lib/calculations/aggregate-by-month";
 
 /**
- * Fetch all transactions in a budget between `from` and `to` (inclusive,
- * both YearMonth values) and aggregate them into monthly totals.
+ * Fetch monthly spending totals for a budget via server-side aggregation.
+ *
+ * Replaces the previous client-side aggregation that hit PostgREST's
+ * 1000-row default limit, causing older months to show zero on the
+ * "All" timeframe. The SQL function pre-aggregates to one row per month
+ * instead of fetching every transaction in the range.
  *
  * Returns only months that have data — zero-filling for the chart's
  * continuous X axis happens in the consumer via fillMonthGaps.
@@ -33,15 +34,18 @@ export function useMonthlyTotals(
       const start = firstDayOfMonth(from!);
       const end = lastDayOfMonth(to!);
 
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("date, amount")
-        .eq("budget_id", budgetId!)
-        .gte("date", start)
-        .lte("date", end);
+      const { data, error } = await supabase.rpc("budget_monthly_totals", {
+        b_id: budgetId!,
+        start_date: start,
+        end_date: end,
+      });
 
       if (error) throw error;
-      return aggregateByMonth(data ?? []);
+
+      return (data ?? []).map((row) => ({
+        yearMonth: row.year_month,
+        total: Number(row.total),
+      }));
     },
   });
 }

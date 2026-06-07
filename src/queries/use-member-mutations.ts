@@ -27,8 +27,7 @@ export function useUpdateMemberRole() {
       toast.success("Role updated.");
       qc.invalidateQueries({ queryKey: memberKeys.byBudget(budgetId) });
     },
-    onError: (error, _variables) => {
-      // Errors deserve longer than the 4s default — give the user time to read.
+    onError: (error) => {
       toast.error("Couldn't update role.", {
         description: error instanceof Error ? error.message : "Unknown error.",
         duration: 6000,
@@ -36,6 +35,44 @@ export function useUpdateMemberRole() {
     },
   });
 }
+
+
+// ---------- Transfer ownership ----------
+// Calls the transfer_budget_ownership RPC, which atomically promotes the
+// target member to owner and demotes the current owner to editor.
+// Both changes happen in one transaction — either both land or neither do.
+
+interface TransferOwnershipVars {
+  budgetId: string;
+  newOwnerId: string;
+}
+
+export function useTransferOwnership() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ budgetId, newOwnerId }: TransferOwnershipVars) => {
+      const { error } = await supabase.rpc("transfer_budget_ownership", {
+        p_budget_id:    budgetId,
+        p_new_owner_id: newOwnerId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_data, { budgetId }) => {
+      toast.success("Ownership transferred.");
+      qc.invalidateQueries({ queryKey: memberKeys.byBudget(budgetId) });
+      // Invalidate budgets list — the current user is no longer owner,
+      // which affects what they can do in other parts of the app.
+      qc.invalidateQueries({ queryKey: ["budgets"] });
+    },
+    onError: (error) => {
+      toast.error("Couldn't transfer ownership.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
+    },
+  });
+}
+
 
 // ---------- Remove / leave ----------
 // The DB doesn't distinguish: removing someone else and leaving yourself
@@ -61,8 +98,8 @@ export function useRemoveMember() {
         // tries to delete the last owner. Surface a clean message.
         if (error.message.includes("cannot_remove_last_owner")) {
           throw new Error(
-            "Cannot remove the last owner of a budget. Promote another " +
-              "member to owner first, or delete the budget instead.",
+            "Cannot remove the last owner of a budget. Transfer ownership " +
+              "to another member first, or delete the budget instead.",
           );
         }
         throw error;
@@ -70,12 +107,9 @@ export function useRemoveMember() {
     },
     onSuccess: (_data, { budgetId }) => {
       qc.invalidateQueries({ queryKey: memberKeys.byBudget(budgetId) });
-      // If the current user just left the budget, the budgets list
-      // changes too. Broad invalidation handles both cases.
       qc.invalidateQueries({ queryKey: ["budgets"] });
     },
-    onError: (error, _variables) => {
-      // Errors deserve longer than the 4s default — give the user time to read.
+    onError: (error) => {
       toast.error("Couldn't remove member.", {
         description: error instanceof Error ? error.message : "Unknown error.",
         duration: 6000,

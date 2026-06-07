@@ -3,9 +3,8 @@ import { supabase } from "@/lib/supabase";
 import type { Database } from "@/types/db";
 import { toast } from "sonner";
 
-
 interface CreateItemInput {
-  budgetId: string;        // for cache invalidation
+  budgetId: string;
   categoryId: string;
   name: string;
   unit?: string | null;
@@ -18,7 +17,6 @@ export function useCreateItem() {
 
   return useMutation({
     mutationFn: async (input: CreateItemInput) => {
-      // Sort order: end of the items list within this category
       const { count, error: countError } = await supabase
         .from("items")
         .select("id", { count: "exact", head: true })
@@ -42,8 +40,7 @@ export function useCreateItem() {
         queryKey: ["items", variables.budgetId],
       });
     },
-    onError: (error, _variables) => {
-      // Errors deserve longer than the 4s default — give the user time to read.
+    onError: (error) => {
       toast.error("Couldn't create item.", {
         description: error instanceof Error ? error.message : "Unknown error.",
         duration: 6000,
@@ -57,7 +54,7 @@ interface UpdateItemInput {
   budgetId: string;
   patch: {
     name?: string;
-    categoryId?: string;       // can move an item between categories
+    categoryId?: string;
     unit?: string | null;
     defaultRate?: number | null;
     defaultMode?: "lump" | "rate_qty";
@@ -90,8 +87,7 @@ export function useUpdateItem() {
         queryKey: ["items", variables.budgetId],
       });
     },
-    onError: (error, _variables) => {
-      // Errors deserve longer than the 4s default — give the user time to read.
+    onError: (error) => {
       toast.error("Couldn't update item.", {
         description: error instanceof Error ? error.message : "Unknown error.",
         duration: 6000,
@@ -119,14 +115,50 @@ export function useArchiveItem() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      toast.success("Item archived.");
+      toast.success(
+        variables.archived === false ? "Item restored." : "Item archived.",
+      );
       queryClient.invalidateQueries({
         queryKey: ["items", variables.budgetId],
       });
     },
-    onError: (error, _variables) => {
-      // Errors deserve longer than the 4s default — give the user time to read.
-      toast.error("Couldn't archive item.", {
+    onError: (error) => {
+      toast.error("Couldn't update item.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
+    },
+  });
+}
+
+interface DeleteItemInput {
+  id: string;
+  budgetId: string;
+}
+
+/**
+ * Hard-delete an archived item. Cascades to transactions via FK.
+ * Invalidates transactions and trends because historical data changes.
+ */
+export function useDeleteItem() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id }: DeleteItemInput) => {
+      const { error } = await supabase
+        .from("items")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, { budgetId }) => {
+      toast.success("Item permanently deleted.");
+      qc.invalidateQueries({ queryKey: ["items", budgetId] });
+      qc.invalidateQueries({ queryKey: ["transactions", budgetId] });
+      qc.invalidateQueries({ queryKey: ["trends", budgetId] });
+    },
+    onError: (error) => {
+      toast.error("Couldn't delete item.", {
         description: error instanceof Error ? error.message : "Unknown error.",
         duration: 6000,
       });

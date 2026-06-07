@@ -1,5 +1,14 @@
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
-import { ArrowLeft, Calendar, Settings, Menu, CalendarRange, TrendingUp, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  Settings,
+  Menu,
+  CalendarRange,
+  TrendingUp,
+  Users,
+  SlidersHorizontal,
+} from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,40 +21,24 @@ import {
 } from "@/components/ui/sheet";
 import { useBudget } from "@/queries/use-budget";
 
-/**
- * Layout for everything under /app/budgets/:id.
- * Sidebar nav on desktop, drawer on mobile.
- * Renders matched child routes via <Outlet />.
- */
 export function BudgetLayout() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const { data: budget, isLoading, error } = useBudget(budgetId);
 
-  // Loading: skeleton header and sidebar so layout doesn't shift when data lands
-  if (isLoading) {
-    return <BudgetLayoutSkeleton />;
-  }
-
-  // Error or not-found: show a friendly fallback rather than a broken layout
-  if (error || !budget) {
-    return <BudgetNotFound />;
-  }
+  if (isLoading) return <BudgetLayoutSkeleton />;
+  if (error || !budget) return <BudgetNotFound />;
 
   return (
     <div className="flex flex-col lg:flex-row min-h-[calc(100vh-3.5rem)]">
       <DesktopSidebar budgetId={budget.id} budgetName={budget.name} />
       <MobileTopBar budgetId={budget.id} budgetName={budget.name} />
       <main className="flex-1 min-w-0">
-        {/* Outlet renders Day view or Manage view */}
         <Outlet />
       </main>
     </div>
   );
 }
 
-// ----------------------------------------------------------------------------
-// Desktop sidebar — always visible on lg screens
-// ----------------------------------------------------------------------------
 function DesktopSidebar({
   budgetId,
   budgetName,
@@ -61,9 +54,6 @@ function DesktopSidebar({
   );
 }
 
-// ----------------------------------------------------------------------------
-// Mobile top bar with hamburger that opens a drawer
-// ----------------------------------------------------------------------------
 function MobileTopBar({
   budgetId,
   budgetName,
@@ -82,7 +72,6 @@ function MobileTopBar({
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0 flex flex-col">
-          {/* Required for accessibility — Sheet requires a title even if visually hidden */}
           <SheetTitle className="sr-only">Budget navigation</SheetTitle>
           <SidebarHeader budgetName={budgetName} />
           <div onClick={() => setOpen(false)}>
@@ -95,9 +84,6 @@ function MobileTopBar({
   );
 }
 
-// ----------------------------------------------------------------------------
-// Shared sidebar internals
-// ----------------------------------------------------------------------------
 function SidebarHeader({ budgetName }: { budgetName: string }) {
   return (
     <div className="p-4 border-b border-border/40">
@@ -114,7 +100,6 @@ function SidebarHeader({ budgetName }: { budgetName: string }) {
 }
 
 function SidebarNav({ budgetId }: { budgetId: string }) {
-  // Today's date in ISO yyyy-mm-dd format, for the default Day-view link.
   const today = todayISO();
 
   return (
@@ -145,9 +130,12 @@ function SidebarNav({ budgetId }: { budgetId: string }) {
           icon={<Settings className="w-4 h-4" />}
           label="Manage"
         />
+        <NavItem
+          to={`/app/budgets/${budgetId}/settings`}
+          icon={<SlidersHorizontal className="w-4 h-4" />}
+          label="Settings"
+        />
       </nav>
-      {/* Honesty note: the app isn't live-updating. Sets expectations for
-          shared budgets so a stale screen doesn't mislead anyone. */}
       <p className="px-3 py-3 text-[11px] leading-snug text-muted-foreground border-t border-border/40">
         Updates aren't live. Data refreshes when you return to the tab or
         every 30 seconds as you navigate.
@@ -182,9 +170,6 @@ function NavItem({
   );
 }
 
-// ----------------------------------------------------------------------------
-// Loading and error states
-// ----------------------------------------------------------------------------
 function BudgetLayoutSkeleton() {
   return (
     <div className="flex flex-col lg:flex-row min-h-[calc(100vh-3.5rem)]">
