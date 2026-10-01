@@ -191,6 +191,14 @@ export function TransactionEntryForm({
 
     setSelectedItemId(id);
     setSearchQuery("");
+    setBrowseCategoryId(item.category_id);
+
+    // Applying the new item's defaults (mode, rate, and clearing qty/amount)
+    // only makes sense for a fresh entry. In edit mode, the user is
+    // correcting which item/category an existing transaction belongs to —
+    // the price they already entered shouldn't silently vanish just
+    // because they changed the item.
+    if (isEditing) return;
 
     const itemMode = (item.default_mode as "lump" | "rate_qty") ?? "lump";
     setMode(itemMode);
@@ -202,7 +210,6 @@ export function TransactionEntryForm({
 
     setQty("");
     setAmount("");
-    setBrowseCategoryId(item.category_id);
   };
 
   const clearItem = () => {
