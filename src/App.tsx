@@ -19,6 +19,7 @@ import { NotFound } from "@/routes/not-found";
 import { MonthView } from "@/routes/month-view";
 import { MonthRedirect } from "@/routes/month-redirect";
 import { Trends } from "@/routes/trends";
+import { Ledger } from "@/routes/ledger";
 import { InviteAccept } from "@/routes/invite-accept";
 import { Members } from "@/routes/members";
 import { Settings } from "@/routes/settings";
@@ -63,6 +64,7 @@ function App() {
                     <Route path="settings" element={<BudgetSettings />} />
                     <Route path="month" element={<MonthRedirect />} />
                     <Route path="month/:yearMonth" element={<MonthView />} />
+                    <Route path="ledger" element={<Ledger />} />
                     <Route path="trends" element={<Trends />} />
                     <Route path="members" element={<Members />} />
                   </Route>

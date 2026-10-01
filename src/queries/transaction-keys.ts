@@ -6,6 +6,7 @@
  *   ['transactions', budgetId]                → all transactions in a budget
  *   ['transactions', budgetId, 'day', date]   → one day's transactions
  *   ['transactions', budgetId, 'month', ym]   → one month's transactions
+ *   ['transactions', budgetId, 'ledger', ...] → filtered ledger view
  *
  * Invalidating a parent key invalidates all children automatically because
  * TanStack Query does prefix-matching by default.
@@ -23,4 +24,21 @@ export const transactionKeys = {
 
   byMonth: (budgetId: string, yearMonth: string) =>
     ["transactions", budgetId, "month", yearMonth] as const,
+
+  ledger: (
+    budgetId: string,
+    from: string,
+    to: string,
+    categoryIds: string[],
+    itemIds: string[],
+  ) =>
+    [
+      "transactions",
+      budgetId,
+      "ledger",
+      from,
+      to,
+      [...categoryIds].sort(),
+      [...itemIds].sort(),
+    ] as const,
 };

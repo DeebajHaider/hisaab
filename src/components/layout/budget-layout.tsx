@@ -5,6 +5,7 @@ import {
   Settings,
   Menu,
   CalendarRange,
+  Receipt,
   TrendingUp,
   Users,
   SlidersHorizontal,
@@ -114,6 +115,11 @@ function SidebarNav({ budgetId }: { budgetId: string }) {
           to={`/app/budgets/${budgetId}/month`}
           icon={<CalendarRange className="w-4 h-4" />}
           label="Month"
+        />
+        <NavItem
+          to={`/app/budgets/${budgetId}/ledger`}
+          icon={<Receipt className="w-4 h-4" />}
+          label="Ledger"
         />
         <NavItem
           to={`/app/budgets/${budgetId}/trends`}

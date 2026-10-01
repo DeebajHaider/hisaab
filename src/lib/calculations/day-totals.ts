@@ -53,6 +53,6 @@ export function groupTransactionsByCategory(
   );
 }
 
-function roundToCents(value: number): number {
+export function roundToCents(value: number): number {
   return Math.round(value * 100) / 100;
 }
