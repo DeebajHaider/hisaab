@@ -139,19 +139,26 @@
   * {
     @apply border-border outline-ring/50;
     }
+  /* overflow-x and scrollbar-gutter live on body, not html, on purpose.
+     Radix's dialog/sheet scroll-lock (react-remove-scroll-bar) measures
+     window.innerWidth - document.documentElement.clientWidth and adds that
+     back as margin-right on body to compensate for the scrollbar it hides.
+     That compensation only cancels out if html's own overflow is left at
+     its default (visible) — browsers then propagate body's overflow to
+     the viewport, which is what actually removes the scrollbar when Radix
+     sets body to overflow: hidden. Give html any explicit overflow value
+     (even just overflow-x) and that propagation breaks: the scrollbar
+     never disappears, but Radix's compensating margin still gets added —
+     a real, uncompensated width change every time a dialog opens or
+     closes. Declaring everything on body instead keeps propagation intact. */
   body {
     @apply bg-background text-foreground overflow-x-hidden;
-    }
-  html {
-    @apply font-sans overflow-x-hidden;
     scrollbar-color: var(--scrollbar-thumb) transparent;
     scrollbar-width: thin;
-    /* Reserve the scrollbar's gutter permanently. Without this, opening a
-       dialog (Radix locks body scroll, removing the scrollbar) reclaims
-       that width and the whole page visibly shifts sideways, then shifts
-       back when the dialog closes. Reserving it up front means toggling
-       the scrollbar never changes the available content width. */
     scrollbar-gutter: stable;
+    }
+  html {
+    @apply font-sans;
     }
 
   /* Firefox/standard scrollbar-color above covers most cases; these
