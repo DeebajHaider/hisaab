@@ -109,7 +109,7 @@ function HoldingRow({
           </div>
         </div>
 
-        <div className="ml-auto text-right tabular-nums">
+        <div className="ml-auto shrink-0 text-right tabular-nums">
           <div className="font-medium">
             {formatMoney(holding.current_value, holding.currency)}
           </div>
@@ -126,7 +126,7 @@ function HoldingRow({
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <Button
             variant="ghost"
             size="icon"

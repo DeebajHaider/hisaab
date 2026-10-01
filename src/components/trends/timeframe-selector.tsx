@@ -15,7 +15,7 @@ interface TimeframeSelectorProps {
  */
 export function TimeframeSelector({ value, onChange }: TimeframeSelectorProps) {
   return (
-    <div className="inline-flex rounded-md border bg-muted p-1">
+    <div className="flex flex-wrap rounded-md border bg-muted p-1">
       {TIMEFRAMES.map((tf) => {
         const isActive = tf === value;
         return (

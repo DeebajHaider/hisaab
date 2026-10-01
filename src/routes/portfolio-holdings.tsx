@@ -31,7 +31,7 @@ export function PortfolioHoldings() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between flex-wrap gap-y-2 mb-6">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Holdings</h1>
           <p className="text-sm text-muted-foreground mt-1">

@@ -33,20 +33,22 @@ function AssetClassRow({
 
   return (
     <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-card px-3 py-2.5 hover:bg-muted/30 transition-colors">
-      <span
-        className={`font-medium truncate ${
-          archived ? "text-muted-foreground line-through" : ""
-        }`}
-      >
-        {assetClass.name}
-      </span>
-      {archived && (
-        <Badge variant="secondary" className="text-xs font-normal">
-          Archived
-        </Badge>
-      )}
+      <div className="min-w-0 flex-1 flex items-center gap-2">
+        <span
+          className={`font-medium truncate ${
+            archived ? "text-muted-foreground line-through" : ""
+          }`}
+        >
+          {assetClass.name}
+        </span>
+        {archived && (
+          <Badge variant="secondary" className="text-xs font-normal shrink-0">
+            Archived
+          </Badge>
+        )}
+      </div>
 
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto shrink-0 flex items-center gap-1">
         {archived ? (
           <Button
             variant="ghost"

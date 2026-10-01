@@ -62,9 +62,9 @@ function CategoryBlock({
 }) {
   return (
     <div className="rounded-lg border border-border/60 bg-card overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border/40 bg-muted/30">
-        <span className="font-medium text-sm">{group.category.name}</span>
-        <span className="text-sm tabular-nums text-muted-foreground">
+      <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border/40 bg-muted/30">
+        <span className="font-medium text-sm min-w-0 flex-1 truncate">{group.category.name}</span>
+        <span className="text-sm tabular-nums text-muted-foreground shrink-0">
           {currency}{" "}
           {group.subtotal.toLocaleString(undefined, {
             minimumFractionDigits: 2,
@@ -135,7 +135,7 @@ function TransactionRow({
         })}
       </div>
 
-      <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex items-center gap-1 shrink-0">
+      <div className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex items-center gap-1 shrink-0">
         <Button
           variant="ghost"
           size="icon"

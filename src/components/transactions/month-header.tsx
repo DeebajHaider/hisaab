@@ -57,8 +57,8 @@ export function MonthHeader({ budgetId, yearMonth }: MonthHeaderProps) {
   for (let yr = maxYear; yr >= minYear; yr--) years.push(yr);
 
   return (
-    <div className="flex items-center justify-between gap-2 border-b pb-4">
-      <div className="flex items-center gap-2">
+    <div className="flex items-center justify-between gap-2 flex-wrap gap-y-2 border-b pb-4">
+      <div className="flex items-center gap-2 flex-wrap">
         <Button
           variant="outline"
           size="icon"
@@ -69,7 +69,7 @@ export function MonthHeader({ budgetId, yearMonth }: MonthHeaderProps) {
         </Button>
 
         {/* Fixed width so the arrows don't shift as the month name changes. */}
-        <h2 className="w-48 text-center text-xl font-semibold tabular-nums">
+        <h2 className="w-36 sm:w-48 text-center text-base sm:text-xl font-semibold tabular-nums">
           {formatMonthLabel(yearMonth)}
         </h2>
 

@@ -9,7 +9,7 @@ export function BudgetsHome() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between flex-wrap gap-y-2 mb-8">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Your budgets</h1>
           <p className="text-sm text-muted-foreground mt-1">

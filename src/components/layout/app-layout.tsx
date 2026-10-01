@@ -38,11 +38,11 @@ export function AppLayout() {
 function AppHeader() {
   return (
     <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-40">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-6">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-3 sm:gap-6">
           <Link to="/app" className="flex items-center gap-2">
             <Wallet className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-            <span className="font-semibold tracking-tight">Hisaab</span>
+            <span className="hidden sm:inline font-semibold tracking-tight">Hisaab</span>
           </Link>
           <SectionNav />
         </div>
@@ -67,7 +67,7 @@ function SectionNav() {
   const inBudgets = !inPortfolio && !inSettings;
 
   const cls = (active: boolean) =>
-    `rounded-md px-3 py-1.5 text-sm transition-colors ${
+    `rounded-md px-2 sm:px-3 py-1.5 text-sm transition-colors ${
       active
         ? "bg-muted font-medium text-foreground"
         : "text-muted-foreground hover:text-foreground"

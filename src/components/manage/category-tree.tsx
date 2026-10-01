@@ -75,20 +75,22 @@ function CategoryRow({
           </Button>
         </CollapsibleTrigger>
 
-        <span className="font-medium truncate">{group.category.name}</span>
+        <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
+          <span className="font-medium truncate">{group.category.name}</span>
 
-        {group.category.tracks_person && (
-          <Badge variant="secondary" className="text-xs gap-1 font-normal">
-            <Users className="w-3 h-3" />
-            <span>Per-person</span>
-          </Badge>
-        )}
+          {group.category.tracks_person && (
+            <Badge variant="secondary" className="text-xs gap-1 font-normal">
+              <Users className="w-3 h-3" />
+              <span>Per-person</span>
+            </Badge>
+          )}
 
-        <span className="text-xs text-muted-foreground ml-1">
-          {itemCount} {itemCount === 1 ? "item" : "items"}
-        </span>
+          <span className="text-xs text-muted-foreground">
+            {itemCount} {itemCount === 1 ? "item" : "items"}
+          </span>
+        </div>
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex items-center gap-1 shrink-0">
           <CategoryFormDialog
             budgetId={budgetId}
             existing={group.category}
@@ -170,25 +172,27 @@ function ItemRow({
   return (
     <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-background transition-colors group">
       <div className="w-4 shrink-0" />
-      <span className="text-sm">{item.name}</span>
+      <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
+        <span className="text-sm truncate">{item.name}</span>
 
-      {item.unit && (
-        <span className="text-xs text-muted-foreground">· {item.unit}</span>
-      )}
+        {item.unit && (
+          <span className="text-xs text-muted-foreground">· {item.unit}</span>
+        )}
 
-      {item.default_rate !== null && (
-        <span className="text-xs text-muted-foreground">
-          · default {item.default_rate}
-        </span>
-      )}
+        {item.default_rate !== null && (
+          <span className="text-xs text-muted-foreground">
+            · default {item.default_rate}
+          </span>
+        )}
 
-      {item.default_mode === "rate_qty" && (
-        <Badge variant="outline" className="text-[10px] py-0 h-4 font-normal">
-          rate × qty
-        </Badge>
-      )}
+        {item.default_mode === "rate_qty" && (
+          <Badge variant="outline" className="text-[10px] py-0 h-4 font-normal">
+            rate × qty
+          </Badge>
+        )}
+      </div>
 
-      <div className="ml-auto opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex items-center gap-1">
+      <div className="ml-auto shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex items-center gap-1">
         <ItemFormDialog
           budgetId={budgetId}
           categories={categories}

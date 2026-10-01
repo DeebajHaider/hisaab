@@ -51,7 +51,7 @@ export function CategoryBreakdownChart({
       <BarChart
         data={breakdown}
         layout="vertical"
-        margin={{ top: 8, right: 64, bottom: 8, left: 8 }}
+        margin={{ top: 8, right: 48, bottom: 8, left: 8 }}
       >
         <XAxis type="number" hide />
         <YAxis
@@ -59,7 +59,7 @@ export function CategoryBreakdownChart({
           dataKey="categoryName"
           tickLine={false}
           axisLine={false}
-          width={120}
+          width={80}
           tick={{ fontSize: 13 }}
         />
         <Tooltip content={<BreakdownTooltip />} cursor={{ fill: "transparent" }} />

@@ -22,8 +22,8 @@ export function DayHeader({ budgetId, date, total, currency }: DayHeaderProps) {
   const goTo = (iso: string) => navigate(`/app/budgets/${budgetId}/day/${iso}`);
 
   return (
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center gap-1">
+    <div className="flex items-center justify-between flex-wrap gap-y-2 mb-4">
+      <div className="flex items-center gap-1 flex-wrap">
         <Button variant="ghost" size="icon" asChild className="w-9 h-9">
           <Link to={`/app/budgets/${budgetId}/day/${prevDate}`} aria-label="Previous day">
             <ChevronLeft className="w-4 h-4" />
@@ -31,7 +31,7 @@ export function DayHeader({ budgetId, date, total, currency }: DayHeaderProps) {
         </Button>
 
         {/* Fixed width so the arrows don't shift as the day label changes. */}
-        <div className="w-32 px-2 text-center">
+        <div className="w-28 sm:w-32 px-2 text-center">
           <div className="font-semibold tracking-tight">
             {formatDayLabel(date)}
           </div>
