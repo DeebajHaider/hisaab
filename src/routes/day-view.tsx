@@ -8,6 +8,7 @@ import {
 } from "@/queries/use-transactions";
 import { calculateDayTotal } from "@/lib/calculations/day-totals";
 import { TransactionEntryForm } from "@/components/transactions/transaction-entry-form";
+import { QuickAddTemplates } from "@/components/transactions/quick-add-templates";
 import { DayHeader } from "@/components/transactions/day-header";
 import { TransactionList } from "@/components/transactions/transaction-list";
 import { EditTransactionDialog } from "@/components/transactions/edit-transaction-dialog";
@@ -88,6 +89,8 @@ export function DayView() {
           onDelete={setDeleting}
         />
       )}
+
+      <QuickAddTemplates budgetId={budgetId} date={date} currency={currency} />
 
       <TransactionEntryForm budgetId={budgetId} date={date} />
 

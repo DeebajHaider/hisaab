@@ -25,12 +25,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/lib/supabase";
+import { useBudget } from "@/queries/use-budget";
 import { useCategories, type Category } from "@/queries/use-categories";
 import { useItems, type ItemWithCategory } from "@/queries/use-items";
 import { groupItemsByCategory } from "@/lib/format/tree-sort";
 import { CategoryTree } from "@/components/manage/category-tree";
 import { CategoryFormDialog } from "@/components/manage/category-form-dialog";
 import { PersonList } from "@/components/manage/person-list";
+import { TemplateList } from "@/components/manage/template-list";
 import {
   useArchiveCategory,
   useDeleteCategory,
@@ -41,6 +43,7 @@ export function Manage() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const [showArchived, setShowArchived] = useState(false);
 
+  const budgetQuery = useBudget(budgetId);
   const categoriesQuery = useCategories(budgetId, {
     includeArchived: showArchived,
   });
@@ -51,6 +54,7 @@ export function Manage() {
   const isLoading = categoriesQuery.isLoading || itemsQuery.isLoading;
   const error = categoriesQuery.error || itemsQuery.error;
 
+  const currency = budgetQuery.data?.currency ?? "PKR";
   const allCategories = categoriesQuery.data ?? [];
   const allItems = itemsQuery.data ?? [];
 
@@ -102,6 +106,13 @@ export function Manage() {
       </section>
 
       <PersonList budgetId={budgetId} />
+
+      <TemplateList
+        budgetId={budgetId}
+        currency={currency}
+        categories={activeCategories}
+        items={activeItems}
+      />
     </div>
   );
 }
@@ -118,7 +129,7 @@ function Header({
   onToggleArchived: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex items-center justify-between flex-wrap gap-y-2 mb-6">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">
           Categories & items
