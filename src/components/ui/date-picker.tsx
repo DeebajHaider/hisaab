@@ -42,6 +42,14 @@ export function DatePicker({ value, onChange, trigger, ariaLabel }: DatePickerPr
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
+          // Remount whenever the bound value changes. The underlying
+          // DayPicker only computes its initially-displayed month once, at
+          // mount, from `selected` — it doesn't re-sync on prop changes.
+          // Without this key, a value set programmatically (e.g. a preset
+          // button far from the currently-displayed month) updates the
+          // trigger label but leaves the calendar grid showing the wrong
+          // month until the user manually navigates it.
+          key={value}
           mode="single"
           selected={selected}
           onSelect={(date) => {
