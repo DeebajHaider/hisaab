@@ -16,10 +16,11 @@ interface FilterChipsProps {
 /**
  * Horizontal wrap of toggleable chips, keyed by id rather than name (unlike
  * CategoryMultiSelect in components/trends, which keys by category name —
- * fine there since it's chart-legend driven, but the Ledger filters on
- * category_id/item_id directly, and item names can collide across
- * categories). No selection means "no filter" — all options are implicitly
- * included.
+ * fine there since it's chart-legend driven, but features that filter or
+ * track by category_id/item_id directly need id-keying, and item names can
+ * collide across categories). No selection means "no filter" — all options
+ * are implicitly included. Shared between the Ledger's filters and the
+ * Targets form's category/item pickers.
  */
 export function FilterChips({
   options,

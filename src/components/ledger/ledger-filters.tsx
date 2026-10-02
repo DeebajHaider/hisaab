@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
-import { FilterChips } from "./filter-chips";
+import { FilterChips } from "@/components/shared/filter-chips";
 import { LEDGER_PRESETS, type LedgerPreset } from "@/lib/calculations/resolve-ledger-preset";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/queries/use-categories";
