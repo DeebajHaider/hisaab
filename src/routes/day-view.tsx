@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
+import { Plus } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBudget } from "@/queries/use-budget";
@@ -24,6 +25,7 @@ export function DayView() {
 
   const [editing, setEditing] = useState<TransactionWithRelations | null>(null);
   const [deleting, setDeleting] = useState<TransactionWithRelations | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   // --- Keyboard navigation ---------------------------------------------------
   // Left/right arrows move to the previous/next day, but ONLY when:
@@ -96,8 +98,12 @@ export function DayView() {
       <QuickAddTemplates budgetId={budgetId} date={date} currency={currency} />
 
       {/* Deliberately not sticky: on phones the form is about a full
-          viewport tall, so pinning it covers the whole transaction list. */}
-      <TransactionEntryForm budgetId={budgetId} date={date} />
+          viewport tall, so pinning it covers the whole transaction list.
+          JumpToFormButton covers the "get back to the form" need instead. */}
+      <div ref={formRef} className="scroll-mt-20">
+        <TransactionEntryForm budgetId={budgetId} date={date} />
+      </div>
+      <JumpToFormButton targetRef={formRef} />
 
       <EditTransactionDialog
         budgetId={budgetId}
@@ -111,6 +117,41 @@ export function DayView() {
         onClose={() => setDeleting(null)}
       />
     </div>
+  );
+}
+
+/** Mobile-only shortcut back to the entry form, shown while it's off-screen. */
+function JumpToFormButton({ targetRef }: { targetRef: RefObject<HTMLDivElement | null> }) {
+  const [formVisible, setFormVisible] = useState(true);
+
+  useEffect(() => {
+    const el = targetRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) =>
+      setFormVisible(entry.isIntersecting),
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [targetRef]);
+
+  if (formVisible) return null;
+
+  const jump = () => {
+    const el = targetRef.current;
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.querySelector<HTMLInputElement>("#search-input")?.focus({ preventScroll: true });
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={jump}
+      aria-label="Add a transaction"
+      className="lg:hidden fixed right-5 bottom-[max(1.25rem,env(safe-area-inset-bottom))] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent-solid text-white hover:bg-accent-solid-hover animate-in fade-in zoom-in-90 duration-150"
+    >
+      <Plus className="h-6 w-6" />
+    </button>
   );
 }
 
