@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHoldings } from "@/queries/use-holdings";
 import { useAssetClasses } from "@/queries/use-asset-classes";
+import { usePortfolio } from "@/queries/use-portfolio";
+import { useUpdatePortfolioFxRates } from "@/queries/use-portfolio-mutations";
 import {
   summarizeByCurrency,
   blendedTotals,
@@ -21,6 +23,7 @@ import {
   type AllocationSlice,
 } from "@/components/portfolio/allocation-donut";
 import { HoldingSummaryList } from "@/components/portfolio/holding-summary-list";
+import { PortfolioProgressionChart } from "@/components/portfolio/portfolio-progression-chart";
 import { ErrorBanner } from "@/components/ui/error-banner";
 
 const BASE = "PKR";
@@ -29,7 +32,35 @@ export function PortfolioOverview() {
   const { portfolioId } = useParams<{ portfolioId: string }>();
   const holdingsQuery = useHoldings(portfolioId, false);
   const acQuery = useAssetClasses(portfolioId, true);
+  const portfolioQuery = usePortfolio(portfolioId);
+  const updateFxRates = useUpdatePortfolioFxRates();
   const [rateInputs, setRateInputs] = useState<Record<string, string>>({});
+
+  // Seed from the portfolio's stored fx_rates once, when it first loads —
+  // not on every render of portfolioQuery.data, which would re-fire on any
+  // background refetch and clobber whatever the user is actively typing
+  // (same class of bug fixed in the edit dialogs earlier).
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (seededRef.current || !portfolioQuery.data) return;
+    const stored = (portfolioQuery.data.fx_rates as Record<string, number>) ?? {};
+    if (Object.keys(stored).length > 0) {
+      const asStrings: Record<string, string> = {};
+      for (const [cur, rate] of Object.entries(stored)) asStrings[cur] = String(rate);
+      setRateInputs(asStrings);
+    }
+    seededRef.current = true;
+  }, [portfolioQuery.data]);
+
+  const persistRates = (next: Record<string, string>) => {
+    if (!portfolioId) return;
+    const numeric: Record<string, number> = {};
+    for (const [cur, raw] of Object.entries(next)) {
+      const n = Number(raw);
+      if (raw.trim() !== "" && !Number.isNaN(n) && n > 0) numeric[cur] = n;
+    }
+    updateFxRates.mutate({ id: portfolioId, fxRates: numeric });
+  };
 
   if (!portfolioId) return null;
 
@@ -82,6 +113,7 @@ export function PortfolioOverview() {
   }
 
   const blended = blendedTotals(holdings, rates, BASE);
+  const holdingCurrencies = Object.fromEntries(holdings.map((h) => [h.id, h.currency]));
 
   // Allocation, mapped from asset-class id to name + stable colors.
   const nameById = new Map(assetClasses.map((ac) => [ac.id, ac.name]));
@@ -118,9 +150,32 @@ export function PortfolioOverview() {
           foreignCurrencies={foreignCurrencies}
           rateInputs={rateInputs}
           setRateInputs={setRateInputs}
+          onRateBlur={() => persistRates(rateInputs)}
           blended={blended}
         />
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-medium text-muted-foreground">
+            Value over time
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PortfolioProgressionChart
+            portfolioId={portfolioId}
+            holdingCurrencies={holdingCurrencies}
+            rates={rates}
+            baseCurrency={BASE}
+          />
+          {blended.unconvertedCurrencies.length > 0 && (
+            <p className="mt-4 text-xs text-muted-foreground">
+              {blended.unconvertedCurrencies.join(", ")} holdings aren't included
+              here — set an exchange rate above to fold them in.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -190,11 +245,13 @@ function BlendPanel({
   foreignCurrencies,
   rateInputs,
   setRateInputs,
+  onRateBlur,
   blended,
 }: {
   foreignCurrencies: string[];
   rateInputs: Record<string, string>;
   setRateInputs: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  onRateBlur: () => void;
   blended: BlendedTotals;
 }) {
   const complete = blended.unconvertedCurrencies.length === 0;
@@ -228,6 +285,7 @@ function BlendPanel({
                 onChange={(e) =>
                   setRateInputs((r) => ({ ...r, [cur]: e.target.value }))
                 }
+                onBlur={onRateBlur}
                 className="max-w-[140px]"
               />
               <span className="text-sm text-muted-foreground">PKR</span>

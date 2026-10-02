@@ -40,6 +40,36 @@ export function useUpdatePortfolio() {
   });
 }
 
+/**
+ * Persists the manually-entered FX blend rates (overview page). No toast —
+ * this fires on blur as the user types, matching the ergonomics of a
+ * free-form inline field rather than a dialog's explicit Save action.
+ */
+export function useUpdatePortfolioFxRates() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      fxRates,
+    }: {
+      id: string;
+      fxRates: Record<string, number>;
+    }) => {
+      const { error } = await supabase
+        .from("portfolios")
+        .update({ fx_rates: fxRates })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: portfolioKeys.detail(vars.id) });
+    },
+    onError: (e: unknown) => {
+      toast.error(e instanceof Error ? e.message : "Couldn't save exchange rate");
+    },
+  });
+}
+
 export function useDeletePortfolio() {
   const qc = useQueryClient();
   return useMutation({
