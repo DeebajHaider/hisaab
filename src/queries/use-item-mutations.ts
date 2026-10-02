@@ -24,7 +24,11 @@ export function useCreateItem() {
 
       if (countError) throw countError;
 
+      // Generated client-side so callers learn the new id without reading
+      // the row back (inserts here deliberately don't use .select()).
+      const id = crypto.randomUUID();
       const { error } = await supabase.from("items").insert({
+        id,
         category_id: input.categoryId,
         name: input.name,
         unit: input.unit ?? null,
@@ -34,12 +38,14 @@ export function useCreateItem() {
       });
 
       if (error) throw error;
+      return id;
     },
-    onSuccess: (_, variables) => {
+    // Returned so mutateAsync resolves only once the items list includes
+    // the new row — callers can select it immediately.
+    onSuccess: (_, variables) =>
       queryClient.invalidateQueries({
         queryKey: ["items", variables.budgetId],
-      });
-    },
+      }),
     onError: (error) => {
       toast.error("Couldn't create item.", {
         description: error instanceof Error ? error.message : "Unknown error.",

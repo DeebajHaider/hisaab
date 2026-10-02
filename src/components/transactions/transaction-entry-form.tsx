@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, type FormEvent } from "react";
-import { Search, X, Check, Loader2 } from "lucide-react";
+import { Search, X, Check, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ import { useCategories } from "@/queries/use-categories";
 import { useItems, type ItemWithCategory } from "@/queries/use-items";
 import { usePeople } from "@/queries/use-people";
 import { useRecentItems } from "@/queries/use-recent-items";
+import { useCreateItem } from "@/queries/use-item-mutations";
 import { rankItems } from "@/lib/search/rank-items";
 import {
   useCreateTransaction,
@@ -61,14 +62,19 @@ export function TransactionEntryForm({
   const [editingDate, setEditingDate] = useState<string>(date);
 
   const [browseCategoryId, setBrowseCategoryId] = useState<string | null>(null);
+  // Name typed into search that the user chose to add as a new item; the
+  // inline create panel is open while this is non-null.
+  const [newItemName, setNewItemName] = useState<string | null>(null);
 
   const createMutation = useCreateTransaction();
   const updateMutation = useUpdateTransaction();
+  const createItemMutation = useCreateItem();
 
   const isEditing = !!existing;
   const mutationPending = createMutation.isPending || updateMutation.isPending;
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
   // --- Derived values
   const items = itemsQuery.data ?? [];
@@ -225,7 +231,28 @@ export function TransactionEntryForm({
     setPersonId(null);
   };
 
+  const createItem = async (name: string, categoryId: string) => {
+    let id: string;
+    try {
+      id = await createItemMutation.mutateAsync({ budgetId, categoryId, name });
+    } catch {
+      return; // the mutation already toasts; keep the panel open to retry
+    }
+    setNewItemName(null);
+    setSelectedItemId(id);
+    setSearchQuery("");
+    setBrowseCategoryId(categoryId);
+    if (!isEditing) {
+      setMode("lump");
+      setRate("");
+      setQty("");
+      setAmount("");
+    }
+    requestAnimationFrame(() => amountInputRef.current?.focus());
+  };
+
   const resetForm = () => {
+    setNewItemName(null);
     setSelectedItemId(null);
     setMode("lump");
     setRate("");
@@ -361,8 +388,23 @@ export function TransactionEntryForm({
             onQueryChange={setSearchQuery}
             onPick={pickItem}
             onClear={clearItem}
+            onCreate={setNewItemName}
             inputRef={searchInputRef}
           />
+          {newItemName !== null && (
+            <NewItemPanel
+              key={newItemName}
+              initialName={newItemName}
+              categories={categories}
+              defaultCategoryId={effectiveCategoryId}
+              pending={createItemMutation.isPending}
+              onCreate={createItem}
+              onCancel={() => {
+                setNewItemName(null);
+                searchInputRef.current?.focus();
+              }}
+            />
+          )}
         </div>
 
         <div className="text-xs text-muted-foreground text-center">
@@ -502,6 +544,7 @@ export function TransactionEntryForm({
               Amount
             </Label>
             <Input
+              ref={amountInputRef}
               id="amount-input"
               type="number"
               value={amount}
@@ -647,6 +690,7 @@ function SearchCombobox({
   onQueryChange,
   onPick,
   onClear,
+  onCreate,
   inputRef,
 }: {
   items: ItemWithCategory[];
@@ -656,12 +700,25 @@ function SearchCombobox({
   onQueryChange: (q: string) => void;
   onPick: (id: string) => void;
   onClear: () => void;
+  onCreate: (name: string) => void;
   inputRef: React.RefObject<HTMLInputElement | null>;
 }) {
   const [open, setOpen] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  const trimmed = query.trim();
+  const canCreate =
+    trimmed !== "" &&
+    !items.some((i) => i.name.toLowerCase() === trimmed.toLowerCase());
+  // The "add new" row sits after the results, at index items.length.
+  const optionCount = items.length + (canCreate ? 1 : 0);
+
+  const create = () => {
+    onCreate(trimmed);
+    setOpen(false);
+  };
 
   useEffect(() => {
     setHighlightIdx(0);
@@ -687,7 +744,7 @@ function SearchCombobox({
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setOpen(true);
-      setHighlightIdx((idx) => Math.min(idx + 1, items.length - 1));
+      setHighlightIdx((idx) => Math.min(idx + 1, optionCount - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setOpen(true);
@@ -697,6 +754,9 @@ function SearchCombobox({
         e.preventDefault();
         onPick(items[highlightIdx].id);
         setOpen(false);
+      } else if (open && canCreate && highlightIdx === items.length) {
+        e.preventDefault();
+        create();
       }
     } else if (e.key === "Escape") {
       setOpen(false);
@@ -752,7 +812,7 @@ function SearchCombobox({
           ref={listRef}
           className="absolute top-full left-0 right-0 mt-1 z-50 max-h-72 overflow-y-auto rounded-md border border-border/60 bg-popover shadow-md py-1"
         >
-          {items.length === 0 ? (
+          {items.length === 0 && !canCreate ? (
             <div className="px-3 py-4 text-sm text-muted-foreground text-center">
               No matching items.
             </div>
@@ -783,8 +843,117 @@ function SearchCombobox({
               </button>
             ))
           )}
+          {canCreate && (
+            <button
+              type="button"
+              data-idx={items.length}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                create();
+              }}
+              onMouseEnter={() => setHighlightIdx(items.length)}
+              className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 ${
+                items.length > 0 ? "border-t border-border/40 mt-1 pt-2" : ""
+              } ${highlightIdx === items.length ? "bg-muted/60" : "hover:bg-muted/40"}`}
+            >
+              <Plus className="w-3.5 h-3.5 text-accent-text shrink-0" />
+              <span className="truncate">
+                Add <span className="font-medium">“{trimmed}”</span> as a new item
+              </span>
+            </button>
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+function NewItemPanel({
+  initialName,
+  categories,
+  defaultCategoryId,
+  pending,
+  onCreate,
+  onCancel,
+}: {
+  initialName: string;
+  categories: { id: string; name: string }[];
+  defaultCategoryId: string | null;
+  pending: boolean;
+  onCreate: (name: string, categoryId: string) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState(initialName);
+  const [categoryId, setCategoryId] = useState(defaultCategoryId ?? "");
+  const canSubmit = name.trim() !== "" && categoryId !== "" && !pending;
+
+  const submit = () => {
+    if (canSubmit) onCreate(name.trim(), categoryId);
+  };
+
+  return (
+    <div className="rounded-md border border-accent-highlight-border bg-accent-highlight p-3 space-y-3">
+      <p className="text-xs font-medium">New item</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label htmlFor="new-item-name" className="text-xs">
+            Name
+          </Label>
+          <Input
+            id="new-item-name"
+            value={name}
+            maxLength={100}
+            autoFocus
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              // Enter must not submit the surrounding transaction form.
+              if (e.key === "Enter") {
+                e.preventDefault();
+                submit();
+              } else if (e.key === "Escape") {
+                onCancel();
+              }
+            }}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="new-item-category" className="text-xs">
+            Category
+          </Label>
+          <Select value={categoryId} onValueChange={setCategoryId}>
+            <SelectTrigger id="new-item-category" className="w-full">
+              <SelectValue placeholder="Pick a category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          Unit and default price can be set later in Manage.
+        </p>
+        <div className="flex gap-2 shrink-0">
+          <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={pending}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={submit}
+            disabled={!canSubmit}
+            className="bg-accent-solid hover:bg-accent-solid-hover text-white"
+          >
+            {pending && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
+            Create item
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
