@@ -95,7 +95,15 @@ export function DayView() {
 
       <QuickAddTemplates budgetId={budgetId} date={date} currency={currency} />
 
-      <TransactionEntryForm budgetId={budgetId} date={date} />
+      {/* Pinned to the bottom of the viewport on mobile so logging the
+          next item doesn't require scrolling back down past the day's
+          list every time; `sticky` (not `fixed`) keeps it in normal
+          document flow until scrolled to, which avoids on-screen-keyboard
+          overlap issues a fixed footer would have. Disabled above `lg`,
+          where there's room for everything inline. */}
+      <div className="sticky bottom-0 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 pb-4 pt-2 bg-background/95 backdrop-blur-sm border-t border-border/40 lg:static lg:z-auto lg:mx-0 lg:px-0 lg:pb-0 lg:pt-0 lg:bg-transparent lg:backdrop-blur-none lg:border-0">
+        <TransactionEntryForm budgetId={budgetId} date={date} />
+      </div>
 
       <EditTransactionDialog
         budgetId={budgetId}
