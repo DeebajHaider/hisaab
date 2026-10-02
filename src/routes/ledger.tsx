@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Download } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LedgerFilters } from "@/components/ledger/ledger-filters";
 import { LedgerDayGroup } from "@/components/ledger/ledger-day-group";
@@ -19,6 +21,8 @@ import {
 import { todayISO } from "@/lib/format/date";
 import { firstDayOfMonth } from "@/lib/format/year-month";
 import { ErrorBanner } from "@/components/ui/error-banner";
+import { buildLedgerCSV } from "@/lib/import/ledger-export";
+import { downloadCSV } from "@/lib/import/download-csv";
 
 export function Ledger() {
   const { budgetId } = useParams<{ budgetId: string }>();
@@ -118,9 +122,24 @@ export function Ledger() {
 
       {!isLoading && (
         <div className="flex items-center justify-between flex-wrap gap-2 px-1">
-          <p className="text-sm text-muted-foreground">
-            {transactions.length} transaction{transactions.length === 1 ? "" : "s"}
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-muted-foreground">
+              {transactions.length} transaction{transactions.length === 1 ? "" : "s"}
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-muted-foreground hover:text-foreground"
+              disabled={transactions.length === 0}
+              onClick={() => {
+                const csv = buildLedgerCSV(transactions);
+                downloadCSV(`hisaab-ledger_${from}_to_${to}.csv`, csv);
+              }}
+            >
+              <Download className="w-3.5 h-3.5 mr-1" />
+              Export
+            </Button>
+          </div>
           <p className="text-sm font-medium tabular-nums">
             Total: {currency}{" "}
             {total.toLocaleString(undefined, {

@@ -62,7 +62,7 @@ export function buildTransactionCSV(
  * which is essential — a comma would break the column structure, and the
  * importer parses cells with plain `Number()`.
  */
-function formatNumber(n: number): string {
+export function formatNumber(n: number): string {
   return n.toString();
 }
 
@@ -71,7 +71,7 @@ function formatNumber(n: number): string {
  * parseCSV tokenizer: a field is quoted if it contains a comma, a quote, or
  * a newline; interior quotes are doubled. A plain field is emitted as-is.
  */
-function esc(value: string): string {
+export function esc(value: string): string {
   if (/[",\r\n]/.test(value)) {
     return `"${value.replace(/"/g, '""')}"`;
   }
