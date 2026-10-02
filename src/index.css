@@ -170,9 +170,9 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
-    --glass-bg: color-mix(in oklab, var(--card) 35%, transparent);
-    --glass-sheen-from: oklch(1 0 0 / 9%);
-    --glass-sheen-to: oklch(1 0 0 / 2%);
+    --glass-bg: color-mix(in oklab, oklch(0.11 0 0) 60%, transparent);
+    --glass-sheen-from: oklch(1 0 0 / 6%);
+    --glass-sheen-to: oklch(1 0 0 / 1%);
     --glass-edge: oklch(1 0 0 / 10%);
     --glass-highlight: oklch(1 0 0 / 20%);
     --glass-shadow: oklch(0 0 0 / 55%);
