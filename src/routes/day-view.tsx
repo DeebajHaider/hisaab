@@ -14,6 +14,7 @@ import { TransactionList } from "@/components/transactions/transaction-list";
 import { EditTransactionDialog } from "@/components/transactions/edit-transaction-dialog";
 import { DeleteTransactionDialog } from "@/components/transactions/delete-transaction-dialog";
 import { addDays } from "@/lib/format/date";
+import { ErrorBanner } from "@/components/ui/error-banner";
 
 export function DayView() {
   const { budgetId, date } = useParams<{ budgetId: string; date: string }>();
@@ -81,6 +82,8 @@ export function DayView() {
 
       {transactionsQuery.isLoading ? (
         <ListSkeleton />
+      ) : transactionsQuery.error ? (
+        <ErrorBanner context="transactions" error={transactionsQuery.error} />
       ) : (
         <TransactionList
           transactions={transactions}

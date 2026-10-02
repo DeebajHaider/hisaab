@@ -18,6 +18,7 @@ import {
 } from "@/lib/calculations/resolve-ledger-preset";
 import { todayISO } from "@/lib/format/date";
 import { firstDayOfMonth } from "@/lib/format/year-month";
+import { ErrorBanner } from "@/components/ui/error-banner";
 
 export function Ledger() {
   const { budgetId } = useParams<{ budgetId: string }>();
@@ -139,6 +140,8 @@ export function Ledger() {
 
       {isLoading ? (
         <ListSkeleton />
+      ) : ledgerQuery.error ? (
+        <ErrorBanner context="transactions" error={ledgerQuery.error} />
       ) : groups.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">

@@ -21,6 +21,7 @@ import {
 import { todayISO } from "@/lib/format/date";
 import { CategoryBreakdownCard } from "@/components/charts/category-breakdown-card";
 import { getCategoryBreakdown } from "@/lib/calculations/category-breakdown";
+import { ErrorBanner } from "@/components/ui/error-banner";
 
 export function MonthView() {
   const { budgetId, yearMonth } = useParams<{
@@ -34,6 +35,7 @@ export function MonthView() {
 
   const isLoading =
     txQuery.isLoading || incomeQuery.isLoading || savingsQuery.isLoading;
+  const queryError = txQuery.error ?? incomeQuery.error ?? savingsQuery.error;
 
   const monthMeta = useMemo<MonthMeta | null>(() => {
     if (!yearMonth) return null;
@@ -93,6 +95,8 @@ export function MonthView() {
           <Skeleton className="h-[180px] w-full" />  {/* income section */}
           <Skeleton className="h-[180px] w-full" />  {/* savings section */}
         </div>
+      ) : queryError ? (
+        <ErrorBanner context="this month's data" error={queryError} />
       ) : !hasAnyData ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">

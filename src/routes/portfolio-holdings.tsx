@@ -8,6 +8,7 @@ import { useAssetClasses } from "@/queries/use-asset-classes";
 import { groupHoldingsByAssetClass } from "@/lib/format/group-holdings";
 import { HoldingFormDialog } from "@/components/portfolio/holding-form-dialog";
 import { HoldingGroupSection } from "@/components/portfolio/holding-list";
+import { ErrorBanner } from "@/components/ui/error-banner";
 
 export function PortfolioHoldings() {
   const { portfolioId } = useParams<{ portfolioId: string }>();
@@ -28,6 +29,7 @@ export function PortfolioHoldings() {
   );
 
   const isLoading = holdingsQuery.isLoading || acQuery.isLoading;
+  const queryError = holdingsQuery.error ?? acQuery.error;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
@@ -65,6 +67,8 @@ export function PortfolioHoldings() {
             <Skeleton key={i} className="h-14 w-full" />
           ))}
         </div>
+      ) : queryError ? (
+        <ErrorBanner context="holdings" error={queryError} />
       ) : groups.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border p-12 text-center">
           <Coins className="w-10 h-10 mx-auto text-muted-foreground mb-3" />

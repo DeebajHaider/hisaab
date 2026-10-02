@@ -21,6 +21,7 @@ import {
   type AllocationSlice,
 } from "@/components/portfolio/allocation-donut";
 import { HoldingSummaryList } from "@/components/portfolio/holding-summary-list";
+import { ErrorBanner } from "@/components/ui/error-banner";
 
 const BASE = "PKR";
 
@@ -41,6 +42,15 @@ export function PortfolioOverview() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-4">
         <Skeleton className="h-28 w-full" />
         <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  const queryError = holdingsQuery.error ?? acQuery.error;
+  if (queryError) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+        <ErrorBanner context="portfolio data" error={queryError} />
       </div>
     );
   }
