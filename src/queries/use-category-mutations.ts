@@ -82,6 +82,11 @@ export function useUpdateCategory() {
       queryClient.invalidateQueries({
         queryKey: ["items", variables.budgetId],
       });
+      // Templates join category name for display (Manage > Templates and
+      // the Day view's Quick-add strip) — stale otherwise after a rename.
+      queryClient.invalidateQueries({
+        queryKey: ["templates", variables.budgetId],
+      });
     },
     onError: (error) => {
       toast.error("Couldn't update category.", {
@@ -130,6 +135,9 @@ export function useArchiveCategory() {
       });
       queryClient.invalidateQueries({
         queryKey: ["items", variables.budgetId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["templates", variables.budgetId],
       });
     },
     onError: (error) => {

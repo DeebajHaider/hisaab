@@ -20,6 +20,7 @@ export function useCreateAssetClass() {
       if (error) throw error;
     },
     onSuccess: (_data, vars) => {
+      toast.success("Asset class created.");
       qc.invalidateQueries({
         queryKey: assetClassKeys.allForPortfolio(vars.portfolioId),
       });
@@ -48,6 +49,7 @@ export function useUpdateAssetClass() {
       if (error) throw error;
     },
     onSuccess: (_data, vars) => {
+      toast.success("Asset class renamed.");
       qc.invalidateQueries({
         queryKey: assetClassKeys.allForPortfolio(vars.portfolioId),
       });
@@ -78,6 +80,7 @@ export function useSetAssetClassArchived() {
       if (error) throw error;
     },
     onSuccess: (_data, vars) => {
+      toast.success(vars.isArchived ? "Asset class archived." : "Asset class restored.");
       qc.invalidateQueries({
         queryKey: assetClassKeys.allForPortfolio(vars.portfolioId),
       });

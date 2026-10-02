@@ -86,6 +86,10 @@ export function useUpdateItem() {
       queryClient.invalidateQueries({
         queryKey: ["items", variables.budgetId],
       });
+      // Templates join item name for display — stale otherwise after a rename.
+      queryClient.invalidateQueries({
+        queryKey: ["templates", variables.budgetId],
+      });
     },
     onError: (error) => {
       toast.error("Couldn't update item.", {
@@ -120,6 +124,9 @@ export function useArchiveItem() {
       );
       queryClient.invalidateQueries({
         queryKey: ["items", variables.budgetId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["templates", variables.budgetId],
       });
     },
     onError: (error) => {

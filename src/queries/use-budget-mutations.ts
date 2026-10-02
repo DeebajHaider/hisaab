@@ -59,6 +59,7 @@ export function useDeleteBudget() {
       if (error) throw error;
     },
     onSuccess: () => {
+      toast.success("Budget deleted.");
       qc.invalidateQueries({ queryKey: ["budgets"] });
     },
     onError: (error) => {

@@ -106,6 +106,7 @@ export function useRemoveMember() {
       }
     },
     onSuccess: (_data, { budgetId }) => {
+      toast.success("Member removed.");
       qc.invalidateQueries({ queryKey: memberKeys.byBudget(budgetId) });
       qc.invalidateQueries({ queryKey: ["budgets"] });
     },

@@ -52,6 +52,7 @@ export function useCreateHolding() {
       if (histError) throw histError;
     },
     onSuccess: (_data, vars) => {
+      toast.success("Holding added.");
       qc.invalidateQueries({
         queryKey: holdingKeys.allForPortfolio(vars.portfolioId),
       });
@@ -93,6 +94,7 @@ export function useUpdateHolding() {
       if (error) throw error;
     },
     onSuccess: (_data, vars) => {
+      toast.success("Holding updated.");
       qc.invalidateQueries({
         queryKey: holdingKeys.allForPortfolio(vars.portfolioId),
       });
@@ -142,6 +144,7 @@ export function useUpdateHoldingValue() {
       if (histError) throw histError;
     },
     onSuccess: (_data, vars) => {
+      toast.success("Value updated.");
       qc.invalidateQueries({
         queryKey: holdingKeys.allForPortfolio(vars.portfolioId),
       });
@@ -194,6 +197,7 @@ export function useAdjustHoldingInvestment() {
       if (histError) throw histError;
     },
     onSuccess: (_data, vars) => {
+      toast.success("Investment adjusted.");
       qc.invalidateQueries({
         queryKey: holdingKeys.allForPortfolio(vars.portfolioId),
       });
@@ -225,6 +229,7 @@ export function useSetHoldingArchived() {
       if (error) throw error;
     },
     onSuccess: (_data, vars) => {
+      toast.success(vars.isArchived ? "Holding archived." : "Holding restored.");
       qc.invalidateQueries({
         queryKey: holdingKeys.allForPortfolio(vars.portfolioId),
       });

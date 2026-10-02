@@ -23,6 +23,7 @@ export function useCreatePerson() {
       if (error) throw error;
     },
     onSuccess: (_data, { budgetId }) => {
+      toast.success("Person added.");
       // Invalidate at the byBudget root so both archived and active
       // people lists refetch. Cheaper than figuring out which one is
       // currently mounted.
@@ -62,7 +63,10 @@ export function useUpdatePerson() {
       if (error) throw error;
     },
     onSuccess: (_data, { budgetId }) => {
+      toast.success("Person updated.");
       qc.invalidateQueries({ queryKey: peopleKeys.byBudget(budgetId) });
+      // Templates join person name for display — stale otherwise after a rename.
+      qc.invalidateQueries({ queryKey: ["templates", budgetId] });
     },
     onError: (error, _variables) => {
       // Errors deserve longer than the 4s default — give the user time to read.
@@ -95,9 +99,10 @@ export function useArchivePerson() {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: (_data, { budgetId }) => {
-      toast.success("Person archived.");
+    onSuccess: (_data, { budgetId, archived }) => {
+      toast.success(archived ? "Person archived." : "Person restored.");
       qc.invalidateQueries({ queryKey: peopleKeys.byBudget(budgetId) });
+      qc.invalidateQueries({ queryKey: ["templates", budgetId] });
     },
     onError: (error, _variables) => {
       // Errors deserve longer than the 4s default — give the user time to read.

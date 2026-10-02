@@ -36,6 +36,7 @@ export function useCreateIncome() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
+      toast.success("Income entry created.");
       queryClient.invalidateQueries({
         queryKey: incomeKeys.byBudget(variables.budgetId),
       });
@@ -83,6 +84,7 @@ export function useUpdateIncome() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
+      toast.success("Income entry updated.");
       queryClient.invalidateQueries({
         queryKey: incomeKeys.byBudget(variables.budgetId),
       });
@@ -118,6 +120,7 @@ export function useDeleteIncome() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
+      toast.success("Income entry deleted.");
       queryClient.invalidateQueries({
         queryKey: incomeKeys.byBudget(variables.budgetId),
       });
