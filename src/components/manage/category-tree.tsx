@@ -61,7 +61,7 @@ function CategoryRow({
     <Collapsible
       open={open}
       onOpenChange={setOpen}
-      className="rounded-lg border border-border/60 bg-card overflow-hidden"
+      className="rounded-lg glass overflow-hidden"
     >
       <div className="flex items-center gap-2 px-3 py-2 hover:bg-muted/30 transition-colors">
         <CollapsibleTrigger asChild>

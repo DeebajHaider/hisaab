@@ -26,20 +26,16 @@ import { useAuth } from "@/lib/auth-context";
 export function AppLayout() {
   return (
     <div className="relative min-h-screen flex flex-col bg-background">
-      {/* Fixed (not scrolling) ambient glow behind all page content. This
-          is what makes the glass effect on Cards and floating surfaces
-          actually visible on ordinary pages — backdrop-blur on an
-          in-flow element has nothing to show if there's nothing layered
-          behind it; a plain card sitting on a flat bg-background blurs
-          literally nothing. With this in place, cards (and dialogs/
-          popovers opened over the page) frost a real gradient instead. */}
+      {/* Fixed ambient color field — the thing .glass surfaces frost.
+          Without it, backdrop-blur over a flat background blurs nothing. */}
       <div
         aria-hidden
         className="fixed inset-0 pointer-events-none overflow-hidden"
         style={{
           background:
-            "radial-gradient(ellipse 800px 500px at 15% 0%, color-mix(in oklab, var(--accent-solid) 7%, transparent), transparent), " +
-            "radial-gradient(ellipse 700px 500px at 100% 40%, color-mix(in oklab, var(--accent-solid) 5%, transparent), transparent)",
+            "radial-gradient(ellipse 900px 600px at 10% -5%, var(--ambient-1), transparent 70%), " +
+            "radial-gradient(ellipse 700px 600px at 95% 45%, var(--ambient-2), transparent 70%), " +
+            "radial-gradient(ellipse 800px 500px at 30% 105%, var(--ambient-3), transparent 70%)",
         }}
       />
       <AppHeader />

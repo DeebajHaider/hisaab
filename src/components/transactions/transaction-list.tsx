@@ -61,7 +61,7 @@ function CategoryBlock({
   onDelete: (transaction: TransactionWithRelations) => void;
 }) {
   return (
-    <div className="rounded-lg border border-border/60 bg-card overflow-hidden">
+    <div className="rounded-lg glass overflow-hidden">
       <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border/40 bg-muted/30">
         <span className="font-medium text-sm min-w-0 flex-1 truncate">{group.category.name}</span>
         <span className="text-sm tabular-nums text-muted-foreground shrink-0">

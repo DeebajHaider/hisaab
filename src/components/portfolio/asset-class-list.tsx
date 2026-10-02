@@ -32,7 +32,7 @@ function AssetClassRow({
   const archived = assetClass.is_archived;
 
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-card px-3 py-2.5 hover:bg-muted/30 transition-colors">
+    <div className="flex items-center gap-2 rounded-lg glass px-3 py-2.5 hover:bg-muted/30 transition-colors">
       <div className="min-w-0 flex-1 flex items-center gap-2">
         <span
           className={`font-medium truncate ${

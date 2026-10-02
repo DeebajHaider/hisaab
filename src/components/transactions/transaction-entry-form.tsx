@@ -336,7 +336,7 @@ export function TransactionEntryForm({
       </h2>
       <form
         onSubmit={handleSubmit}
-        className="rounded-lg border border-border/60 bg-card/75 backdrop-blur-xl backdrop-saturate-150 p-5 sm:p-6 space-y-5"
+        className="rounded-lg glass p-5 sm:p-6 space-y-5"
       >
         {/* Date — edit mode only. */}
         {isEditing && (
@@ -791,7 +791,7 @@ function SearchCombobox({
 
 function FormSkeleton() {
   return (
-    <div className="rounded-lg border border-border/60 bg-card p-4 space-y-4">
+    <div className="rounded-lg glass p-4 space-y-4">
       <div className="h-9 bg-muted/40 rounded animate-pulse" />
       <div className="grid grid-cols-2 gap-3">
         <div className="h-9 bg-muted/40 rounded animate-pulse" />

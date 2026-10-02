@@ -84,7 +84,7 @@ function HoldingRow({
   const sign = gain ? "+" : "−";
 
   return (
-    <div className="rounded-lg border border-border/60 bg-card">
+    <div className="rounded-lg glass">
       <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30 transition-colors">
         <div className="min-w-0">
           <div className="flex items-center gap-2">

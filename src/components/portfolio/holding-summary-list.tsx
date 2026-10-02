@@ -33,7 +33,7 @@ function SummaryRow({ holding }: { holding: Holding }) {
   const sign = gain ? "+" : "−";
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-card px-3 py-2.5">
+    <div className="flex items-center gap-3 rounded-lg glass px-3 py-2.5">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-medium truncate">{holding.name}</span>

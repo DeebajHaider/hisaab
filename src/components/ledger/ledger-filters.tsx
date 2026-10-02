@@ -68,7 +68,7 @@ export function LedgerFilters({
   }, [items, selectedCategoryIds]);
 
   return (
-    <div className="space-y-4 rounded-lg border border-border/60 bg-card/75 backdrop-blur-xl backdrop-saturate-150 p-4">
+    <div className="space-y-4 rounded-lg glass p-4">
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex flex-wrap rounded-md border bg-muted p-1">
           {LEDGER_PRESETS.map((preset) => {

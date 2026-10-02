@@ -99,7 +99,7 @@ function RenameSection({
   };
 
   return (
-    <section className="rounded-lg border border-border/60 bg-card/75 backdrop-blur-xl backdrop-saturate-150 p-5 sm:p-6">
+    <section className="rounded-lg glass p-5 sm:p-6">
       <header className="mb-4">
         <h2 className="text-base font-medium">Rename budget</h2>
         <p className="text-xs text-muted-foreground mt-0.5">
@@ -206,7 +206,7 @@ function DangerZone({
   };
 
   return (
-    <section className="rounded-lg border border-destructive/30 bg-card/75 backdrop-blur-xl backdrop-saturate-150 p-5 sm:p-6">
+    <section className="rounded-lg glass border border-destructive/30 p-5 sm:p-6">
       <header className="mb-4">
         <h2 className="text-base font-medium text-destructive">Danger zone</h2>
         <p className="text-xs text-muted-foreground mt-0.5">

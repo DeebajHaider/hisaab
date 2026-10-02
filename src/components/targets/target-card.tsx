@@ -77,7 +77,7 @@ export function TargetCard({ budgetId, currency, target, categories, items }: Ta
   })();
 
   return (
-    <div className="rounded-lg border border-border/60 bg-card p-4 space-y-3">
+    <div className="rounded-lg glass p-4 space-y-3">
       <div className="flex items-start justify-between gap-2 flex-wrap">
         <div className="min-w-0">
           <h3 className="font-medium truncate">{target.name}</h3>

@@ -24,7 +24,7 @@ function formatAmount(amount: number): string {
  */
 export function LedgerDayGroup({ budgetId, group, currency }: LedgerDayGroupProps) {
   return (
-    <div className="rounded-lg border border-border/60 bg-card overflow-hidden">
+    <div className="rounded-lg glass overflow-hidden">
       <Link
         to={`/app/budgets/${budgetId}/day/${group.date}`}
         className="flex items-center justify-between px-3 py-2 border-b border-border/40 bg-muted/30 hover:bg-muted/50 transition-colors"
