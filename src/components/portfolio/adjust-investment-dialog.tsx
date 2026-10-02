@@ -106,7 +106,7 @@ export function AdjustInvestmentDialog({ holding, open, onOpenChange }: Props) {
             <Button
               type="button"
               variant={mode === "add" ? "default" : "outline"}
-              className={mode === "add" ? "bg-teal-600 hover:bg-teal-700 text-white" : ""}
+              className={mode === "add" ? "bg-accent-solid hover:bg-accent-solid-hover text-white" : ""}
               onClick={() => setMode("add")}
             >
               Add
@@ -115,7 +115,7 @@ export function AdjustInvestmentDialog({ holding, open, onOpenChange }: Props) {
               type="button"
               variant={mode === "withdraw" ? "default" : "outline"}
               className={
-                mode === "withdraw" ? "bg-teal-600 hover:bg-teal-700 text-white" : ""
+                mode === "withdraw" ? "bg-accent-solid hover:bg-accent-solid-hover text-white" : ""
               }
               onClick={() => setMode("withdraw")}
             >
@@ -172,7 +172,7 @@ export function AdjustInvestmentDialog({ holding, open, onOpenChange }: Props) {
             </Button>
             <Button
               type="submit"
-              className="bg-teal-600 hover:bg-teal-700 text-white"
+              className="bg-accent-solid hover:bg-accent-solid-hover text-white"
               disabled={adjust.isPending || !validAmount || withdrawTooMuch}
             >
               {adjust.isPending ? "Saving..." : mode === "add" ? "Add" : "Withdraw"}

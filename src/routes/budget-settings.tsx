@@ -45,7 +45,7 @@ export function BudgetSettings() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
           Budget settings
         </h1>
         <p className="text-sm text-muted-foreground mt-1">{budget.name}</p>
@@ -125,7 +125,7 @@ function RenameSection({
           <Button
             type="submit"
             disabled={!isDirty || updateBudget.isPending}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
+            className="bg-accent-solid hover:bg-accent-solid-hover text-white"
           >
             {updateBudget.isPending ? (
               <>

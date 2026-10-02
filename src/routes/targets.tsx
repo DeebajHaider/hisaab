@@ -44,10 +44,10 @@ export function Targets() {
     budgetQuery.error ?? categoriesQuery.error ?? itemsQuery.error ?? targetsQuery.error;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8">
       <div className="flex items-center justify-between flex-wrap gap-y-2">
         <div>
-          <h1 className="text-2xl font-semibold">Targets</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Targets</h1>
           <p className="text-sm text-muted-foreground">
             Spending goals for any mix of categories and items, over any date range.
           </p>
@@ -58,7 +58,7 @@ export function Targets() {
             categories={categories}
             items={items}
             trigger={
-              <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white">
+              <Button size="sm" className="bg-accent-solid hover:bg-accent-solid-hover text-white">
                 <Plus className="w-4 h-4 mr-1.5" />
                 New target
               </Button>
@@ -89,7 +89,7 @@ export function Targets() {
                 categories={categories}
                 items={items}
                 trigger={
-                  <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white">
+                  <Button size="sm" className="bg-accent-solid hover:bg-accent-solid-hover text-white">
                     <Plus className="w-4 h-4 mr-1.5" />
                     New target
                   </Button>

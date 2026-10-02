@@ -248,7 +248,7 @@ export function TemplateFormDialog({
                 type="button"
                 onClick={() => setMode("lump")}
                 className={`px-3 py-1 text-xs ${
-                  mode === "lump" ? "bg-teal-600 text-white" : "bg-background hover:bg-muted"
+                  mode === "lump" ? "bg-accent-solid text-white" : "bg-background hover:bg-muted"
                 }`}
               >
                 Lump
@@ -258,7 +258,7 @@ export function TemplateFormDialog({
                 onClick={() => setMode("rate_qty")}
                 className={`px-3 py-1 text-xs ${
                   mode === "rate_qty"
-                    ? "bg-teal-600 text-white"
+                    ? "bg-accent-solid text-white"
                     : "bg-background hover:bg-muted"
                 }`}
               >
@@ -367,7 +367,7 @@ export function TemplateFormDialog({
             </Button>
             <Button
               type="submit"
-              className="bg-teal-600 hover:bg-teal-700 text-white"
+              className="bg-accent-solid hover:bg-accent-solid-hover text-white"
               disabled={isPending || !categoryId || !itemId || !amount.trim()}
             >
               {isPending

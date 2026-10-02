@@ -41,7 +41,7 @@ function AppHeader() {
       <div className="max-w-6xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3 sm:gap-6">
           <Link to="/app" className="flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            <Wallet className="w-5 h-5 text-accent-text" />
             <span className="hidden sm:inline font-semibold tracking-tight">Hisaab</span>
           </Link>
           <SectionNav />
@@ -123,7 +123,7 @@ function UserMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="w-9 h-9 rounded-full">
           <Avatar className="w-8 h-8">
-            <AvatarFallback className="bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 text-sm font-medium">
+            <AvatarFallback className="bg-accent-soft text-accent-soft-foreground text-sm font-medium">
               {initial}
             </AvatarFallback>
           </Avatar>

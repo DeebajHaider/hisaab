@@ -126,7 +126,7 @@ export function AssetClassFormDialog({
             </Button>
             <Button
               type="submit"
-              className="bg-teal-600 hover:bg-teal-700 text-white"
+              className="bg-accent-solid hover:bg-accent-solid-hover text-white"
               disabled={isPending || !name.trim()}
             >
               {isPending

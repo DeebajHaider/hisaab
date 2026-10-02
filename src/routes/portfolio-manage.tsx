@@ -17,10 +17,10 @@ export function PortfolioManage() {
   const assetClasses = acQuery.data ?? [];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
       <div className="flex items-center justify-between flex-wrap gap-y-2 mb-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Asset classes</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Asset classes</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Groups for your holdings. Archive the ones you don't use.
           </p>
@@ -36,7 +36,7 @@ export function PortfolioManage() {
           <AssetClassFormDialog
             portfolioId={portfolioId}
             trigger={
-              <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white">
+              <Button size="sm" className="bg-accent-solid hover:bg-accent-solid-hover text-white">
                 <Plus className="w-4 h-4 mr-1.5" />
                 New asset class
               </Button>
@@ -61,7 +61,7 @@ export function PortfolioManage() {
           <AssetClassFormDialog
             portfolioId={portfolioId}
             trigger={
-              <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white">
+              <Button size="sm" className="bg-accent-solid hover:bg-accent-solid-hover text-white">
                 <Plus className="w-4 h-4 mr-1.5" />
                 Add asset class
               </Button>

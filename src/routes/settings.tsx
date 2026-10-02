@@ -124,7 +124,7 @@ export function Settings() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Personal preferences. Apply across every budget you belong to.
         </p>
@@ -189,8 +189,8 @@ export function Settings() {
             )}
 
             {justSaved && !updateMutation.isPending && (
-              <div className="rounded-md border border-teal-200 dark:border-teal-900/60 bg-teal-50 dark:bg-teal-950/30 p-3 text-sm flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+              <div className="rounded-md border border-accent-highlight-border bg-accent-highlight p-3 text-sm flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-accent-text" />
                 <span>Saved.</span>
               </div>
             )}
@@ -199,7 +199,7 @@ export function Settings() {
               <Button
                 type="submit"
                 disabled={!isDirty || updateMutation.isPending}
-                className="bg-teal-600 hover:bg-teal-700 text-white"
+                className="bg-accent-solid hover:bg-accent-solid-hover text-white"
               >
                 {updateMutation.isPending ? (
                   <>
@@ -302,7 +302,7 @@ export function Settings() {
                 !confirmPassword ||
                 profileQuery.isLoading
               }
-              className="bg-teal-600 hover:bg-teal-700 text-white"
+              className="bg-accent-solid hover:bg-accent-solid-hover text-white"
             >
               {passwordPending ? (
                 <>
@@ -540,7 +540,7 @@ function BlockedDeletion({ budgets }: { budgets: OwnedSharedBudget[] }) {
           <li key={b.budget_id}>
             <Link
               to={`/app/budgets/${b.budget_id}/members`}
-              className="text-sm text-teal-600 dark:text-teal-400 hover:underline underline-offset-2"
+              className="text-sm text-accent-text hover:underline underline-offset-2"
             >
               {b.budget_name} → Members
             </Link>

@@ -11,7 +11,7 @@ export function BudgetsHome() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
       <div className="flex items-center justify-between flex-wrap gap-y-2 mb-8">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Your budgets</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Your budgets</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Pick a budget to log expenses, or create a new one.
           </p>
@@ -71,12 +71,12 @@ function BudgetGrid({ budgets }: { budgets: ReturnType<typeof useBudgets>["data"
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {budgets.map((budget) => (
         <Link key={budget.id} to={`/app/budgets/${budget.id}`} className="group">
-          <Card className="h-full transition-colors group-hover:border-teal-300 dark:group-hover:border-teal-700">
+          <Card className="h-full transition-colors group-hover:border-accent-border-hover">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center justify-between">
                 <span className="truncate">{budget.name}</span>
                 {budget.is_shared && (
-                  <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300">
+                  <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-accent-soft text-accent-soft-foreground">
                     Shared
                   </span>
                 )}

@@ -102,9 +102,9 @@ export function Trends() {
   const hasAnyHistory = earliest !== null;
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold">Trends</h1>
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Trends</h1>
         <p className="text-sm text-muted-foreground">
           Spending patterns across time.
         </p>

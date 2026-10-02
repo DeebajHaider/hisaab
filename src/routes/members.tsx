@@ -56,10 +56,10 @@ export function Members() {
   const isOwner = currentMember?.role === "owner";
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-6 max-w-3xl">
+    <div className="flex flex-col gap-6 sm:gap-8 max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold">Members</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Members</h1>
           <p className="text-sm text-muted-foreground">
             People with access to{" "}
             <span className="font-medium">{budgetQuery.data?.name}</span>.
@@ -199,7 +199,7 @@ function MemberRow({
   return (
     <li className="flex items-center gap-3 py-3">
       <Avatar className="w-9 h-9 shrink-0">
-        <AvatarFallback className="bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 text-sm font-medium">
+        <AvatarFallback className="bg-accent-soft text-accent-soft-foreground text-sm font-medium">
           {initial}
         </AvatarFallback>
       </Avatar>
@@ -350,7 +350,7 @@ function MemberRow({
 function RoleBadge({ role }: { role: "owner" | "editor" | "viewer" }) {
   if (role === "owner") {
     return (
-      <Badge className="bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/40">
+      <Badge className="bg-accent-soft text-accent-soft-foreground hover:bg-accent-soft">
         Owner
       </Badge>
     );

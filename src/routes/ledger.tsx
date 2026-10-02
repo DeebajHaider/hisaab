@@ -97,9 +97,9 @@ export function Ledger() {
     ledgerQuery.isLoading;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold">Ledger</h1>
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Ledger</h1>
         <p className="text-sm text-muted-foreground">
           Search your transaction history by date range, category, or item.
         </p>

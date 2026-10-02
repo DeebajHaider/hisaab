@@ -32,10 +32,10 @@ export function PortfolioHoldings() {
   const queryError = holdingsQuery.error ?? acQuery.error;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
       <div className="flex items-center justify-between flex-wrap gap-y-2 mb-6">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Holdings</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Holdings</h1>
           <p className="text-sm text-muted-foreground mt-1">
             What you own, grouped by asset class.
           </p>
@@ -52,7 +52,7 @@ export function PortfolioHoldings() {
             portfolioId={portfolioId}
             assetClasses={activeAssetClasses}
             trigger={
-              <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white">
+              <Button size="sm" className="bg-accent-solid hover:bg-accent-solid-hover text-white">
                 <Plus className="w-4 h-4 mr-1.5" />
                 New holding
               </Button>
@@ -80,7 +80,7 @@ export function PortfolioHoldings() {
             portfolioId={portfolioId}
             assetClasses={activeAssetClasses}
             trigger={
-              <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white">
+              <Button size="sm" className="bg-accent-solid hover:bg-accent-solid-hover text-white">
                 <Plus className="w-4 h-4 mr-1.5" />
                 Add holding
               </Button>

@@ -331,12 +331,12 @@ export function TransactionEntryForm({
 
   return (
     <section>
-      <h2 className="text-sm font-medium text-muted-foreground mb-2 px-1">
+      <h2 className="text-sm font-medium text-muted-foreground mb-3 px-1">
         {isEditing ? "Edit transaction" : "Add a transaction"}
       </h2>
       <form
         onSubmit={handleSubmit}
-        className="rounded-lg border border-border/60 bg-card p-4 space-y-4"
+        className="rounded-lg border border-border/60 bg-card p-5 sm:p-6 space-y-5"
       >
         {/* Date — edit mode only. */}
         {isEditing && (
@@ -441,7 +441,7 @@ export function TransactionEntryForm({
               onClick={() => setMode("lump")}
               className={`px-3 py-1 text-xs ${
                 mode === "lump"
-                  ? "bg-teal-600 text-white"
+                  ? "bg-accent-solid text-white"
                   : "bg-background hover:bg-muted"
               }`}
             >
@@ -452,7 +452,7 @@ export function TransactionEntryForm({
               onClick={() => setMode("rate_qty")}
               className={`px-3 py-1 text-xs ${
                 mode === "rate_qty"
-                  ? "bg-teal-600 text-white"
+                  ? "bg-accent-solid text-white"
                   : "bg-background hover:bg-muted"
               }`}
             >
@@ -611,7 +611,7 @@ export function TransactionEntryForm({
           )}
           <Button
             type="submit"
-            className="bg-teal-600 hover:bg-teal-700 text-white"
+            className="bg-accent-solid hover:bg-accent-solid-hover text-white"
             disabled={
               mutationPending ||
               !selectedItem ||
@@ -778,7 +778,7 @@ function SearchCombobox({
                   {item.unit && ` · ${item.unit}`}
                 </span>
                 {item.id === selectedId && (
-                  <Check className="w-3.5 h-3.5 ml-auto text-teal-600 dark:text-teal-400" />
+                  <Check className="w-3.5 h-3.5 ml-auto text-accent-text" />
                 )}
               </button>
             ))

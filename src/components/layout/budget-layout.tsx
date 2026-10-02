@@ -171,7 +171,7 @@ function NavItem({
       className={({ isActive }) =>
         `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
           isActive
-            ? "bg-teal-100/60 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 font-medium"
+            ? "bg-accent-soft/60 text-accent-soft-foreground font-medium"
             : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
         }`
       }

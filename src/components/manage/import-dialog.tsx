@@ -185,7 +185,7 @@ function TemplateTab({
         <Button
           onClick={handleImport}
           disabled={importMutation.isPending || !plan}
-          className="bg-teal-600 hover:bg-teal-700 text-white"
+          className="bg-accent-solid hover:bg-accent-solid-hover text-white"
         >
           {importMutation.isPending ? (
             <>
@@ -377,7 +377,7 @@ function CSVTab({
       {plan && errors.length === 0 && (
         <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-sm">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-teal-600" />
+            <CheckCircle2 className="w-4 h-4 text-accent-text" />
             <span>
               Ready to import: <strong>{plan.categories.length}</strong>{" "}
               categories, <strong>{plan.items.length}</strong> items
@@ -392,7 +392,7 @@ function CSVTab({
         <Button
           onClick={handleImport}
           disabled={!plan || errors.length > 0 || importMutation.isPending}
-          className="bg-teal-600 hover:bg-teal-700 text-white"
+          className="bg-accent-solid hover:bg-accent-solid-hover text-white"
         >
           {importMutation.isPending ? (
             <>
@@ -658,7 +658,7 @@ function TransactionTab({ budgetId }: { budgetId: string }) {
       {plan && errors.length === 0 && !done && (
         <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-sm space-y-2">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-teal-600" />
+            <CheckCircle2 className="w-4 h-4 text-accent-text" />
             <span>
               Ready to import <strong>{plan.transactions.length}</strong>{" "}
               {plan.transactions.length === 1 ? "transaction" : "transactions"},
@@ -719,8 +719,8 @@ function TransactionTab({ budgetId }: { budgetId: string }) {
 
       {/* Success — held until the user explicitly starts another import */}
       {done && (
-        <div className="rounded-md border border-teal-200 dark:border-teal-900/60 bg-teal-50 dark:bg-teal-950/30 p-3 text-sm flex items-start gap-2">
-          <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400 mt-0.5 shrink-0" />
+        <div className="rounded-md border border-accent-highlight-border bg-accent-highlight p-3 text-sm flex items-start gap-2">
+          <CheckCircle2 className="w-4 h-4 text-accent-text mt-0.5 shrink-0" />
           <div className="space-y-1">
             <div>
               Imported{" "}
@@ -759,7 +759,7 @@ function TransactionTab({ budgetId }: { budgetId: string }) {
               importMutation.isPending ||
               taxonomyLoading
             }
-            className="bg-teal-600 hover:bg-teal-700 text-white"
+            className="bg-accent-solid hover:bg-accent-solid-hover text-white"
           >
             {importMutation.isPending ? (
               <>
@@ -798,8 +798,8 @@ function ImportStatusMessage({
     const restoredSomething = categoriesRestored > 0 || itemsRestored > 0;
 
     return (
-      <div className="rounded-md border border-teal-200 dark:border-teal-900/60 bg-teal-50 dark:bg-teal-950/30 p-3 text-sm flex items-start gap-2">
-        <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400 mt-0.5 shrink-0" />
+      <div className="rounded-md border border-accent-highlight-border bg-accent-highlight p-3 text-sm flex items-start gap-2">
+        <CheckCircle2 className="w-4 h-4 text-accent-text mt-0.5 shrink-0" />
         <div className="space-y-1">
           {addedSomething && (
             <div>

@@ -25,14 +25,14 @@ export function PortfoliosHome() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Your portfolios</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Your portfolios</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Track what you own and how it's doing. Private to you.
           </p>
         </div>
         <PortfolioFormDialog
           trigger={
-            <Button className="bg-teal-600 hover:bg-teal-700 text-white">
+            <Button className="bg-accent-solid hover:bg-accent-solid-hover text-white">
               New portfolio
             </Button>
           }
@@ -127,7 +127,7 @@ function PortfolioGrid({
       {portfolios.map((p) => (
         <Card
           key={p.id}
-          className="relative h-full transition-colors hover:border-teal-300 dark:hover:border-teal-700"
+          className="relative h-full transition-colors hover:border-accent-border-hover"
         >
           {/* The link covers the whole card; the menu sits above it in the
               corner and isn't inside the link, so opening it never navigates. */}

@@ -84,7 +84,7 @@ export function MonthView() {
   const expensesTotal = summary?.totalExpenses ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8">
       <MonthHeader budgetId={budgetId} yearMonth={yearMonth} />
 
       {isLoading ? (

@@ -77,7 +77,7 @@ export function DayView() {
   const currency = budget?.currency ?? "PKR";
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8">
       <DayHeader budgetId={budgetId} date={date} total={total} currency={currency} />
 
       {transactionsQuery.isLoading ? (

@@ -22,23 +22,26 @@ export function DayHeader({ budgetId, date, total, currency }: DayHeaderProps) {
   const goTo = (iso: string) => navigate(`/app/budgets/${budgetId}/day/${iso}`);
 
   return (
-    <div className="flex items-center justify-between flex-wrap gap-y-2 mb-4">
+    <div className="flex items-start justify-between flex-wrap gap-y-4">
       <div className="flex items-center gap-1 flex-wrap">
-        <Button variant="ghost" size="icon" asChild className="w-9 h-9">
+        <Button variant="ghost" size="icon" asChild className="w-9 h-9 shrink-0">
           <Link to={`/app/budgets/${budgetId}/day/${prevDate}`} aria-label="Previous day">
             <ChevronLeft className="w-4 h-4" />
           </Link>
         </Button>
 
-        {/* Fixed width so the arrows don't shift as the day label changes. */}
-        <div className="w-28 sm:w-32 px-2 text-center">
-          <div className="font-semibold tracking-tight">
+        {/* Fixed width so the arrows don't shift as the day label changes.
+            This is the page's de facto title — Day view has no separate
+            heading — so it carries real weight instead of reading as a
+            small nav widget. */}
+        <div className="w-36 sm:w-44 px-1 text-center">
+          <div className="text-2xl sm:text-3xl font-semibold tracking-tight">
             {formatDayLabel(date)}
           </div>
-          <div className="text-xs text-muted-foreground">{date}</div>
+          <div className="text-xs text-muted-foreground mt-0.5">{date}</div>
         </div>
 
-        <Button variant="ghost" size="icon" asChild className="w-9 h-9">
+        <Button variant="ghost" size="icon" asChild className="w-9 h-9 shrink-0">
           <Link to={`/app/budgets/${budgetId}/day/${nextDate}`} aria-label="Next day">
             <ChevronRight className="w-4 h-4" />
           </Link>
@@ -49,22 +52,22 @@ export function DayHeader({ budgetId, date, total, currency }: DayHeaderProps) {
           onChange={goTo}
           ariaLabel="Pick a date"
           trigger={
-            <Button variant="ghost" size="icon" className="w-9 h-9" aria-label="Pick a date">
+            <Button variant="ghost" size="icon" className="w-9 h-9 shrink-0" aria-label="Pick a date">
               <CalendarDays className="w-4 h-4" />
             </Button>
           }
         />
 
         {!isToday && (
-          <Button variant="ghost" size="sm" asChild className="ml-1 h-8">
+          <Button variant="ghost" size="sm" asChild className="ml-1 h-8 shrink-0">
             <Link to={`/app/budgets/${budgetId}/day/${today}`}>Today</Link>
           </Button>
         )}
       </div>
 
       <div className="text-right">
-        <div className="text-xs text-muted-foreground">Day total</div>
-        <div className="text-lg font-semibold tabular-nums">
+        <div className="text-xs text-muted-foreground uppercase tracking-wide">Day total</div>
+        <div className="text-2xl sm:text-3xl font-semibold tracking-tight tabular-nums mt-0.5">
           {currency}{" "}
           {total.toLocaleString(undefined, {
             minimumFractionDigits: 2,

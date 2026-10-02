@@ -24,7 +24,7 @@ export function VarianceCard({ income, expenses, savings }: VarianceCardProps) {
   const statusConfig = {
     surplus: {
       label: "Surplus",
-      colorClass: "text-teal-600 dark:text-teal-400",
+      colorClass: "text-accent-text",
       Icon: TrendingUp,
     },
     deficit: {

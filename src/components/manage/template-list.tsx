@@ -121,7 +121,7 @@ function SectionHeader({
           categories={categories}
           items={items}
           trigger={
-            <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white">
+            <Button size="sm" className="bg-accent-solid hover:bg-accent-solid-hover text-white">
               <Plus className="w-4 h-4 mr-1.5" />
               New template
             </Button>
@@ -239,7 +239,7 @@ function EmptyState({
           categories={categories}
           items={items}
           trigger={
-            <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white">
+            <Button size="sm" className="bg-accent-solid hover:bg-accent-solid-hover text-white">
               <Plus className="w-4 h-4 mr-1.5" />
               Add template
             </Button>

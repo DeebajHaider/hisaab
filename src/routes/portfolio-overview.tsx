@@ -70,7 +70,7 @@ export function PortfolioOverview() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6">
         <Skeleton className="h-28 w-full" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -131,9 +131,9 @@ export function PortfolioOverview() {
   );
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Overview</h1>
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Overview</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Where your money sits and how it's doing.
         </p>

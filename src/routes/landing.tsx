@@ -42,7 +42,7 @@ function Header() {
     <header className="border-b border-border/40 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <Wallet className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+          <Wallet className="w-5 h-5 text-accent-text" />
           <span className="font-semibold text-lg tracking-tight">Hisaab</span>
         </Link>
         <div className="flex items-center gap-2">
@@ -50,7 +50,7 @@ function Header() {
           <Button asChild variant="ghost" size="sm">
             <Link to="/auth">Sign in</Link>
           </Button>
-          <Button asChild size="sm" className="bg-teal-600 hover:bg-teal-700 text-white">
+          <Button asChild size="sm" className="bg-accent-solid hover:bg-accent-solid-hover text-white">
             <Link to="/auth">Get started</Link>
           </Button>
         </div>
@@ -106,7 +106,7 @@ function Hero() {
         </div>
         <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight mb-6 max-w-3xl mx-auto">
           The budgeting tool that fits how your{" "}
-          <span className="text-teal-600 dark:text-teal-400">family</span>{" "}
+          <span className="text-accent-text">family</span>{" "}
           actually spends.
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
@@ -115,7 +115,7 @@ function Hero() {
           see where the money actually goes.
         </p>
         <div className="flex items-center justify-center gap-3">
-          <Button asChild size="lg" className="bg-teal-600 hover:bg-teal-700 text-white">
+          <Button asChild size="lg" className="bg-accent-solid hover:bg-accent-solid-hover text-white">
             <Link to="/auth">Get started — it's free</Link>
           </Button>
           <Button asChild size="lg" variant="outline">
@@ -174,7 +174,7 @@ function StatCard({
     <div
       className={`rounded-lg border p-4 ${
         accent
-          ? "border-teal-200 dark:border-teal-900/60 bg-teal-50/50 dark:bg-teal-950/20"
+          ? "border-accent-highlight-border bg-accent-highlight/50"
           : "border-border/60 bg-background"
       }`}
     >
@@ -304,7 +304,7 @@ function FeatureRow({
 function EntryVisual() {
   return (
     <div className="p-6 space-y-3">
-      <div className="px-3 py-2 rounded-md border border-teal-200 dark:border-teal-900/60 bg-teal-50/50 dark:bg-teal-950/20 text-sm">
+      <div className="px-3 py-2 rounded-md border border-accent-highlight-border bg-accent-highlight/50 text-sm">
         <span className="text-muted-foreground">Search:</span>{" "}
         <span className="font-medium">flou</span>
       </div>
@@ -476,7 +476,7 @@ function Footer() {
     <footer className="border-t border-border/40">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <Wallet className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+          <Wallet className="w-4 h-4 text-accent-text" />
           <span className="text-sm text-muted-foreground">
             Hisaab — clearer family finances.
           </span>
