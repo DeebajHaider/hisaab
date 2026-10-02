@@ -44,6 +44,14 @@
     --color-card: var(--card);
     --color-foreground: var(--foreground);
     --color-background: var(--background);
+    --color-accent-solid: var(--accent-solid);
+    --color-accent-solid-hover: var(--accent-solid-hover);
+    --color-accent-text: var(--accent-text);
+    --color-accent-soft: var(--accent-soft);
+    --color-accent-soft-foreground: var(--accent-soft-foreground);
+    --color-accent-border-hover: var(--accent-border-hover);
+    --color-accent-highlight: var(--accent-highlight);
+    --color-accent-highlight-border: var(--accent-highlight-border);
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -74,6 +82,18 @@
     --ring: oklch(0.708 0 0);
     --scrollbar-thumb: oklch(0.80 0 0);
     --scrollbar-thumb-hover: oklch(0.65 0 0);
+    /* Accent tokens — same teal already in use everywhere (Tailwind's
+       teal-600/700/100), just centralized into one source of truth instead
+       of bg-teal-600/text-teal-600 copy-pasted across ~20 files. Same
+       rendered color, not a redesign of the accent itself. */
+    --accent-solid: oklch(0.6 0.118 184.704);        /* teal-600 */
+    --accent-solid-hover: oklch(0.511 0.096 186.391); /* teal-700 */
+    --accent-text: oklch(0.6 0.118 184.704);          /* teal-600 */
+    --accent-soft: oklch(0.953 0.051 180.801);        /* teal-100 */
+    --accent-soft-foreground: oklch(0.511 0.096 186.391); /* teal-700 */
+    --accent-border-hover: oklch(0.855 0.138 181.071); /* teal-300 */
+    --accent-highlight: oklch(0.984 0.014 180.72);      /* teal-50 — info-box background */
+    --accent-highlight-border: oklch(0.91 0.096 180.426); /* teal-200 */
     --chart-1: oklch(0.65 0.18 188);   /* teal */
     --chart-2: oklch(0.78 0.16 80);    /* amber */
     --chart-3: oklch(0.68 0.22 14);    /* rose */
@@ -116,6 +136,14 @@
     --ring: oklch(0.556 0 0);
     --scrollbar-thumb: oklch(0.38 0 0);
     --scrollbar-thumb-hover: oklch(0.50 0 0);
+    --accent-solid: oklch(0.6 0.118 184.704);         /* teal-600 — buttons stay the same solid color in both themes, matching current behavior */
+    --accent-solid-hover: oklch(0.511 0.096 186.391); /* teal-700 */
+    --accent-text: oklch(0.777 0.152 181.912);        /* teal-400 — lighter for contrast on a dark background */
+    --accent-soft: oklch(0.277 0.046 192.524 / 40%);  /* teal-950/40 */
+    --accent-soft-foreground: oklch(0.855 0.138 181.071); /* teal-300 */
+    --accent-border-hover: oklch(0.511 0.096 186.391); /* teal-700 */
+    --accent-highlight: oklch(0.277 0.046 192.524 / 30%);  /* teal-950/30 */
+    --accent-highlight-border: oklch(0.386 0.063 188.416 / 60%); /* teal-900/60 */
     --chart-1: oklch(0.72 0.16 188);
     --chart-2: oklch(0.82 0.15 80);
     --chart-3: oklch(0.74 0.20 14);
@@ -180,5 +208,14 @@
     }
   ::-webkit-scrollbar-thumb:hover {
     background-color: var(--scrollbar-thumb-hover);
+    }
+
+  /* Soft colored glow on every primary (accent-solid) button — one rule
+     instead of repeating a shadow utility on every submit button in the
+     app. Subtle on purpose: a hint of lift, not a neon effect. */
+  .bg-accent-solid {
+    box-shadow:
+      0 1px 2px 0 color-mix(in oklab, var(--accent-solid) 25%, transparent),
+      0 4px 12px -2px color-mix(in oklab, var(--accent-solid) 30%, transparent);
     }
 }
