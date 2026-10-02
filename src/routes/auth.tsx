@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { Wallet } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,72 +88,97 @@ export function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>{mode === "sign-in" ? "Sign in" : "Create account"}</CardTitle>
-          <CardDescription>
-            {mode === "sign-in"
-              ? "Welcome back to Hisaab."
-              : "Start tracking your budget."}
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete={
-                  mode === "sign-in" ? "current-password" : "new-password"
-                }
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
-            {error && (
-              <p className="text-sm text-destructive" role="alert">
-                {error}
-              </p>
-            )}
-          </CardContent>
-          <CardFooter className="flex flex-col gap-3">
-            <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting
-                ? "Working..."
-                : mode === "sign-in"
-                  ? "Sign in"
-                  : "Sign up"}
-            </Button>
-            <button
-              type="button"
-              className="text-sm text-muted-foreground hover:text-foreground"
-              onClick={() => {
-                setMode(mode === "sign-in" ? "sign-up" : "sign-in");
-                setError(null);
-              }}
-            >
+    <div className="relative min-h-screen flex items-center justify-center p-4 bg-background overflow-hidden">
+      {/* Restrained radial glow behind the card — this is the first screen
+          anyone sees, worth a touch more presence than a flat background,
+          without competing with the form itself. */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 600px 400px at 50% 35%, color-mix(in oklab, var(--accent-solid) 10%, transparent), transparent)",
+        }}
+      />
+
+      <div className="relative w-full max-w-sm flex flex-col items-center gap-8">
+        <Link to="/" className="flex items-center gap-2">
+          <Wallet className="w-6 h-6 text-accent-text" />
+          <span className="text-lg font-semibold tracking-tight">Hisaab</span>
+        </Link>
+
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="text-xl">
+              {mode === "sign-in" ? "Sign in" : "Create account"}
+            </CardTitle>
+            <CardDescription>
               {mode === "sign-in"
-                ? "Need an account? Sign up"
-                : "Have an account? Sign in"}
-            </button>
-          </CardFooter>
-        </form>
-      </Card>
+                ? "Welcome back to Hisaab."
+                : "Start tracking your budget."}
+            </CardDescription>
+          </CardHeader>
+          <form onSubmit={handleSubmit}>
+            <CardContent className="flex flex-col gap-5">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete={
+                    mode === "sign-in" ? "current-password" : "new-password"
+                  }
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                />
+              </div>
+              {error && (
+                <p className="text-sm text-destructive" role="alert">
+                  {error}
+                </p>
+              )}
+            </CardContent>
+            <CardFooter className="flex flex-col gap-4">
+              <Button
+                type="submit"
+                className="w-full bg-accent-solid hover:bg-accent-solid-hover text-white"
+                disabled={submitting}
+              >
+                {submitting
+                  ? "Working..."
+                  : mode === "sign-in"
+                    ? "Sign in"
+                    : "Sign up"}
+              </Button>
+              <button
+                type="button"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => {
+                  setMode(mode === "sign-in" ? "sign-up" : "sign-in");
+                  setError(null);
+                }}
+              >
+                {mode === "sign-in"
+                  ? "Need an account? Sign up"
+                  : "Have an account? Sign in"}
+              </button>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }
