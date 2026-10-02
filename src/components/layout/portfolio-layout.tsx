@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
 import { ArrowLeft, LayoutDashboard, Coins, Settings, Menu } from "lucide-react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { RouteFallback } from "@/components/layout/route-fallback";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -23,7 +24,9 @@ export function PortfolioLayout() {
       <DesktopSidebar portfolioId={portfolio.id} portfolioName={portfolio.name} />
       <MobileTopBar portfolioId={portfolio.id} portfolioName={portfolio.name} />
       <main className="flex-1 min-w-0">
-        <Outlet />
+        <Suspense fallback={<RouteFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

@@ -1,4 +1,7 @@
+import { Suspense, useEffect } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
+import { RouteFallback } from "@/components/layout/route-fallback";
+import { prefetchAppRoutes } from "@/routes/lazy-routes";
 import { Wallet, Sun, Moon, Monitor, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getInitials } from "@/lib/format/initials";
@@ -24,6 +27,10 @@ import { useAuth } from "@/lib/auth-context";
  * Renders nothing if user is null (RequireAuth handles that, but defensive).
  */
 export function AppLayout() {
+  useEffect(() => {
+    prefetchAppRoutes();
+  }, []);
+
   return (
     <div className="relative min-h-screen flex flex-col bg-background">
       {/* Fixed ambient color field — the thing .glass surfaces frost.
@@ -40,8 +47,9 @@ export function AppLayout() {
       />
       <AppHeader />
       <main className="relative flex-1">
-        {/* Outlet renders the matched child route */}
-        <Outlet />
+        <Suspense fallback={<RouteFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

@@ -11,7 +11,8 @@ import {
   Users,
   SlidersHorizontal,
 } from "lucide-react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { RouteFallback } from "@/components/layout/route-fallback";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { todayISO } from "@/lib/format/date";
@@ -35,7 +36,9 @@ export function BudgetLayout() {
       <DesktopSidebar budgetId={budget.id} budgetName={budget.name} />
       <MobileTopBar budgetId={budget.id} budgetName={budget.name} />
       <main className="flex-1 min-w-0">
-        <Outlet />
+        <Suspense fallback={<RouteFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );
