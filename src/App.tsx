@@ -20,6 +20,7 @@ import { BudgetSettings } from "@/routes/budget-settings";
 import { NotFound } from "@/routes/not-found";
 import { MonthRedirect } from "@/routes/month-redirect";
 import { Ledger } from "@/routes/ledger";
+import { Targets } from "@/routes/targets";
 import { InviteAccept } from "@/routes/invite-accept";
 import { Members } from "@/routes/members";
 import { Settings } from "@/routes/settings";
@@ -95,6 +96,7 @@ function App() {
                       <Route path="month" element={<MonthRedirect />} />
                       <Route path="month/:yearMonth" element={<MonthView />} />
                       <Route path="ledger" element={<Ledger />} />
+                    <Route path="targets" element={<Targets />} />
                       <Route path="trends" element={<Trends />} />
                       <Route path="members" element={<Members />} />
                     </Route>

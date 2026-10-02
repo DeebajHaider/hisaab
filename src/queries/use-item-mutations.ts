@@ -90,6 +90,10 @@ export function useUpdateItem() {
       queryClient.invalidateQueries({
         queryKey: ["templates", variables.budgetId],
       });
+      // Targets resolve tracked item names client-side against this list too.
+      queryClient.invalidateQueries({
+        queryKey: ["targets", variables.budgetId],
+      });
     },
     onError: (error) => {
       toast.error("Couldn't update item.", {
@@ -127,6 +131,9 @@ export function useArchiveItem() {
       });
       queryClient.invalidateQueries({
         queryKey: ["templates", variables.budgetId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["targets", variables.budgetId],
       });
     },
     onError: (error) => {

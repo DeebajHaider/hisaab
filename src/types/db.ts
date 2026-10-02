@@ -514,6 +514,53 @@ export type Database = {
           },
         ]
       }
+      targets: {
+        Row: {
+          budget_id: string
+          category_ids: string[]
+          created_at: string
+          created_by: string | null
+          end_date: string
+          id: string
+          item_ids: string[]
+          name: string
+          start_date: string
+          target_amount: number
+        }
+        Insert: {
+          budget_id: string
+          category_ids?: string[]
+          created_at?: string
+          created_by?: string | null
+          end_date: string
+          id?: string
+          item_ids?: string[]
+          name: string
+          start_date: string
+          target_amount: number
+        }
+        Update: {
+          budget_id?: string
+          category_ids?: string[]
+          created_at?: string
+          created_by?: string | null
+          end_date?: string
+          id?: string
+          item_ids?: string[]
+          name?: string
+          start_date?: string
+          target_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "targets_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transaction_templates: {
         Row: {
           amount: number

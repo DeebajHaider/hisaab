@@ -6,6 +6,7 @@ import {
   Menu,
   CalendarRange,
   Receipt,
+  Target,
   TrendingUp,
   Users,
   SlidersHorizontal,
@@ -120,6 +121,11 @@ function SidebarNav({ budgetId }: { budgetId: string }) {
           to={`/app/budgets/${budgetId}/ledger`}
           icon={<Receipt className="w-4 h-4" />}
           label="Ledger"
+        />
+        <NavItem
+          to={`/app/budgets/${budgetId}/targets`}
+          icon={<Target className="w-4 h-4" />}
+          label="Targets"
         />
         <NavItem
           to={`/app/budgets/${budgetId}/trends`}

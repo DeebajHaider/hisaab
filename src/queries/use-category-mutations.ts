@@ -87,6 +87,11 @@ export function useUpdateCategory() {
       queryClient.invalidateQueries({
         queryKey: ["templates", variables.budgetId],
       });
+      // Targets resolve tracked category names client-side against this
+      // list too — same staleness risk.
+      queryClient.invalidateQueries({
+        queryKey: ["targets", variables.budgetId],
+      });
     },
     onError: (error) => {
       toast.error("Couldn't update category.", {
@@ -138,6 +143,9 @@ export function useArchiveCategory() {
       });
       queryClient.invalidateQueries({
         queryKey: ["templates", variables.budgetId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["targets", variables.budgetId],
       });
     },
     onError: (error) => {
