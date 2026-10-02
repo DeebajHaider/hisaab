@@ -119,7 +119,13 @@ export function AuthPage() {
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
-            <CardContent className="flex flex-col gap-5">
+            {/* CardContent and CardFooter both live inside <form>, so
+                they fall outside Card's own flex gap (that only spans
+                CardHeader and the <form> as a single child) -- pb-6 here
+                is what actually keeps the last field clear of
+                CardFooter's top border, which otherwise sits right
+                against it. */}
+            <CardContent className="flex flex-col gap-5 pb-6">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
