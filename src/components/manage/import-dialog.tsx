@@ -337,10 +337,11 @@ function CSVTab({
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs text-muted-foreground">
+        <label htmlFor="import-csv-text" className="text-xs text-muted-foreground">
           Or paste CSV content directly:
         </label>
         <Textarea
+          id="import-csv-text"
           value={csvText}
           onChange={handleTextChange}
           placeholder={

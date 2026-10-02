@@ -88,7 +88,7 @@
        rendered color, not a redesign of the accent itself. */
     --accent-solid: oklch(0.6 0.118 184.704);        /* teal-600 */
     --accent-solid-hover: oklch(0.511 0.096 186.391); /* teal-700 */
-    --accent-text: oklch(0.6 0.118 184.704);          /* teal-600 */
+    --accent-text: oklch(0.511 0.096 186.391);        /* teal-700 — teal-600 text is only 3.7:1 on white, below WCAG AA */
     --accent-soft: oklch(0.953 0.051 180.801);        /* teal-100 */
     --accent-soft-foreground: oklch(0.511 0.096 186.391); /* teal-700 */
     --accent-border-hover: oklch(0.855 0.138 181.071); /* teal-300 */

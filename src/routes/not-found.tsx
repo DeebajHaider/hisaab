@@ -8,7 +8,7 @@ export function NotFound() {
       <div className="max-w-sm w-full text-center space-y-4">
         <FileQuestion className="w-10 h-10 mx-auto text-muted-foreground" />
         <div>
-          <p className="text-5xl font-bold tracking-tight text-muted-foreground/30 mb-2">
+          <p aria-hidden className="text-5xl font-bold tracking-tight text-muted-foreground/30 mb-2">
             404
           </p>
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Page not found</h1>

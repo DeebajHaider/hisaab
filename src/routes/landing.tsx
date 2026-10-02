@@ -342,7 +342,7 @@ function DropItem({
     >
       <span className="font-medium">{name}</span>
       {category && (
-        <span className="text-muted-foreground text-xs ml-2">
+        <span className={`text-xs ml-2 ${highlighted ? "text-foreground/70" : "text-muted-foreground"}`}>
           {category}
           {unit && ` · ${unit}`}
         </span>
