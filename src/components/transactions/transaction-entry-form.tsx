@@ -214,6 +214,11 @@ export function TransactionEntryForm({
 
   const clearItem = () => {
     setSelectedItemId(null);
+
+    // Same reasoning as pickItem: clearing the item to re-search for a
+    // replacement shouldn't wipe a price already entered while editing.
+    if (isEditing) return;
+
     setRate("");
     setQty("");
     setAmount("");
@@ -719,6 +724,11 @@ function SearchCombobox({
           setOpen(true);
         }}
         onKeyDown={handleKeyDown}
+        // Dropdown items pick via onMouseDown + preventDefault (see below),
+        // so a real click never reaches here as a blur — this only closes
+        // the dropdown when focus actually leaves (e.g. tabbing away),
+        // which otherwise left it open and stale for keyboard users.
+        onBlur={() => setOpen(false)}
         className="pl-9 pr-9"
         autoComplete="off"
       />

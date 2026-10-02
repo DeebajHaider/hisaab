@@ -68,6 +68,11 @@ export function TemplateFormDialog({
   const selectedCategory = categories.find((c) => c.id === categoryId) ?? null;
   const selectedItem = items.find((i) => i.id === itemId) ?? null;
 
+  // Depends on `open` alone, not `existing`/`categories` — a background
+  // refetch of either list (triggered by any sibling mutation) would
+  // otherwise re-fire this mid-edit and clobber whatever the user has
+  // typed, since react-query hands back new object/array references on
+  // every refetch even when the content is unchanged.
   useEffect(() => {
     if (!open) return;
     setCategoryId(existing?.category_id ?? categories[0]?.id ?? "");
@@ -80,7 +85,8 @@ export function TemplateFormDialog({
     setPersonId(existing?.person_id ?? null);
     setNotes(existing?.notes ?? "");
     setError(null);
-  }, [open, existing, categories]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // Reset the item when the category changes away from the current item's category.
   useEffect(() => {

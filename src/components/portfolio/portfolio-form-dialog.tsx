@@ -37,14 +37,19 @@ export function PortfolioFormDialog({
 
   const createPortfolio = useCreatePortfolio();
   const updatePortfolio = useUpdatePortfolio();
+  const isPending = createPortfolio.isPending || updatePortfolio.isPending;
 
-  // Re-sync the field whenever we (re)open in edit mode.
+  // Re-sync the field when the dialog opens. Depends on `open` alone, not
+  // `existing` — see CategoryFormDialog's dialog for why (a background
+  // refetch of the portfolios list would otherwise re-fire this mid-edit
+  // and clobber whatever the user has typed).
   useEffect(() => {
     if (open) {
       setName(existing?.name ?? "");
       setError(null);
     }
-  }, [open, existing]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -78,28 +83,42 @@ export function PortfolioFormDialog({
               : "A portfolio is your private container for what you own. Asset classes are added for you."}
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-2">
-          <Label htmlFor="portfolio-name">Name</Label>
-          <Input
-            id="portfolio-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. My investments"
-            autoFocus
-          />
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            className="bg-teal-600 hover:bg-teal-700 text-white"
-          >
-            {isEdit ? "Save" : "Create"}
-          </Button>
-        </DialogFooter>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="portfolio-name">Name</Label>
+            <Input
+              id="portfolio-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. My investments"
+              autoFocus
+            />
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-teal-600 hover:bg-teal-700 text-white"
+              disabled={isPending || !name.trim()}
+            >
+              {isPending
+                ? isEdit
+                  ? "Saving..."
+                  : "Creating..."
+                : isEdit
+                  ? "Save"
+                  : "Create"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

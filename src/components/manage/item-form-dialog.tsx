@@ -55,6 +55,11 @@ export function ItemFormDialog({
   const updateMutation = useUpdateItem();
   const isEditing = !!existing;
 
+  // Depends on `open` alone, not `existing`/`categories` — a background
+  // refetch of either list (triggered by any sibling mutation) would
+  // otherwise re-fire this mid-edit and clobber whatever the user has
+  // typed, since react-query hands back new object/array references on
+  // every refetch even when the content is unchanged.
   useEffect(() => {
     if (open) {
       setName(existing?.name ?? "");
@@ -70,7 +75,8 @@ export function ItemFormDialog({
       setDefaultMode((existing?.default_mode as "lump" | "rate_qty") ?? "lump");
       setError(null);
     }
-  }, [open, existing, defaultCategoryId, categories]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 

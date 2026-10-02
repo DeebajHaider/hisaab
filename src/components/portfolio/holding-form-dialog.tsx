@@ -69,6 +69,11 @@ export function HoldingFormDialog({
   const isEditing = !!existing;
   const today = todayISO();
 
+  // Depends on `open` alone, not `existing`/`assetClasses` — a background
+  // refetch of either (triggered by any sibling mutation) would otherwise
+  // re-fire this mid-edit and clobber whatever the user has typed, since
+  // react-query hands back new object/array references on every refetch
+  // even when the content is unchanged.
   useEffect(() => {
     if (open) {
       setName(existing?.name ?? "");
@@ -83,7 +88,8 @@ export function HoldingFormDialog({
       setNotes(existing?.notes ?? "");
       setError(null);
     }
-  }, [open, existing, defaultAssetClassId, assetClasses, today]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 

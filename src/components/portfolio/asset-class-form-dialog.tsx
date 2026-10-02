@@ -41,12 +41,16 @@ export function AssetClassFormDialog({
   const updateMutation = useUpdateAssetClass();
   const isEditing = !!existing;
 
+  // Depends on `open` alone, not `existing` — see CategoryFormDialog for
+  // why (a background refetch of the asset-class list would otherwise
+  // re-fire this mid-edit and clobber whatever the user has typed).
   useEffect(() => {
     if (open) {
       setName(existing?.name ?? "");
       setError(null);
     }
-  }, [open, existing]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 

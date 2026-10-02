@@ -46,14 +46,20 @@ export function CategoryFormDialog({
   const isEditing = !!existing;
 
   // When the dialog opens, sync state from `existing` (if editing) or reset (if creating).
-  // useEffect on `open` is the right place — it runs only on open transitions.
+  // Deliberately depends on `open` alone, not `existing` — `existing` comes
+  // from a list query, and a background refetch of that list (triggered by
+  // any sibling category mutation, or just window refocus) hands back a
+  // new object reference even when nothing actually changed. Depending on
+  // `existing` here would re-fire this effect mid-edit and silently
+  // overwrite whatever the user has typed since opening.
   useEffect(() => {
     if (open) {
       setName(existing?.name ?? "");
       setTracksPerson(existing?.tracks_person ?? false);
       setError(null);
     }
-  }, [open, existing]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 

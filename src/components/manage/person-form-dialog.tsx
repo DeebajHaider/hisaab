@@ -42,14 +42,17 @@ export function PersonFormDialog({
   const updateMutation = useUpdatePerson();
   const isEditing = !!existing;
 
-  // Sync state from `existing` when the dialog opens. useEffect on `open`
-  // runs only on open-transition, matching the CategoryFormDialog pattern.
+  // Sync state from `existing` when the dialog opens. Depends on `open`
+  // alone, not `existing` — see CategoryFormDialog for why (a background
+  // refetch of the people list would otherwise re-fire this mid-edit and
+  // clobber whatever the user has typed).
   useEffect(() => {
     if (open) {
       setName(existing?.name ?? "");
       setError(null);
     }
-  }, [open, existing]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
