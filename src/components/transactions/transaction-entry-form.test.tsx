@@ -111,3 +111,28 @@ describe("TransactionEntryForm inline item creation", () => {
     expect(state.createItem.mutateAsync).not.toHaveBeenCalled();
   });
 });
+
+describe("TransactionEntryForm focus flow", () => {
+  it("moves focus to Amount after picking an existing item from search", async () => {
+    const user = userEvent.setup();
+    render(<TransactionEntryForm budgetId="b1" date="2026-10-02" />);
+
+    await user.type(search(), "Petr");
+    await user.click(await screen.findByRole("button", { name: /Petrol/ }));
+
+    await waitFor(() => expect(screen.getByLabelText("Amount")).toHaveFocus());
+  });
+
+  it("goes to Qty when the item has a default rate in rate x qty mode", async () => {
+    state.items = [
+      { ...item("item-flour", "Flour"), default_mode: "rate_qty", default_rate: 180, unit: "Kg" },
+    ];
+    const user = userEvent.setup();
+    render(<TransactionEntryForm budgetId="b1" date="2026-10-02" />);
+
+    await user.type(search(), "Flo");
+    await user.click(await screen.findByRole("button", { name: /Flour/ }));
+
+    await waitFor(() => expect(screen.getByLabelText(/^Qty/)).toHaveFocus());
+  });
+});

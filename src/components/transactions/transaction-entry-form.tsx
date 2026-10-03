@@ -216,6 +216,17 @@ export function TransactionEntryForm({
 
     setQty("");
     setAmount("");
+
+    // Straight to the first empty number field, so logging is
+    // pick -> type -> Enter. The delay lets the render commit, and lets a
+    // closing Select hand focus back to its trigger first so we win.
+    const nextField =
+      itemMode === "rate_qty"
+        ? item.default_rate !== null
+          ? "qty-input"
+          : "rate-input"
+        : "amount-input";
+    setTimeout(() => document.getElementById(nextField)?.focus(), 60);
   };
 
   const clearItem = () => {
@@ -514,6 +525,7 @@ export function TransactionEntryForm({
                 <Input
                   id="rate-input"
                   type="number"
+                  inputMode="decimal"
                   value={rate}
                   onChange={(e) => setRate(e.target.value)}
                   min={0}
@@ -528,6 +540,7 @@ export function TransactionEntryForm({
                 <Input
                   id="qty-input"
                   type="number"
+                  inputMode="decimal"
                   value={qty}
                   onChange={(e) => setQty(e.target.value)}
                   min={0}
@@ -547,6 +560,7 @@ export function TransactionEntryForm({
               ref={amountInputRef}
               id="amount-input"
               type="number"
+              inputMode="decimal"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               min={0}

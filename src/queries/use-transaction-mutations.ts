@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { transactionKeys } from "./transaction-keys";
 import { trendsKeys } from "./trends-keys";
 import type { Database } from "@/types/db";
+import type { Transaction } from "./use-transactions";
 import { toast } from "sonner";
 
 
@@ -141,6 +142,34 @@ export function useUpdateTransaction() {
 interface DeleteTransactionInput {
   id: string;
   budgetId: string;
+  /** When given, the success toast offers Undo, which re-inserts this row. */
+  snapshot?: Transaction;
+}
+
+function refreshTransactions(
+  queryClient: ReturnType<typeof useQueryClient>,
+  budgetId: string,
+) {
+  queryClient.invalidateQueries({ queryKey: transactionKeys.byBudget(budgetId) });
+  queryClient.invalidateQueries({ queryKey: trendsKeys.byBudget(budgetId) });
+}
+
+async function restoreTransaction(row: Transaction) {
+  // Same id so anything still pointing at it keeps working. created_by is
+  // left to its default (the current user).
+  const { error } = await supabase.from("transactions").insert({
+    id: row.id,
+    budget_id: row.budget_id,
+    category_id: row.category_id,
+    item_id: row.item_id,
+    date: row.date,
+    amount: row.amount,
+    rate: row.rate,
+    qty: row.qty,
+    person_id: row.person_id,
+    notes: row.notes,
+  });
+  if (error) throw error;
 }
 
 export function useDeleteTransaction() {
@@ -156,13 +185,30 @@ export function useDeleteTransaction() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      toast.success("Transaction deleted.");
-      queryClient.invalidateQueries({
-        queryKey: transactionKeys.byBudget(variables.budgetId),
-      });
-      // Trends aggregations also need to refresh when transactions change.
-      queryClient.invalidateQueries({
-        queryKey: trendsKeys.byBudget(variables.budgetId),
+      const { snapshot, budgetId } = variables;
+      refreshTransactions(queryClient, budgetId);
+      if (!snapshot) {
+        toast.success("Transaction deleted.");
+        return;
+      }
+      toast("Transaction deleted.", {
+        duration: 8000,
+        action: {
+          label: "Undo",
+          onClick: () => {
+            restoreTransaction(snapshot)
+              .then(() => {
+                refreshTransactions(queryClient, budgetId);
+                toast.success("Transaction restored.");
+              })
+              .catch((error: unknown) =>
+                toast.error("Couldn't restore transaction.", {
+                  description: error instanceof Error ? error.message : "Unknown error.",
+                  duration: 6000,
+                }),
+              );
+          },
+        },
       });
     },
     onError: (error, _variables) => {

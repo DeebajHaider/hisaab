@@ -196,6 +196,7 @@ export function ItemFormDialog({
               <Input
                 id="item-rate"
                 type="number"
+                inputMode="decimal"
                 placeholder="180"
                 value={defaultRate}
                 onChange={(e) => setDefaultRate(e.target.value)}

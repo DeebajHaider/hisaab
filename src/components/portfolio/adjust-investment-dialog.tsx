@@ -130,6 +130,7 @@ export function AdjustInvestmentDialog({ holding, open, onOpenChange }: Props) {
             <Input
               id="adjust-amount"
               type="number"
+              inputMode="decimal"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               min={0}

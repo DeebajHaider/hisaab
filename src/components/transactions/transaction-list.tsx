@@ -139,7 +139,7 @@ function TransactionRow({
         <Button
           variant="ghost"
           size="icon"
-          className="w-7 h-7"
+          className="w-10 h-10 sm:w-7 sm:h-7"
           onClick={() => onEdit(transaction)}
         >
           <Pencil className="w-3 h-3" />
@@ -148,7 +148,7 @@ function TransactionRow({
         <Button
           variant="ghost"
           size="icon"
-          className="w-7 h-7"
+          className="w-10 h-10 sm:w-7 sm:h-7"
           onClick={() => onDelete(transaction)}
         >
           <Trash2 className="w-3 h-3" />

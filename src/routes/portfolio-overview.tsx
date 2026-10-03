@@ -278,6 +278,7 @@ function BlendPanel({
               <Input
                 id={`rate-${cur}`}
                 type="number"
+                inputMode="decimal"
                 min={0}
                 step="0.0001"
                 placeholder="e.g. 280"

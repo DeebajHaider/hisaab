@@ -123,7 +123,7 @@ function SavingsRow({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
+          className="h-10 w-10 sm:h-8 sm:w-8"
           onClick={onEdit}
           aria-label="Edit savings"
         >
@@ -132,7 +132,7 @@ function SavingsRow({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-destructive"
+          className="h-10 w-10 sm:h-8 sm:w-8 text-destructive"
           onClick={onDelete}
           aria-label="Delete savings"
         >

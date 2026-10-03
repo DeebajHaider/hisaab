@@ -130,7 +130,7 @@ function HoldingRow({
           <Button
             variant="ghost"
             size="icon"
-            className="w-8 h-8"
+            className="w-10 h-10 sm:w-8 sm:h-8"
             onClick={() => setExpanded((v) => !v)}
             aria-expanded={expanded}
           >
@@ -146,7 +146,7 @@ function HoldingRow({
             <Button
               variant="ghost"
               size="icon"
-              className="w-8 h-8"
+              className="w-10 h-10 sm:w-8 sm:h-8"
               disabled={setArchived.isPending}
               onClick={() =>
                 setArchived.mutate({
@@ -162,7 +162,7 @@ function HoldingRow({
           ) : (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="w-8 h-8">
+                <Button variant="ghost" size="icon" className="w-10 h-10 sm:w-8 sm:h-8">
                   <MoreVertical className="w-4 h-4" />
                   <span className="sr-only">Actions for {holding.name}</span>
                 </Button>

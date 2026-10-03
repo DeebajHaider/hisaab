@@ -236,6 +236,7 @@ export function HoldingFormDialog({
               <Input
                 id="holding-invested"
                 type="number"
+                inputMode="decimal"
                 placeholder="25000"
                 value={originalInvestment}
                 onChange={(e) => setOriginalInvestment(e.target.value)}
@@ -255,6 +256,7 @@ export function HoldingFormDialog({
                 <Input
                   id="holding-current"
                   type="number"
+                  inputMode="decimal"
                   placeholder="Same as invested"
                   value={currentValue}
                   onChange={(e) => setCurrentValue(e.target.value)}

@@ -155,7 +155,7 @@ function PortfolioGrid({
           <div className="absolute top-3 right-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="w-7 h-7">
+                <Button variant="ghost" size="icon" className="w-10 h-10 sm:w-7 sm:h-7">
                   <MoreVertical className="w-4 h-4" />
                   <span className="sr-only">Portfolio actions</span>
                 </Button>

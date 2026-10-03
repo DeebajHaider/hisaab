@@ -98,6 +98,7 @@ export function UpdateValueDialog({ holding, open, onOpenChange }: Props) {
             <Input
               id="update-value"
               type="number"
+              inputMode="decimal"
               value={value}
               onChange={(e) => setValue(e.target.value)}
               min={0}

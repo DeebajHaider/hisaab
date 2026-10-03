@@ -198,7 +198,7 @@ function ItemRow({
           categories={categories}
           existing={item}
           trigger={
-            <Button variant="ghost" size="icon" className="w-7 h-7">
+            <Button variant="ghost" size="icon" className="w-10 h-10 sm:w-7 sm:h-7">
               <Pencil className="w-3 h-3" />
               <span className="sr-only">Edit {item.name}</span>
             </Button>
@@ -215,7 +215,7 @@ function ItemRow({
             })
           }
           trigger={
-            <Button variant="ghost" size="icon" className="w-7 h-7">
+            <Button variant="ghost" size="icon" className="w-10 h-10 sm:w-7 sm:h-7">
               <Archive className="w-3 h-3" />
               <span className="sr-only">Archive {item.name}</span>
             </Button>

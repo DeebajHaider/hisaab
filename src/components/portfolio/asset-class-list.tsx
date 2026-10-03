@@ -53,7 +53,7 @@ function AssetClassRow({
           <Button
             variant="ghost"
             size="icon"
-            className="w-8 h-8"
+            className="w-10 h-10 sm:w-8 sm:h-8"
             disabled={setArchived.isPending}
             onClick={() =>
               setArchived.mutate({
@@ -72,7 +72,7 @@ function AssetClassRow({
               portfolioId={portfolioId}
               existing={assetClass}
               trigger={
-                <Button variant="ghost" size="icon" className="w-8 h-8">
+                <Button variant="ghost" size="icon" className="w-10 h-10 sm:w-8 sm:h-8">
                   <Pencil className="w-3.5 h-3.5" />
                   <span className="sr-only">Edit {assetClass.name}</span>
                 </Button>
@@ -90,7 +90,7 @@ function AssetClassRow({
                 })
               }
               trigger={
-                <Button variant="ghost" size="icon" className="w-8 h-8">
+                <Button variant="ghost" size="icon" className="w-10 h-10 sm:w-8 sm:h-8">
                   <Archive className="w-3.5 h-3.5" />
                   <span className="sr-only">Archive {assetClass.name}</span>
                 </Button>

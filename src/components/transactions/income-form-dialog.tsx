@@ -174,6 +174,7 @@ export function IncomeFormDialog({
               <Input
                 id="income-amount"
                 type="number"
+                inputMode="decimal"
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}

@@ -277,6 +277,7 @@ export function TemplateFormDialog({
                   <Input
                     id="template-rate"
                     type="number"
+                    inputMode="decimal"
                     value={rate}
                     onChange={(e) => setRate(e.target.value)}
                     min={0}
@@ -291,6 +292,7 @@ export function TemplateFormDialog({
                   <Input
                     id="template-qty"
                     type="number"
+                    inputMode="decimal"
                     value={qty}
                     onChange={(e) => setQty(e.target.value)}
                     min={0}
@@ -307,6 +309,7 @@ export function TemplateFormDialog({
               <Input
                 id="template-amount"
                 type="number"
+                inputMode="decimal"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 min={0}

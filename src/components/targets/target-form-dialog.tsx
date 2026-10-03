@@ -174,6 +174,7 @@ export function TargetFormDialog({
             <Input
               id="target-amount"
               type="number"
+              inputMode="decimal"
               placeholder="4000"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}

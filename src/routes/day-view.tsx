@@ -7,13 +7,13 @@ import {
   useTransactions,
   type TransactionWithRelations,
 } from "@/queries/use-transactions";
+import { useDeleteTransaction } from "@/queries/use-transaction-mutations";
 import { calculateDayTotal } from "@/lib/calculations/day-totals";
 import { TransactionEntryForm } from "@/components/transactions/transaction-entry-form";
 import { QuickAddTemplates } from "@/components/transactions/quick-add-templates";
 import { DayHeader } from "@/components/transactions/day-header";
 import { TransactionList } from "@/components/transactions/transaction-list";
 import { EditTransactionDialog } from "@/components/transactions/edit-transaction-dialog";
-import { DeleteTransactionDialog } from "@/components/transactions/delete-transaction-dialog";
 import { addDays } from "@/lib/format/date";
 import { ErrorBanner } from "@/components/ui/error-banner";
 
@@ -24,12 +24,12 @@ export function DayView() {
   const transactionsQuery = useTransactions(budgetId, date);
 
   const [editing, setEditing] = useState<TransactionWithRelations | null>(null);
-  const [deleting, setDeleting] = useState<TransactionWithRelations | null>(null);
+  const deleteMutation = useDeleteTransaction();
   const formRef = useRef<HTMLDivElement>(null);
 
   // --- Keyboard navigation ---------------------------------------------------
   // Left/right arrows move to the previous/next day, but ONLY when:
-  //   - no dialog is open (edit or delete)
+  //   - no dialog is open (edit)
   //   - focus isn't inside an input/textarea/contenteditable
   //   - focus isn't inside an open popover/dropdown/listbox
   // The popover/dropdown check covers the calendar picker, the item-search
@@ -43,7 +43,7 @@ export function DayView() {
       // Don't intercept when modifier keys are held — the user might be
       // doing browser navigation (Alt+Left) or text selection (Shift+Arrow).
       if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-      if (editing || deleting) return;
+      if (editing) return;
 
       const active = document.activeElement as HTMLElement | null;
       if (active) {
@@ -69,7 +69,7 @@ export function DayView() {
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [budgetId, date, editing, deleting, navigate]);
+  }, [budgetId, date, editing, navigate]);
 
   if (!budgetId || !date) return null;
 
@@ -91,7 +91,10 @@ export function DayView() {
           transactions={transactions}
           currency={currency}
           onEdit={setEditing}
-          onDelete={setDeleting}
+          onDelete={(tx) =>
+            // No confirm step: the toast's Undo is faster and safer.
+            deleteMutation.mutate({ id: tx.id, budgetId, snapshot: tx })
+          }
         />
       )}
 
@@ -111,11 +114,6 @@ export function DayView() {
         onClose={() => setEditing(null)}
       />
 
-      <DeleteTransactionDialog
-        budgetId={budgetId}
-        transaction={deleting}
-        onClose={() => setDeleting(null)}
-      />
     </div>
   );
 }
@@ -148,7 +146,7 @@ function JumpToFormButton({ targetRef }: { targetRef: RefObject<HTMLDivElement |
       type="button"
       onClick={jump}
       aria-label="Add a transaction"
-      className="lg:hidden fixed right-5 bottom-[max(1.25rem,env(safe-area-inset-bottom))] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent-solid text-white hover:bg-accent-solid-hover animate-in fade-in zoom-in-90 duration-150"
+      className="lg:hidden fixed right-5 bottom-[calc(4.5rem+env(safe-area-inset-bottom)+0.75rem)] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent-solid text-white hover:bg-accent-solid-hover animate-in fade-in zoom-in-90 duration-150"
     >
       <Plus className="h-6 w-6" />
     </button>
