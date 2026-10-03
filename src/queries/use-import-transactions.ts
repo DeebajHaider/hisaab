@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { transactionKeys } from "./transaction-keys";
-import { trendsKeys } from "./trends-keys";
+import { invalidateTransactionData } from "./invalidate-transactions";
 import type { Ref, TransactionImportPlan } from "@/lib/import/transaction-import";
 
 interface ImportInput {
@@ -199,12 +198,7 @@ export function useImportTransactions() {
       // Invalidate budget-scoped roots (cascades to day/month queries), plus
       // trends aggregations and the taxonomy lists — the import may have
       // created categories and items.
-      queryClient.invalidateQueries({
-        queryKey: transactionKeys.byBudget(variables.budgetId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: trendsKeys.byBudget(variables.budgetId),
-      });
+      invalidateTransactionData(queryClient, variables.budgetId);
       queryClient.invalidateQueries({
         queryKey: ["categories", variables.budgetId],
       });

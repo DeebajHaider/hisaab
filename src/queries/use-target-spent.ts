@@ -10,9 +10,9 @@ import type { Target } from "./use-targets";
  * naturally, same pattern as the per-row transaction-count query in
  * manage.tsx's PermanentDeleteDialog.
  */
-export function useTargetSpent(budgetId: string | undefined, target: Target) {
-  return useQuery({
-    queryKey: ["target-spent", target.id],
+export function targetSpentQuery(budgetId: string | undefined, target: Target) {
+  return {
+    queryKey: ["target-spent", target.id] as const,
     enabled: !!budgetId,
     queryFn: async (): Promise<number> => {
       let query = supabase
@@ -40,5 +40,9 @@ export function useTargetSpent(budgetId: string | undefined, target: Target) {
 
       return roundToCents((data ?? []).reduce((sum, t) => sum + t.amount, 0));
     },
-  });
+  };
+}
+
+export function useTargetSpent(budgetId: string | undefined, target: Target) {
+  return useQuery(targetSpentQuery(budgetId, target));
 }

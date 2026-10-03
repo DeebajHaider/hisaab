@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/types/db";
 import { toast } from "sonner";
+import { invalidateTransactionData } from "./invalidate-transactions";
 
 interface CreateCategoryInput {
   budgetId: string;
@@ -182,8 +183,7 @@ export function useDeleteCategory() {
       toast.success("Category permanently deleted.");
       qc.invalidateQueries({ queryKey: ["categories", budgetId] });
       qc.invalidateQueries({ queryKey: ["items", budgetId] });
-      qc.invalidateQueries({ queryKey: ["transactions", budgetId] });
-      qc.invalidateQueries({ queryKey: ["trends", budgetId] });
+      invalidateTransactionData(qc, budgetId);
     },
     onError: (error) => {
       toast.error("Couldn't delete category.", {

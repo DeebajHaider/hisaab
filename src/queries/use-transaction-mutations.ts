@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { transactionKeys } from "./transaction-keys";
-import { trendsKeys } from "./trends-keys";
+import { invalidateTransactionData } from "./invalidate-transactions";
 import type { Database } from "@/types/db";
 import type { Transaction } from "./use-transactions";
 import type { TransactionInsert } from "@/lib/calculations/copy-transactions";
@@ -54,13 +53,7 @@ export function useCreateTransaction() {
       toast.success("Transaction created.");
       // Invalidate the budget-scoped transactions root, which cascades to
       // every day/month query for this budget.
-      queryClient.invalidateQueries({
-        queryKey: transactionKeys.byBudget(variables.budgetId),
-      });
-      // Trends aggregations also need to refresh when transactions change.
-      queryClient.invalidateQueries({
-        queryKey: trendsKeys.byBudget(variables.budgetId),
-      });
+      invalidateTransactionData(queryClient, variables.budgetId);
     },
     onError: (error, _variables) => {
       // Errors deserve longer than the 4s default — give the user time to read.
@@ -118,13 +111,7 @@ export function useUpdateTransaction() {
       toast.success("Transaction updated.");
       // Date may have changed — invalidate the whole budget's transactions
       // rather than trying to figure out the old and new days.
-      queryClient.invalidateQueries({
-        queryKey: transactionKeys.byBudget(variables.budgetId),
-      });
-      // Trends aggregations also need to refresh when transactions change.
-      queryClient.invalidateQueries({
-        queryKey: trendsKeys.byBudget(variables.budgetId),
-      });
+      invalidateTransactionData(queryClient, variables.budgetId);
     },
     onError: (error, _variables) => {
       // Errors deserve longer than the 4s default — give the user time to read.
@@ -147,13 +134,6 @@ interface DeleteTransactionInput {
   snapshot?: Transaction;
 }
 
-function refreshTransactions(
-  queryClient: ReturnType<typeof useQueryClient>,
-  budgetId: string,
-) {
-  queryClient.invalidateQueries({ queryKey: transactionKeys.byBudget(budgetId) });
-  queryClient.invalidateQueries({ queryKey: trendsKeys.byBudget(budgetId) });
-}
 
 async function restoreTransaction(row: Transaction) {
   // Same id so anything still pointing at it keeps working. created_by is
@@ -187,7 +167,7 @@ export function useDeleteTransaction() {
     },
     onSuccess: (_, variables) => {
       const { snapshot, budgetId } = variables;
-      refreshTransactions(queryClient, budgetId);
+      invalidateTransactionData(queryClient, budgetId);
       if (!snapshot) {
         toast.success("Transaction deleted.");
         return;
@@ -199,7 +179,7 @@ export function useDeleteTransaction() {
           onClick: () => {
             restoreTransaction(snapshot)
               .then(() => {
-                refreshTransactions(queryClient, budgetId);
+                invalidateTransactionData(queryClient, budgetId);
                 toast.success("Transaction restored.");
               })
               .catch((error: unknown) =>
@@ -241,7 +221,7 @@ export function useCopyTransactions() {
       if (error) throw error;
     },
     onSuccess: (_, { budgetId, rows }) => {
-      refreshTransactions(queryClient, budgetId);
+      invalidateTransactionData(queryClient, budgetId);
       const ids = rows.map((r) => r.id!);
       toast(`Copied ${rows.length} transaction${rows.length === 1 ? "" : "s"}.`, {
         duration: 8000,
@@ -260,7 +240,7 @@ export function useCopyTransactions() {
                   });
                   return;
                 }
-                refreshTransactions(queryClient, budgetId);
+                invalidateTransactionData(queryClient, budgetId);
                 toast.success("Copy undone.");
               });
           },

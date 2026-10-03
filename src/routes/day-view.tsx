@@ -11,6 +11,7 @@ import { useDeleteTransaction } from "@/queries/use-transaction-mutations";
 import { calculateDayTotal } from "@/lib/calculations/day-totals";
 import { TransactionEntryForm } from "@/components/transactions/transaction-entry-form";
 import { QuickAddTemplates } from "@/components/transactions/quick-add-templates";
+import { TargetAlerts } from "@/components/targets/target-alerts";
 import { CopyPreviousDay } from "@/components/transactions/copy-previous-day";
 import { buildRepeatDraft, type RepeatDraft } from "@/lib/calculations/copy-transactions";
 import { DayHeader } from "@/components/transactions/day-header";
@@ -85,6 +86,8 @@ export function DayView() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8">
       <DayHeader budgetId={budgetId} date={date} total={total} currency={currency} />
+
+      <TargetAlerts budgetId={budgetId} date={date} currency={currency} />
 
       {transactionsQuery.isLoading ? (
         <ListSkeleton />
