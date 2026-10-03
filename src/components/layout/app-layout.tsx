@@ -1,6 +1,7 @@
 import { Suspense, useEffect } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { RouteFallback } from "@/components/layout/route-fallback";
+import { CommandPalette } from "@/components/layout/command-palette";
 import { prefetchAppRoutes } from "@/routes/lazy-routes";
 import { Wallet, Sun, Moon, Monitor, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ export function AppLayout() {
             "radial-gradient(ellipse 800px 500px at 30% 105%, var(--ambient-3), transparent 70%)",
         }}
       />
+      <CommandPalette />
       <AppHeader />
       <main className="relative flex-1">
         <Suspense fallback={<RouteFallback />}>
