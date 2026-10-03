@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { transactionKeys } from "./transaction-keys";
 import type { TransactionWithRelations } from "./use-transactions";
@@ -39,8 +39,10 @@ export function useLedgerTransactions(
       : ["transactions", "noop"],
     enabled: !!budgetId && !!from && !!to,
     // Keep the old rows on screen while a changed filter loads, so typing in
-    // the search box doesn't flash the list to skeletons.
-    placeholderData: keepPreviousData,
+    // the search box doesn't flash the list to skeletons. Only within the
+    // same budget: another budget's rows must never stand in for these.
+    placeholderData: (previous, previousQuery) =>
+      previousQuery?.queryKey[1] === budgetId ? previous : undefined,
     queryFn: async (): Promise<TransactionWithRelations[]> => {
       let query = supabase
         .from("transactions")

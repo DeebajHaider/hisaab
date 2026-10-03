@@ -4,18 +4,28 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useLedgerTransactions } from "./use-ledger-transactions";
 
-const calls = vi.hoisted(() => ({ log: [] as [string, ...unknown[]][] }));
+const calls = vi.hoisted(() => ({
+  log: [] as [string, ...unknown[]][],
+  rowsByBudget: {} as Record<string, unknown[]>,
+  gate: null as Promise<void> | null,
+}));
 
 vi.mock("@/lib/supabase", () => {
   // A chainable stand-in for the PostgREST builder that records each call.
   const builder: Record<string, unknown> = {};
+  let budget = "";
   for (const name of ["select", "eq", "gte", "lte", "in", "ilike", "order"]) {
     builder[name] = (...args: unknown[]) => {
       calls.log.push([name, ...args]);
+      if (name === "eq" && args[0] === "budget_id") budget = args[1] as string;
       return builder;
     };
   }
-  builder.limit = () => Promise.resolve({ data: [], error: null });
+  builder.limit = async () => {
+    const rows = calls.rowsByBudget[budget] ?? [];
+    await calls.gate;
+    return { data: rows, error: null };
+  };
   return { supabase: { from: () => builder } };
 });
 
@@ -29,6 +39,8 @@ const used = (name: string) => calls.log.filter(([n]) => n === name);
 
 beforeEach(() => {
   calls.log = [];
+  calls.rowsByBudget = {};
+  calls.gate = null;
 });
 
 describe("useLedgerTransactions filters", () => {
@@ -68,5 +80,42 @@ describe("useLedgerTransactions filters", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(used("ilike")).toHaveLength(0);
+  });
+});
+
+describe("useLedgerTransactions while a changed query loads", () => {
+  it("keeps the previous rows when only a filter changes within the same budget", async () => {
+    calls.rowsByBudget = { b1: [{ id: "a" }] };
+    const { result, rerender } = renderHook(
+      ({ search }) => useLedgerTransactions("b1", { ...base, search }),
+      { wrapper, initialProps: { search: "" } },
+    );
+    await waitFor(() => expect(result.current.data).toHaveLength(1));
+
+    let release!: () => void;
+    calls.gate = new Promise<void>((r) => (release = r));
+    rerender({ search: "chai" });
+
+    expect(result.current.isPlaceholderData).toBe(true);
+    expect(result.current.data).toEqual([{ id: "a" }]);
+    release();
+    await waitFor(() => expect(result.current.isPlaceholderData).toBe(false));
+  });
+
+  it("never shows another budget's rows while a different budget loads", async () => {
+    calls.rowsByBudget = { b1: [{ id: "from-b1" }], b2: [{ id: "from-b2" }] };
+    const { result, rerender } = renderHook(
+      ({ budgetId }) => useLedgerTransactions(budgetId, base),
+      { wrapper, initialProps: { budgetId: "b1" } },
+    );
+    await waitFor(() => expect(result.current.data).toEqual([{ id: "from-b1" }]));
+
+    let release!: () => void;
+    calls.gate = new Promise<void>((r) => (release = r));
+    rerender({ budgetId: "b2" });
+
+    expect(result.current.data).toBeUndefined();
+    release();
+    await waitFor(() => expect(result.current.data).toEqual([{ id: "from-b2" }]));
   });
 });
