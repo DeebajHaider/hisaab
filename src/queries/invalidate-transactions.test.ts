@@ -3,14 +3,19 @@ import { describe, expect, it, vi } from "vitest";
 import { invalidateTransactionData } from "./invalidate-transactions";
 
 describe("invalidateTransactionData", () => {
-  it("refreshes lists, trends, and every target's progress for the budget", () => {
+  it("refreshes lists, trends, recent-item ranking, and every target's progress", () => {
     const qc = new QueryClient();
     const spy = vi.spyOn(qc, "invalidateQueries");
 
     invalidateTransactionData(qc, "b1");
 
     const keys = spy.mock.calls.map(([filters]) => filters?.queryKey);
-    expect(keys).toEqual([["transactions", "b1"], ["trends", "b1"], ["target-spent"]]);
+    expect(keys).toEqual([
+      ["transactions", "b1"],
+      ["trends", "b1"],
+      ["recent-items", "b1"],
+      ["target-spent"],
+    ]);
   });
 
   it("actually marks cached target progress stale", () => {

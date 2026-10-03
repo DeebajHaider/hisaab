@@ -1,3 +1,4 @@
+import { addDays, todayISO } from "@/lib/format/date";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
@@ -28,10 +29,8 @@ export function useRecentItems(
     queryKey: ["recent-items", budgetId, days],
     enabled: !!budgetId,
     queryFn: async (): Promise<RecentItemUsage[]> => {
-      // Compute the cutoff date in the user's local timezone, then send as ISO date.
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - days);
-      const cutoffISO = cutoff.toISOString().slice(0, 10);
+      // Local calendar date, not UTC (see toISODate).
+      const cutoffISO = addDays(todayISO(), -days);
 
       const { data, error } = await supabase
         .from("transactions")
