@@ -1,3 +1,4 @@
+import { newId } from "@/lib/uuid";
 import { useState } from "react";
 import { CopyPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,7 @@ export function CopyPreviousDay({ budgetId, date, currency }: CopyPreviousDayPro
   const confirm = () => {
     copyMutation.mutate({
       budgetId,
-      rows: buildCopies(source, date, () => crypto.randomUUID()),
+      rows: buildCopies(source, date, () => newId()),
     });
     setOpen(false);
   };

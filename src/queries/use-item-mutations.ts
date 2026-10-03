@@ -1,3 +1,4 @@
+import { newId } from "@/lib/uuid";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/types/db";
@@ -27,7 +28,7 @@ export function useCreateItem() {
 
       // Generated client-side so callers learn the new id without reading
       // the row back (inserts here deliberately don't use .select()).
-      const id = crypto.randomUUID();
+      const id = newId();
       const { error } = await supabase.from("items").insert({
         id,
         category_id: input.categoryId,
