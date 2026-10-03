@@ -86,8 +86,8 @@
        teal-600/700/100), just centralized into one source of truth instead
        of bg-teal-600/text-teal-600 copy-pasted across ~20 files. Same
        rendered color, not a redesign of the accent itself. */
-    --accent-solid: oklch(0.511 0.096 186.391);       /* teal-700 — white text on teal-600 is only 3.7:1, below WCAG AA */
-    --accent-solid-hover: oklch(0.437 0.078 188.216); /* teal-800 */
+    --accent-solid: oklch(0.6 0.118 184.704);        /* teal-600 */
+    --accent-solid-hover: oklch(0.511 0.096 186.391); /* teal-700 */
     --accent-text: oklch(0.511 0.096 186.391);        /* teal-700 — teal-600 text is only 3.7:1 on white, below WCAG AA */
     --accent-soft: oklch(0.953 0.051 180.801);        /* teal-100 */
     --accent-soft-foreground: oklch(0.511 0.096 186.391); /* teal-700 */
@@ -119,8 +119,8 @@
     --glass-edge: oklch(0.145 0 0 / 8%);
     --glass-highlight: oklch(1 0 0 / 90%);
     --glass-shadow: oklch(0.145 0 0 / 10%);
-    --ambient-1: color-mix(in oklab, oklch(0.6 0.118 184.704) 14%, transparent);
-    --ambient-2: color-mix(in oklab, oklch(0.6 0.118 184.704) 9%, transparent);
+    --ambient-1: color-mix(in oklab, var(--accent-solid) 14%, transparent);
+    --ambient-2: color-mix(in oklab, var(--accent-solid) 9%, transparent);
     --ambient-3: color-mix(in oklab, oklch(0.72 0.15 230) 7%, transparent);
 }
 
@@ -145,8 +145,8 @@
     --ring: oklch(0.556 0 0);
     --scrollbar-thumb: oklch(0.38 0 0);
     --scrollbar-thumb-hover: oklch(0.50 0 0);
-    --accent-solid: oklch(0.511 0.096 186.391);       /* teal-700 — same in both themes */
-    --accent-solid-hover: oklch(0.437 0.078 188.216); /* teal-800 */
+    --accent-solid: oklch(0.6 0.118 184.704);         /* teal-600 — buttons stay the same solid color in both themes, matching current behavior */
+    --accent-solid-hover: oklch(0.511 0.096 186.391); /* teal-700 */
     --accent-text: oklch(0.777 0.152 181.912);        /* teal-400 — lighter for contrast on a dark background */
     --accent-soft: oklch(0.277 0.046 192.524 / 40%);  /* teal-950/40 */
     --accent-soft-foreground: oklch(0.855 0.138 181.071); /* teal-300 */
@@ -176,8 +176,8 @@
     --glass-edge: oklch(1 0 0 / 10%);
     --glass-highlight: oklch(1 0 0 / 20%);
     --glass-shadow: oklch(0 0 0 / 55%);
-    --ambient-1: color-mix(in oklab, oklch(0.6 0.118 184.704) 26%, transparent);
-    --ambient-2: color-mix(in oklab, oklch(0.6 0.118 184.704) 16%, transparent);
+    --ambient-1: color-mix(in oklab, var(--accent-solid) 26%, transparent);
+    --ambient-2: color-mix(in oklab, var(--accent-solid) 16%, transparent);
     --ambient-3: color-mix(in oklab, oklch(0.72 0.15 230) 12%, transparent);
 }
 

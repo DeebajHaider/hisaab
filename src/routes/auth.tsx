@@ -97,7 +97,7 @@ export function AuthPage() {
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse 600px 400px at 50% 35%, color-mix(in oklab, oklch(0.6 0.118 184.704) 10%, transparent), transparent)",
+            "radial-gradient(ellipse 600px 400px at 50% 35%, color-mix(in oklab, var(--accent-solid) 10%, transparent), transparent)",
         }}
       />
 
