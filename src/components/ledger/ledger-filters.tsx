@@ -1,9 +1,14 @@
-import { useMemo } from "react";
-import { Search, X } from "lucide-react";
+import { useMemo, useState, type ReactNode } from "react";
+import { ChevronRight, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { FilterChips } from "@/components/shared/filter-chips";
 import { LEDGER_PRESETS, type LedgerPreset } from "@/lib/calculations/resolve-ledger-preset";
 import { cn } from "@/lib/utils";
@@ -147,36 +152,33 @@ export function LedgerFilters({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">Categories</Label>
+      <FilterSection label="Categories" selectedCount={selectedCategoryIds.length}>
         <FilterChips
           options={categoryOptions}
           selected={selectedCategoryIds}
           onToggle={onToggleCategory}
           emptyLabel="No categories set up yet."
         />
-      </div>
+      </FilterSection>
 
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">Items</Label>
+      <FilterSection label="Items" selectedCount={selectedItemIds.length}>
         <FilterChips
           options={itemOptions}
           selected={selectedItemIds}
           onToggle={onToggleItem}
           emptyLabel="No items in the selected categories."
         />
-      </div>
+      </FilterSection>
 
       {people.length > 0 && (
-        <div className="space-y-2">
-          <Label className="text-xs text-muted-foreground">People</Label>
+        <FilterSection label="People" selectedCount={selectedPersonIds.length}>
           <FilterChips
             options={personOptions}
             selected={selectedPersonIds}
             onToggle={onTogglePerson}
             emptyLabel=""
           />
-        </div>
+        </FilterSection>
       )}
 
       {onClearFilters && (
@@ -192,5 +194,33 @@ export function LedgerFilters({
         </Button>
       )}
     </div>
+  );
+}
+
+/** A filter group that starts closed. Long taxonomies would otherwise push
+ *  the results off screen, so the header shows how many are selected. */
+function FilterSection({
+  label,
+  selectedCount,
+  children,
+}: {
+  label: string;
+  selectedCount: number;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger className="group flex min-h-9 w-full items-center gap-2 rounded-md text-left text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring">
+        <ChevronRight className="h-3.5 w-3.5 transition-transform group-data-[state=open]:rotate-90" />
+        <span>{label}</span>
+        {selectedCount > 0 && (
+          <span className="rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-medium text-accent-soft-foreground">
+            {selectedCount} selected
+          </span>
+        )}
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pb-1 pt-1">{children}</CollapsibleContent>
+    </Collapsible>
   );
 }
