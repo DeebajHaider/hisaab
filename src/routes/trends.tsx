@@ -21,6 +21,8 @@ import {
   formatMonthLabel,
 } from "@/lib/format/year-month";
 
+const NO_CATEGORIES: string[] = [];
+
 export function Trends() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const [timeframe, setTimeframe] = useState<Timeframe>("6M");
@@ -51,7 +53,7 @@ export function Trends() {
   // Compute defaults for the comparison chart. Recomputed when the data
   // changes (timeframe shift or mutation invalidation).
   const aggregateResult = categoryQuery.data;
-  const allCategories = aggregateResult?.categories ?? [];
+  const allCategories = aggregateResult?.categories ?? NO_CATEGORIES;
   const colors = useMemo(
     () => assignCategoryColors(allCategories),
     [allCategories],

@@ -111,7 +111,7 @@ function scoreItem(
   const name = item.name.toLowerCase();
 
   // Determine match type
-  let baseScore = 0;
+  let baseScore: number;
   if (name.startsWith(query)) {
     baseScore = 1000;
   } else if (matchesAnyWordPrefix(name, query)) {
