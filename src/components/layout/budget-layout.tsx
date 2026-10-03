@@ -1,9 +1,10 @@
-import { Link, NavLink, Outlet, useParams } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Calendar,
   Settings,
   Menu,
+  Ellipsis,
   CalendarRange,
   Receipt,
   Target,
@@ -27,6 +28,7 @@ import { useBudget } from "@/queries/use-budget";
 export function BudgetLayout() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const { data: budget, isLoading, error } = useBudget(budgetId);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   if (isLoading) return <BudgetLayoutSkeleton />;
   if (error || !budget) return <BudgetNotFound />;
@@ -34,12 +36,19 @@ export function BudgetLayout() {
   return (
     <div className="flex flex-col lg:flex-row min-h-[calc(100vh-3.5rem)]">
       <DesktopSidebar budgetId={budget.id} budgetName={budget.name} />
-      <MobileTopBar budgetId={budget.id} budgetName={budget.name} />
-      <main className="flex-1 min-w-0">
+      <MobileTopBar
+        budgetId={budget.id}
+        budgetName={budget.name}
+        open={menuOpen}
+        onOpenChange={setMenuOpen}
+      />
+      {/* Room for the phone tab bar so the last content isn't hidden under it. */}
+      <main className="flex-1 min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0">
         <Suspense fallback={<RouteFallback />}>
           <Outlet />
         </Suspense>
       </main>
+      <BottomTabBar budgetId={budget.id} onMore={() => setMenuOpen(true)} />
     </div>
   );
 }
@@ -62,11 +71,14 @@ function DesktopSidebar({
 function MobileTopBar({
   budgetId,
   budgetName,
+  open,
+  onOpenChange: setOpen,
 }: {
   budgetId: string;
   budgetName: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
   return (
     <div className="lg:hidden border-b border-border/40 px-4 py-3 flex items-center gap-3">
       <Sheet open={open} onOpenChange={setOpen}>
@@ -86,6 +98,51 @@ function MobileTopBar({
       </Sheet>
       <span className="font-semibold truncate">{budgetName}</span>
     </div>
+  );
+}
+
+function BottomTabBar({
+  budgetId,
+  onMore,
+}: {
+  budgetId: string;
+  onMore: () => void;
+}) {
+  const { pathname } = useLocation();
+  const base = `/app/budgets/${budgetId}`;
+  const tabs = [
+    { to: `${base}/day/${todayISO()}`, prefix: `${base}/day`, label: "Day", icon: Calendar },
+    { to: `${base}/month`, prefix: `${base}/month`, label: "Month", icon: CalendarRange },
+    { to: `${base}/ledger`, prefix: `${base}/ledger`, label: "Ledger", icon: Receipt },
+    { to: `${base}/targets`, prefix: `${base}/targets`, label: "Targets", icon: Target },
+  ];
+  const onTab = tabs.some((t) => pathname.startsWith(t.prefix));
+  const tabCls = (active: boolean) =>
+    `flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] transition-colors ${
+      active ? "text-accent-text font-medium" : "text-muted-foreground"
+    }`;
+
+  return (
+    <nav
+      aria-label="Budget sections"
+      className="lg:hidden fixed inset-x-0 bottom-0 z-40 flex border-t border-border/40 bg-background/80 backdrop-blur-xl backdrop-saturate-150 pb-[env(safe-area-inset-bottom)]"
+    >
+      {tabs.map(({ to, prefix, label, icon: Icon }) => (
+        <Link
+          key={label}
+          to={to}
+          aria-current={pathname.startsWith(prefix) ? "page" : undefined}
+          className={tabCls(pathname.startsWith(prefix))}
+        >
+          <Icon className="h-5 w-5" />
+          {label}
+        </Link>
+      ))}
+      <button type="button" onClick={onMore} className={tabCls(!onTab)}>
+        <Ellipsis className="h-5 w-5" />
+        More
+      </button>
+    </nav>
   );
 }
 
@@ -112,6 +169,7 @@ function SidebarNav({ budgetId }: { budgetId: string }) {
       <nav className="flex-1 p-2 flex flex-col gap-1">
         <NavItem
           to={`/app/budgets/${budgetId}/day/${today}`}
+          matchPrefix={`/app/budgets/${budgetId}/day`}
           icon={<Calendar className="w-4 h-4" />}
           label="Day view"
         />
@@ -161,19 +219,23 @@ function SidebarNav({ budgetId }: { budgetId: string }) {
 
 function NavItem({
   to,
+  matchPrefix,
   icon,
   label,
 }: {
   to: string;
+  /** Treat any path under this prefix as active (Day view's link carries a date). */
+  matchPrefix?: string;
   icon: React.ReactNode;
   label: string;
 }) {
+  const { pathname } = useLocation();
   return (
     <NavLink
       to={to}
       className={({ isActive }) =>
         `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-          isActive
+          matchPrefix ? pathname.startsWith(matchPrefix) : isActive
             ? "bg-accent-soft/60 text-accent-soft-foreground font-medium"
             : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
         }`

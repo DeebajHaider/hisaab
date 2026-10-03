@@ -2,6 +2,7 @@ import { Suspense, useEffect } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { RouteFallback } from "@/components/layout/route-fallback";
 import { CommandPalette } from "@/components/layout/command-palette";
+import { DocumentTitle } from "@/components/layout/document-title";
 import { prefetchAppRoutes } from "@/routes/lazy-routes";
 import { Wallet, Sun, Moon, Monitor, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,7 @@ export function AppLayout() {
         }}
       />
       <CommandPalette />
+      <DocumentTitle />
       <AppHeader />
       <main className="relative flex-1">
         <Suspense fallback={<RouteFallback />}>
@@ -59,7 +61,7 @@ export function AppLayout() {
 
 function AppHeader() {
   return (
-    <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-40">
+    <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-40 pt-[env(safe-area-inset-top)]">
       <div className="max-w-6xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3 sm:gap-6">
           <Link to="/app" className="flex items-center gap-2">
