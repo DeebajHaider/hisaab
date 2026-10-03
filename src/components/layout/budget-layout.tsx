@@ -233,13 +233,14 @@ function NavItem({
   return (
     <NavLink
       to={to}
-      className={({ isActive }) =>
-        `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-          matchPrefix ? pathname.startsWith(matchPrefix) : isActive
+      className={({ isActive }) => {
+        const active = matchPrefix ? pathname.startsWith(matchPrefix) : isActive;
+        return `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+          active
             ? "bg-accent-soft/60 text-accent-soft-foreground font-medium"
             : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-        }`
-      }
+        }`;
+      }}
     >
       {icon}
       {label}
