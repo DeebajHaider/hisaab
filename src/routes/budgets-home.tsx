@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import { Calendar, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBudgets } from "@/queries/use-budgets";
 import { CreateBudgetDialog } from "@/components/budgets/create-budget-dialog";
+import { BudgetMonthSpend } from "@/components/budgets/budget-month-spend";
 
 export function BudgetsHome() {
   const { data: budgets, isLoading, error } = useBudgets();
@@ -83,20 +84,7 @@ function BudgetGrid({ budgets }: { budgets: ReturnType<typeof useBudgets>["data"
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>
-                  Created{" "}
-                  {new Date(budget.created_at).toLocaleDateString("en-PK", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </span>
-                <span className="ml-auto font-medium uppercase">
-                  {budget.currency}
-                </span>
-              </div>
+              <BudgetMonthSpend budgetId={budget.id} currency={budget.currency} />
             </CardContent>
           </Card>
         </Link>
