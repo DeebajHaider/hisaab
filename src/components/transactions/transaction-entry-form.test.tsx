@@ -74,7 +74,7 @@ describe("TransactionEntryForm inline item creation", () => {
 
   it("creates the item, selects it, and focuses the amount without submitting the transaction", async () => {
     const user = userEvent.setup();
-    const { container } = render(<TransactionEntryForm budgetId="b1" date="2026-10-02" />);
+    render(<TransactionEntryForm budgetId="b1" date="2026-10-02" />);
 
     await user.type(search(), "Chai");
     await user.keyboard("{Enter}");
@@ -82,7 +82,8 @@ describe("TransactionEntryForm inline item creation", () => {
     const nameInput = screen.getByLabelText("Name");
     expect(nameInput).toHaveValue("Chai");
 
-    await user.click(container.querySelector("#new-item-category")!);
+    const panel = screen.getByText("New item").closest("div")!.parentElement!;
+    await user.click(within(panel).getByRole("combobox"));
     await user.click(within(screen.getByRole("listbox")).getByRole("option", { name: "Car" }));
 
     await user.click(nameInput);
@@ -188,5 +189,51 @@ describe("TransactionEntryForm log again", () => {
 
     await waitFor(() => expect(screen.getByLabelText(/^Qty/)).toHaveFocus());
     expect(screen.getByLabelText("Rate")).toHaveValue(180);
+  });
+});
+
+describe("TransactionEntryForm with two copies mounted (page form + Edit dialog)", () => {
+  it("gives every element a unique id and keeps each label tied to its own field", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <>
+        <section data-testid="page">
+          <TransactionEntryForm budgetId="b1" date="2026-10-02" />
+        </section>
+        <section data-testid="dialog">
+          <TransactionEntryForm budgetId="b1" date="2026-10-02" />
+        </section>
+      </>,
+    );
+
+    const ids = [...container.querySelectorAll("[id]")].map((el) => el.id);
+    expect(new Set(ids).size).toBe(ids.length);
+
+    for (const testId of ["page", "dialog"]) {
+      const scope = within(screen.getByTestId(testId));
+      await user.click(scope.getByText("Amount"));
+      expect(scope.getByLabelText("Amount")).toHaveFocus();
+    }
+  });
+
+  it("marks only the page form's search box as the shortcut target when not editing", () => {
+    const { container } = render(
+      <>
+        <TransactionEntryForm budgetId="b1" date="2026-10-02" />
+        <TransactionEntryForm
+          budgetId="b1"
+          date="2026-10-02"
+          existing={
+            {
+              id: "t1", budget_id: "b1", category_id: "cat-car", item_id: "item-petrol",
+              date: "2026-10-02", amount: 100, rate: null, qty: null, person_id: null,
+              notes: null, item: { id: "item-petrol", name: "Petrol", unit: null },
+              category: car, person: null,
+            } as never
+          }
+        />
+      </>,
+    );
+    expect(container.querySelectorAll("[data-entry-search]")).toHaveLength(1);
   });
 });

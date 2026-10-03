@@ -44,7 +44,7 @@ function setup(path = "/app/budgets/b1/ledger") {
             <>
               <Where />
               <input data-testid="field" />
-              <input id="search-input" data-testid="search" />
+              <input data-entry-search data-testid="search" />
             </>
           }
         />

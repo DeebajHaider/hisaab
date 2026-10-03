@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, type FormEvent } from "react";
+import { useState, useEffect, useId, useRef, useMemo, type FormEvent } from "react";
 import { Search, X, Check, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,9 @@ interface TransactionEntryFormProps {
   onSaved?: () => void;
   onCancel?: () => void;
 }
+
+// One shared empty list, so memo dependencies stay stable while queries load.
+const NONE: never[] = [];
 
 export function TransactionEntryForm({
   budgetId,
@@ -82,12 +85,20 @@ export function TransactionEntryForm({
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
+  const rateInputRef = useRef<HTMLInputElement>(null);
+  const qtyInputRef = useRef<HTMLInputElement>(null);
+
+  // The Edit dialog renders a second copy of this form while the page's own
+  // is still mounted, so element ids must be unique per instance or labels
+  // would attach to the wrong form's fields.
+  const uid = useId();
+  const fid = (name: string) => `${uid}-${name}`;
 
   // --- Derived values
-  const items = itemsQuery.data ?? [];
-  const categories = categoriesQuery.data ?? [];
-  const recent = recentQuery.data ?? [];
-  const people = peopleQuery.data ?? [];
+  const items = itemsQuery.data ?? NONE;
+  const categories = categoriesQuery.data ?? NONE;
+  const recent = recentQuery.data ?? NONE;
+  const people = peopleQuery.data ?? NONE;
 
   const selectedItem = useMemo(
     () => items.find((i) => i.id === selectedItemId) ?? null,
@@ -187,9 +198,7 @@ export function TransactionEntryForm({
   useEffect(() => {
     if (!initial || !formReady || initialFocused.current) return;
     initialFocused.current = true;
-    const field = document.getElementById(
-      initial.mode === "rate_qty" ? "qty-input" : "amount-input",
-    ) as HTMLInputElement | null;
+    const field = initial.mode === "rate_qty" ? qtyInputRef.current : amountInputRef.current;
     field?.focus();
     field?.select();
   }, [initial, formReady]);
@@ -244,10 +253,10 @@ export function TransactionEntryForm({
     const nextField =
       itemMode === "rate_qty"
         ? item.default_rate !== null
-          ? "qty-input"
-          : "rate-input"
-        : "amount-input";
-    setTimeout(() => document.getElementById(nextField)?.focus(), 60);
+          ? qtyInputRef
+          : rateInputRef
+        : amountInputRef;
+    setTimeout(() => nextField.current?.focus(), 60);
   };
 
   const clearItem = () => {
@@ -411,7 +420,7 @@ export function TransactionEntryForm({
 
         {/* Search */}
         <div className="space-y-2">
-          <Label htmlFor="search-input">Search items</Label>
+          <Label htmlFor={fid("search-input")}>Search items</Label>
           <SearchCombobox
             items={searchResults}
             selectedId={selectedItemId}
@@ -422,6 +431,8 @@ export function TransactionEntryForm({
             onClear={clearItem}
             onCreate={setNewItemName}
             inputRef={searchInputRef}
+            inputId={fid("search-input")}
+            primary={!isEditing}
           />
           {newItemName !== null && (
             <NewItemPanel
@@ -446,7 +457,7 @@ export function TransactionEntryForm({
         {/* Category + Item dropdowns */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-2">
-            <Label htmlFor="category-select">Category</Label>
+            <Label htmlFor={fid("category-select")}>Category</Label>
             <Select
               value={effectiveCategoryId ?? ""}
               onValueChange={(v) => {
@@ -456,7 +467,7 @@ export function TransactionEntryForm({
                 }
               }}
             >
-              <SelectTrigger id="category-select">
+              <SelectTrigger id={fid("category-select")}>
                 <SelectValue placeholder="Pick a category" />
               </SelectTrigger>
               <SelectContent>
@@ -470,13 +481,13 @@ export function TransactionEntryForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="item-select">Item</Label>
+            <Label htmlFor={fid("item-select")}>Item</Label>
             <Select
               value={selectedItemId ?? ""}
               onValueChange={pickItem}
               disabled={!effectiveCategoryId}
             >
-              <SelectTrigger id="item-select">
+              <SelectTrigger id={fid("item-select")}>
                 <SelectValue
                   placeholder={
                     effectiveCategoryId
@@ -540,11 +551,12 @@ export function TransactionEntryForm({
           {mode === "rate_qty" && (
             <>
               <div className="space-y-1">
-                <Label htmlFor="rate-input" className="text-xs">
+                <Label htmlFor={fid("rate-input")} className="text-xs">
                   Rate
                 </Label>
                 <Input
-                  id="rate-input"
+                  ref={rateInputRef}
+                  id={fid("rate-input")}
                   type="number"
                   inputMode="decimal"
                   value={rate}
@@ -555,11 +567,12 @@ export function TransactionEntryForm({
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="qty-input" className="text-xs">
+                <Label htmlFor={fid("qty-input")} className="text-xs">
                   Qty {selectedItem?.unit && `(${selectedItem.unit})`}
                 </Label>
                 <Input
-                  id="qty-input"
+                  ref={qtyInputRef}
+                  id={fid("qty-input")}
                   type="number"
                   inputMode="decimal"
                   value={qty}
@@ -574,12 +587,12 @@ export function TransactionEntryForm({
           <div
             className={`space-y-1 ${mode === "rate_qty" ? "" : "col-span-3"}`}
           >
-            <Label htmlFor="amount-input" className="text-xs">
+            <Label htmlFor={fid("amount-input")} className="text-xs">
               Amount
             </Label>
             <Input
               ref={amountInputRef}
-              id="amount-input"
+              id={fid("amount-input")}
               type="number"
               inputMode="decimal"
               value={amount}
@@ -600,7 +613,7 @@ export function TransactionEntryForm({
             so an archived current-assignee remains visible. */}
         {selectedCategory?.tracks_person && (
           <div className="space-y-2">
-            <Label htmlFor="person-select">Person</Label>
+            <Label htmlFor={fid("person-select")}>Person</Label>
             <Select
               // Remounting on personId changes forces Radix to re-match its
               // internal SelectItem lookup. Without this, when the form pre-fills
@@ -611,7 +624,7 @@ export function TransactionEntryForm({
               value={personId ?? ""}
               onValueChange={setPersonId}
             >
-              <SelectTrigger id="person-select">
+              <SelectTrigger id={fid("person-select")}>
                 <SelectValue placeholder="Pick a person">
                   {selectedPerson && (
                     <span>
@@ -648,11 +661,11 @@ export function TransactionEntryForm({
 
         {/* Notes */}
         <div className="space-y-2">
-          <Label htmlFor="notes-input" className="text-xs">
+          <Label htmlFor={fid("notes-input")} className="text-xs">
             Notes (optional)
           </Label>
           <Textarea
-            id="notes-input"
+            id={fid("notes-input")}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
@@ -727,6 +740,8 @@ function SearchCombobox({
   onClear,
   onCreate,
   inputRef,
+  inputId,
+  primary,
 }: {
   items: ItemWithCategory[];
   selectedId: string | null;
@@ -737,6 +752,9 @@ function SearchCombobox({
   onClear: () => void;
   onCreate: (name: string) => void;
   inputRef: React.RefObject<HTMLInputElement | null>;
+  inputId: string;
+  /** Marks the page's own search box (not the Edit dialog's) as the target of the "n" shortcut and + button. */
+  primary: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState(0);
@@ -811,7 +829,8 @@ function SearchCombobox({
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
       <Input
         ref={inputRef}
-        id="search-input"
+        id={inputId}
+        data-entry-search={primary ? "" : undefined}
         placeholder="Type to search..."
         value={displayValue}
         onChange={(e) => {
@@ -918,6 +937,7 @@ function NewItemPanel({
   onCreate: (name: string, categoryId: string) => void;
   onCancel: () => void;
 }) {
+  const uid = useId();
   const [name, setName] = useState(initialName);
   const [categoryId, setCategoryId] = useState(defaultCategoryId ?? "");
   const canSubmit = name.trim() !== "" && categoryId !== "" && !pending;
@@ -931,11 +951,11 @@ function NewItemPanel({
       <p className="text-xs font-medium">New item</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1">
-          <Label htmlFor="new-item-name" className="text-xs">
+          <Label htmlFor={`${uid}-name`} className="text-xs">
             Name
           </Label>
           <Input
-            id="new-item-name"
+            id={`${uid}-name`}
             value={name}
             maxLength={100}
             autoFocus
@@ -952,11 +972,11 @@ function NewItemPanel({
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="new-item-category" className="text-xs">
+          <Label htmlFor={`${uid}-category`} className="text-xs">
             Category
           </Label>
           <Select value={categoryId} onValueChange={setCategoryId}>
-            <SelectTrigger id="new-item-category" className="w-full">
+            <SelectTrigger id={`${uid}-category`} className="w-full">
               <SelectValue placeholder="Pick a category" />
             </SelectTrigger>
             <SelectContent>

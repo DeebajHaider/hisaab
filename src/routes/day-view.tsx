@@ -167,7 +167,7 @@ function JumpToFormButton({ targetRef }: { targetRef: RefObject<HTMLDivElement |
     const el = targetRef.current;
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "start" });
-    el.querySelector<HTMLInputElement>("#search-input")?.focus({ preventScroll: true });
+    el.querySelector<HTMLInputElement>("[data-entry-search]")?.focus({ preventScroll: true });
   };
 
   return (

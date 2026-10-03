@@ -59,7 +59,7 @@ export function CommandPalette() {
 
   const focusNewTransaction = useCallback(() => {
     const focus = () => {
-      const input = document.getElementById("search-input");
+      const input = document.querySelector<HTMLElement>("[data-entry-search]");
       if (!input) return false;
       input.scrollIntoView({ behavior: "smooth", block: "center" });
       input.focus({ preventScroll: true });
