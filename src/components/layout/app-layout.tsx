@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { RouteFallback } from "@/components/layout/route-fallback";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { DocumentTitle } from "@/components/layout/document-title";
+import { OfflineBanner } from "@/components/layout/offline-banner";
 import { prefetchAppRoutes } from "@/routes/lazy-routes";
 import { Wallet, Sun, Moon, Monitor, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,7 @@ function AppHeader() {
           <UserMenu />
         </div>
       </div>
+      <OfflineBanner />
     </header>
   );
 }
