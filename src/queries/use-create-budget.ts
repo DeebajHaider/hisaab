@@ -28,12 +28,6 @@ export function useCreateBudget() {
     throw new Error("Must be signed in to create a budget");
   }
 
-  // DEBUG: check what supabase-js thinks the auth state is
-  const { data: { session } } = await supabase.auth.getSession();
-  console.log("React auth user.id:", user.id);
-  console.log("Supabase session user.id:", session?.user?.id);
-  console.log("Are they equal?", user.id === session?.user?.id);
-
   const { error } = await supabase
     .from("budgets")
     .insert({
