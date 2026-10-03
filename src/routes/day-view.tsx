@@ -11,6 +11,7 @@ import { useDeleteTransaction } from "@/queries/use-transaction-mutations";
 import { calculateDayTotal } from "@/lib/calculations/day-totals";
 import { TransactionEntryForm } from "@/components/transactions/transaction-entry-form";
 import { QuickAddTemplates } from "@/components/transactions/quick-add-templates";
+import { useSwipe } from "@/lib/gestures/use-swipe";
 import { TargetAlerts } from "@/components/targets/target-alerts";
 import { CopyPreviousDay } from "@/components/transactions/copy-previous-day";
 import { buildRepeatDraft, type RepeatDraft } from "@/lib/calculations/copy-transactions";
@@ -76,6 +77,13 @@ export function DayView() {
     return () => window.removeEventListener("keydown", handler);
   }, [budgetId, date, editing, navigate]);
 
+  // Swipe left for the next day, right for the previous (phones).
+  const swipe = useSwipe((direction) => {
+    if (!budgetId || !date) return;
+    const target = addDays(date, direction === "left" ? 1 : -1);
+    navigate(`/app/budgets/${budgetId}/day/${target}`);
+  }, !editing);
+
   if (!budgetId || !date) return null;
 
   const budget = budgetQuery.data;
@@ -84,7 +92,10 @@ export function DayView() {
   const currency = budget?.currency ?? "PKR";
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8">
+    <div
+      {...swipe}
+      className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8 min-h-[70vh]"
+    >
       <DayHeader budgetId={budgetId} date={date} total={total} currency={currency} />
 
       <TargetAlerts budgetId={budgetId} date={date} currency={currency} />
