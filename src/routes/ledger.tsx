@@ -9,6 +9,8 @@ import { LedgerDayGroup } from "@/components/ledger/ledger-day-group";
 import { useBudget } from "@/queries/use-budget";
 import { useCategories } from "@/queries/use-categories";
 import { useItems } from "@/queries/use-items";
+import { usePeople } from "@/queries/use-people";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useEarliestTransactionMonth } from "@/queries/use-earliest-transaction-month";
 import { useLedgerTransactions, LEDGER_ROW_CAP } from "@/queries/use-ledger-transactions";
 import { calculateDayTotal } from "@/lib/calculations/day-totals";
@@ -33,15 +35,28 @@ export function Ledger() {
   const [to, setTo] = useState(() => todayISO());
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [itemIds, setItemIds] = useState<string[]>([]);
+  const [personIds, setPersonIds] = useState<string[]>([]);
+  const [searchText, setSearchText] = useState("");
+  const search = useDebouncedValue(searchText);
 
   const budgetQuery = useBudget(budgetId);
   const categoriesQuery = useCategories(budgetId);
   const itemsQuery = useItems(budgetId);
+  // Archived people included: their past transactions still need filtering.
+  const peopleQuery = usePeople(budgetId, { includeArchived: true });
   const earliestQuery = useEarliestTransactionMonth(budgetId);
-  const ledgerQuery = useLedgerTransactions(budgetId, { from, to, categoryIds, itemIds });
+  const ledgerQuery = useLedgerTransactions(budgetId, {
+    from,
+    to,
+    categoryIds,
+    itemIds,
+    personIds,
+    search,
+  });
 
   const categories = categoriesQuery.data ?? [];
   const items = itemsQuery.data ?? [];
+  const people = peopleQuery.data ?? [];
   const earliestDate = earliestQuery.data ? firstDayOfMonth(earliestQuery.data) : null;
 
   // Which preset (if any) the current from/to matches — purely derived, no
@@ -81,6 +96,19 @@ export function Ledger() {
     setItemIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
+  const handleTogglePerson = (id: string) => {
+    setPersonIds((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
+  };
+
+  const hasExtraFilters =
+    categoryIds.length > 0 || itemIds.length > 0 || personIds.length > 0 || searchText.trim() !== "";
+  const clearFilters = () => {
+    setCategoryIds([]);
+    setItemIds([]);
+    setPersonIds([]);
+    setSearchText("");
+  };
+
   if (!budgetId) return null;
 
   const budget = budgetQuery.data;
@@ -101,7 +129,7 @@ export function Ledger() {
       <div>
         <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Ledger</h1>
         <p className="text-sm text-muted-foreground">
-          Search your transaction history by date range, category, or item.
+          Search your transaction history by date, category, item, person, or notes.
         </p>
       </div>
 
@@ -118,6 +146,12 @@ export function Ledger() {
         items={items}
         selectedItemIds={itemIds}
         onToggleItem={handleToggleItem}
+        people={people}
+        selectedPersonIds={personIds}
+        onTogglePerson={handleTogglePerson}
+        search={searchText}
+        onSearchChange={setSearchText}
+        onClearFilters={hasExtraFilters ? clearFilters : undefined}
       />
 
       {!isLoading && (

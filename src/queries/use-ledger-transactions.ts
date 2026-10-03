@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { transactionKeys } from "./transaction-keys";
 import type { TransactionWithRelations } from "./use-transactions";
+import { containsPattern } from "@/lib/search/like-pattern";
 
 export const LEDGER_ROW_CAP = 1000;
 
@@ -10,11 +11,14 @@ export interface LedgerFilters {
   to: string;
   categoryIds: string[];
   itemIds: string[];
+  personIds: string[];
+  /** Free text matched against the transaction's notes. */
+  search: string;
 }
 
 /**
  * Fetch transactions in a budget across an arbitrary date range, optionally
- * narrowed to specific categories and/or items, newest first — the data
+ * narrowed to specific categories, items, people and/or a notes search, newest first — the data
  * source for the Ledger page.
  *
  * Unlike useMonthTransactions (bounded to one calendar month, so safely
@@ -26,13 +30,17 @@ export function useLedgerTransactions(
   budgetId: string | undefined,
   filters: LedgerFilters,
 ) {
-  const { from, to, categoryIds, itemIds } = filters;
+  const { from, to, categoryIds, itemIds, personIds, search } = filters;
+  const notesPattern = containsPattern(search);
 
   return useQuery({
     queryKey: budgetId
-      ? transactionKeys.ledger(budgetId, from, to, categoryIds, itemIds)
+      ? transactionKeys.ledger(budgetId, from, to, categoryIds, itemIds, personIds, notesPattern ?? "")
       : ["transactions", "noop"],
     enabled: !!budgetId && !!from && !!to,
+    // Keep the old rows on screen while a changed filter loads, so typing in
+    // the search box doesn't flash the list to skeletons.
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<TransactionWithRelations[]> => {
       let query = supabase
         .from("transactions")
@@ -51,6 +59,12 @@ export function useLedgerTransactions(
       }
       if (itemIds.length > 0) {
         query = query.in("item_id", itemIds);
+      }
+      if (personIds.length > 0) {
+        query = query.in("person_id", personIds);
+      }
+      if (notesPattern) {
+        query = query.ilike("notes", notesPattern);
       }
 
       const { data, error } = await query
