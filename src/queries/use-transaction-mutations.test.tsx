@@ -2,11 +2,12 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useDeleteTransaction } from "./use-transaction-mutations";
+import { useCopyTransactions, useDeleteTransaction } from "./use-transaction-mutations";
 import type { Transaction } from "./use-transactions";
 
 const db = vi.hoisted(() => ({
   deleteEq: vi.fn(),
+  deleteIn: vi.fn(),
   insert: vi.fn(),
 }));
 const toastMock = vi.hoisted(() =>
@@ -16,7 +17,7 @@ const toastMock = vi.hoisted(() =>
 vi.mock("@/lib/supabase", () => ({
   supabase: {
     from: () => ({
-      delete: () => ({ eq: db.deleteEq }),
+      delete: () => ({ eq: db.deleteEq, in: db.deleteIn }),
       insert: db.insert,
     }),
   },
@@ -47,6 +48,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   db.deleteEq.mockResolvedValue({ error: null });
   db.insert.mockResolvedValue({ error: null });
+  db.deleteIn.mockResolvedValue({ error: null });
 });
 
 describe("useDeleteTransaction undo", () => {
@@ -100,5 +102,47 @@ describe("useDeleteTransaction undo", () => {
       ),
     );
     expect(toastMock.success).not.toHaveBeenCalledWith("Transaction restored.");
+  });
+});
+
+describe("useCopyTransactions", () => {
+  const rows = [
+    { id: "n1", budget_id: "b1", item_id: "i1", category_id: "c1", date: "2026-10-03", amount: 100 },
+    { id: "n2", budget_id: "b1", item_id: "i2", category_id: "c1", date: "2026-10-03", amount: 250 },
+  ];
+
+  it("inserts all rows in one request and offers Undo", async () => {
+    const { result } = renderHook(() => useCopyTransactions(), { wrapper });
+    result.current.mutate({ budgetId: "b1", rows });
+
+    await waitFor(() => expect(toastMock).toHaveBeenCalled());
+    expect(db.insert).toHaveBeenCalledTimes(1);
+    expect(db.insert).toHaveBeenCalledWith(rows);
+    expect(toastMock.mock.calls[0][0]).toBe("Copied 2 transactions.");
+  });
+
+  it("Undo deletes exactly the copied rows", async () => {
+    const { result } = renderHook(() => useCopyTransactions(), { wrapper });
+    result.current.mutate({ budgetId: "b1", rows });
+
+    await waitFor(() => expect(toastMock).toHaveBeenCalled());
+    toastMock.mock.calls[0][1].action.onClick();
+
+    await waitFor(() => expect(toastMock.success).toHaveBeenCalledWith("Copy undone."));
+    expect(db.deleteIn).toHaveBeenCalledWith("id", ["n1", "n2"]);
+  });
+
+  it("reports an insert failure and offers no Undo", async () => {
+    db.insert.mockResolvedValue({ error: new Error("permission denied") });
+    const { result } = renderHook(() => useCopyTransactions(), { wrapper });
+    result.current.mutate({ budgetId: "b1", rows });
+
+    await waitFor(() =>
+      expect(toastMock.error).toHaveBeenCalledWith(
+        "Couldn't copy transactions.",
+        expect.objectContaining({ description: "permission denied" }),
+      ),
+    );
+    expect(toastMock).not.toHaveBeenCalled();
   });
 });

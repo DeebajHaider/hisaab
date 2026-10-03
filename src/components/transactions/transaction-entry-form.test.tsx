@@ -136,3 +136,57 @@ describe("TransactionEntryForm focus flow", () => {
     await waitFor(() => expect(screen.getByLabelText(/^Qty/)).toHaveFocus());
   });
 });
+
+describe("TransactionEntryForm log again", () => {
+  it("starts from the previous transaction and selects the amount for overwriting", async () => {
+    const user = userEvent.setup();
+    render(
+      <TransactionEntryForm
+        budgetId="b1"
+        date="2026-10-02"
+        initial={{
+          itemId: "item-petrol",
+          categoryId: "cat-car",
+          mode: "lump",
+          rate: "",
+          qty: "",
+          amount: "4250",
+          personId: null,
+        }}
+      />,
+    );
+
+    expect(search()).toHaveValue("Petrol");
+    const amount = screen.getByLabelText("Amount") as HTMLInputElement;
+    await waitFor(() => expect(amount).toHaveFocus());
+    expect(amount).toHaveValue(4250);
+
+    // Selected on focus, so typing replaces 4250 instead of appending to it.
+    await user.keyboard("5000");
+    expect(amount).toHaveValue(5000);
+  });
+
+  it("lands on Qty for rate x qty items", async () => {
+    state.items = [
+      { ...item("item-flour", "Flour"), default_mode: "rate_qty", default_rate: 180, unit: "Kg" },
+    ];
+    render(
+      <TransactionEntryForm
+        budgetId="b1"
+        date="2026-10-02"
+        initial={{
+          itemId: "item-flour",
+          categoryId: "cat-car",
+          mode: "rate_qty",
+          rate: "180",
+          qty: "2",
+          amount: "360",
+          personId: null,
+        }}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByLabelText(/^Qty/)).toHaveFocus());
+    expect(screen.getByLabelText("Rate")).toHaveValue(180);
+  });
+});

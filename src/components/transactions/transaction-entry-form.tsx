@@ -23,6 +23,7 @@ import {
   useUpdateTransaction,
 } from "@/queries/use-transaction-mutations";
 import type { TransactionWithRelations } from "@/queries/use-transactions";
+import type { RepeatDraft } from "@/lib/calculations/copy-transactions";
 
 interface TransactionEntryFormProps {
   budgetId: string;
@@ -30,6 +31,9 @@ interface TransactionEntryFormProps {
    *  initial date — the user can change it via the date picker. */
   date: string;
   existing?: TransactionWithRelations | null;
+  /** Start from a previous transaction ("log again"). Create mode only; to
+   *  apply a new draft, remount the form with a different `key`. */
+  initial?: RepeatDraft | null;
   onSaved?: () => void;
   onCancel?: () => void;
 }
@@ -38,6 +42,7 @@ export function TransactionEntryForm({
   budgetId,
   date,
   existing,
+  initial,
   onSaved,
   onCancel,
 }: TransactionEntryFormProps) {
@@ -48,12 +53,12 @@ export function TransactionEntryForm({
   const recentQuery = useRecentItems(budgetId);
 
   // --- Form state
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [mode, setMode] = useState<"lump" | "rate_qty">("lump");
-  const [rate, setRate] = useState("");
-  const [qty, setQty] = useState("");
-  const [amount, setAmount] = useState("");
-  const [personId, setPersonId] = useState<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(initial?.itemId ?? null);
+  const [mode, setMode] = useState<"lump" | "rate_qty">(initial?.mode ?? "lump");
+  const [rate, setRate] = useState(initial?.rate ?? "");
+  const [qty, setQty] = useState(initial?.qty ?? "");
+  const [amount, setAmount] = useState(initial?.amount ?? "");
+  const [personId, setPersonId] = useState<string | null>(initial?.personId ?? null);
   const [notes, setNotes] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +66,9 @@ export function TransactionEntryForm({
   // route's date is used at submit time. Initialized in the pre-fill effect.
   const [editingDate, setEditingDate] = useState<string>(date);
 
-  const [browseCategoryId, setBrowseCategoryId] = useState<string | null>(null);
+  const [browseCategoryId, setBrowseCategoryId] = useState<string | null>(
+    initial?.categoryId ?? null,
+  );
   // Name typed into search that the user chose to add as a new item; the
   // inline create panel is open while this is non-null.
   const [newItemName, setNewItemName] = useState<string | null>(null);
@@ -172,6 +179,20 @@ export function TransactionEntryForm({
       setEditingDate(existing.date);
     }
   }, [existing]);
+
+  // --- "Log again": once the form is on screen, put the cursor in the
+  // number the user is most likely to change, selected so typing replaces it.
+  const initialFocused = useRef(false);
+  const formReady = !categoriesQuery.isLoading && !itemsQuery.isLoading;
+  useEffect(() => {
+    if (!initial || !formReady || initialFocused.current) return;
+    initialFocused.current = true;
+    const field = document.getElementById(
+      initial.mode === "rate_qty" ? "qty-input" : "amount-input",
+    ) as HTMLInputElement | null;
+    field?.focus();
+    field?.select();
+  }, [initial, formReady]);
 
   // --- Auto-compute amount in rate_qty mode
   useEffect(() => {

@@ -4,6 +4,7 @@ import { transactionKeys } from "./transaction-keys";
 import { trendsKeys } from "./trends-keys";
 import type { Database } from "@/types/db";
 import type { Transaction } from "./use-transactions";
+import type { TransactionInsert } from "@/lib/calculations/copy-transactions";
 import { toast } from "sonner";
 
 
@@ -214,6 +215,60 @@ export function useDeleteTransaction() {
     onError: (error, _variables) => {
       // Errors deserve longer than the 4s default — give the user time to read.
       toast.error("Couldn't delete transaction.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
+    },
+  });
+}
+
+// ----------------------------------------------------------------------------
+// Copy (bulk insert)
+// ----------------------------------------------------------------------------
+
+interface CopyTransactionsInput {
+  budgetId: string;
+  /** Rows with ids already assigned, so Undo can delete exactly these. */
+  rows: TransactionInsert[];
+}
+
+export function useCopyTransactions() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ rows }: CopyTransactionsInput) => {
+      const { error } = await supabase.from("transactions").insert(rows);
+      if (error) throw error;
+    },
+    onSuccess: (_, { budgetId, rows }) => {
+      refreshTransactions(queryClient, budgetId);
+      const ids = rows.map((r) => r.id!);
+      toast(`Copied ${rows.length} transaction${rows.length === 1 ? "" : "s"}.`, {
+        duration: 8000,
+        action: {
+          label: "Undo",
+          onClick: () => {
+            supabase
+              .from("transactions")
+              .delete()
+              .in("id", ids)
+              .then(({ error }) => {
+                if (error) {
+                  toast.error("Couldn't undo the copy.", {
+                    description: error.message,
+                    duration: 6000,
+                  });
+                  return;
+                }
+                refreshTransactions(queryClient, budgetId);
+                toast.success("Copy undone.");
+              });
+          },
+        },
+      });
+    },
+    onError: (error) => {
+      toast.error("Couldn't copy transactions.", {
         description: error instanceof Error ? error.message : "Unknown error.",
         duration: 6000,
       });

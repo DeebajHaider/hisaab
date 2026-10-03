@@ -11,6 +11,8 @@ import { useDeleteTransaction } from "@/queries/use-transaction-mutations";
 import { calculateDayTotal } from "@/lib/calculations/day-totals";
 import { TransactionEntryForm } from "@/components/transactions/transaction-entry-form";
 import { QuickAddTemplates } from "@/components/transactions/quick-add-templates";
+import { CopyPreviousDay } from "@/components/transactions/copy-previous-day";
+import { buildRepeatDraft, type RepeatDraft } from "@/lib/calculations/copy-transactions";
 import { DayHeader } from "@/components/transactions/day-header";
 import { TransactionList } from "@/components/transactions/transaction-list";
 import { EditTransactionDialog } from "@/components/transactions/edit-transaction-dialog";
@@ -26,6 +28,8 @@ export function DayView() {
   const [editing, setEditing] = useState<TransactionWithRelations | null>(null);
   const deleteMutation = useDeleteTransaction();
   const formRef = useRef<HTMLDivElement>(null);
+  // "Log again": a fresh nonce remounts the form with the chosen transaction as its starting point.
+  const [repeat, setRepeat] = useState<{ draft: RepeatDraft; nonce: number } | null>(null);
 
   // --- Keyboard navigation ---------------------------------------------------
   // Left/right arrows move to the previous/next day, but ONLY when:
@@ -91,6 +95,10 @@ export function DayView() {
           transactions={transactions}
           currency={currency}
           onEdit={setEditing}
+          onRepeat={(tx) => {
+            setRepeat({ draft: buildRepeatDraft(tx), nonce: Date.now() });
+            formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
           onDelete={(tx) =>
             // No confirm step: the toast's Undo is faster and safer.
             deleteMutation.mutate({ id: tx.id, budgetId, snapshot: tx })
@@ -98,13 +106,20 @@ export function DayView() {
         />
       )}
 
+      <CopyPreviousDay budgetId={budgetId} date={date} currency={currency} />
+
       <QuickAddTemplates budgetId={budgetId} date={date} currency={currency} />
 
       {/* Deliberately not sticky: on phones the form is about a full
           viewport tall, so pinning it covers the whole transaction list.
           JumpToFormButton covers the "get back to the form" need instead. */}
       <div ref={formRef} className="scroll-mt-20">
-        <TransactionEntryForm budgetId={budgetId} date={date} />
+        <TransactionEntryForm
+          key={repeat?.nonce ?? "fresh"}
+          initial={repeat?.draft ?? null}
+          budgetId={budgetId}
+          date={date}
+        />
       </div>
       <JumpToFormButton targetRef={formRef} />
 
