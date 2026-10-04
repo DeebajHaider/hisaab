@@ -14,6 +14,7 @@ describe("invalidateTransactionData", () => {
       ["transactions", "b1"],
       ["trends", "b1"],
       ["recent-items", "b1"],
+      ["last-transaction", "b1"],
       ["target-spent"],
     ]);
   });

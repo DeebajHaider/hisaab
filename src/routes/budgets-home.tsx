@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBudgets } from "@/queries/use-budgets";
 import { CreateBudgetDialog } from "@/components/budgets/create-budget-dialog";
 import { BudgetMonthSpend } from "@/components/budgets/budget-month-spend";
+import { BudgetLastActivity } from "@/components/budgets/budget-last-activity";
 
 export function BudgetsHome() {
   const { data: budgets, isLoading, error } = useBudgets();
@@ -85,6 +86,7 @@ function BudgetGrid({ budgets }: { budgets: ReturnType<typeof useBudgets>["data"
             </CardHeader>
             <CardContent>
               <BudgetMonthSpend budgetId={budget.id} currency={budget.currency} />
+              <BudgetLastActivity budgetId={budget.id} />
             </CardContent>
           </Card>
         </Link>

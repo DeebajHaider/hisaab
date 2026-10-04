@@ -9,6 +9,7 @@ export function invalidateTransactionData(queryClient: QueryClient, budgetId: st
   queryClient.invalidateQueries({ queryKey: transactionKeys.byBudget(budgetId) });
   queryClient.invalidateQueries({ queryKey: trendsKeys.byBudget(budgetId) });
   queryClient.invalidateQueries({ queryKey: ["recent-items", budgetId] });
+  queryClient.invalidateQueries({ queryKey: ["last-transaction", budgetId] });
   // Target progress is keyed by target id, not budget, so invalidate the lot.
   queryClient.invalidateQueries({ queryKey: ["target-spent"] });
 }
