@@ -330,3 +330,14 @@
     transition: background-color 5000s ease-in-out 0s;
     }
 }
+/* Browser and password-manager autofill paints inputs a pale blue-white that
+   clashes with the dark glass surfaces. Painting a huge inset shadow in the
+   theme's own input color, and pinning the text color, overrides it. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--foreground);
+  caret-color: var(--foreground);
+  box-shadow: 0 0 0 1000px var(--background) inset;
+  transition: background-color 600000s 0s;
+}

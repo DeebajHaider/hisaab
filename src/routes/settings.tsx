@@ -4,6 +4,7 @@ import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -236,9 +237,8 @@ export function Settings() {
             <Label htmlFor="current-password" className="text-xs">
               Current password
             </Label>
-            <Input
+            <PasswordInput
               id="current-password"
-              type="password"
               autoComplete="current-password"
               value={currentPassword}
               onChange={(e) => {
@@ -253,9 +253,8 @@ export function Settings() {
             <Label htmlFor="new-password" className="text-xs">
               New password
             </Label>
-            <Input
+            <PasswordInput
               id="new-password"
-              type="password"
               autoComplete="new-password"
               value={newPassword}
               onChange={(e) => {
@@ -271,9 +270,8 @@ export function Settings() {
             <Label htmlFor="confirm-password" className="text-xs">
               Confirm new password
             </Label>
-            <Input
+            <PasswordInput
               id="confirm-password"
-              type="password"
               autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => {
