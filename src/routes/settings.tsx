@@ -15,6 +15,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
+import { hasPasswordLogin } from "@/lib/auth-providers";
 import { useMyProfile } from "@/queries/use-my-profile";
 import { useUpdateMyProfile } from "@/queries/use-update-my-profile";
 import {
@@ -27,6 +29,8 @@ const MAX_DISPLAY_NAME_LENGTH = 80;
 export function Settings() {
   const profileQuery = useMyProfile();
   const updateMutation = useUpdateMyProfile();
+  const { user } = useAuth();
+  const canChangePassword = hasPasswordLogin(user);
 
   // ── Profile section ────────────────────────────────────────────
   const [displayName, setDisplayName] = useState("");
@@ -220,10 +224,13 @@ export function Settings() {
         <header className="mb-4">
           <h2 className="text-base font-medium">Security</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Change the password you use to sign in.
+            {canChangePassword
+              ? "Change the password you use to sign in."
+              : "You sign in with Google, so there's no password to manage here."}
           </p>
         </header>
 
+        {canChangePassword && (
         <form onSubmit={handlePasswordChange} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="current-password" className="text-xs">
@@ -315,6 +322,7 @@ export function Settings() {
             </Button>
           </div>
         </form>
+        )}
       </section>
 
       {/* ── Sessions ─────────────────────────────────────────────── */}
