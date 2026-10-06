@@ -53,7 +53,7 @@ function CategoryRow({
   categories: Category[];
   group: CategoryGroup;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const archiveCategory = useArchiveCategory();
   const itemCount = group.items.length;
 

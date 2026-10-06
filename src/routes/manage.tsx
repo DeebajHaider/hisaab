@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ChevronRight,
   Plus,
   FolderPlus,
   Upload,
@@ -9,6 +10,11 @@ import {
   RotateCcw,
   Trash2,
 } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { ImportDialog } from "@/components/manage/import-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +49,8 @@ import { useArchiveItem, useDeleteItem } from "@/queries/use-item-mutations";
 export function Manage() {
   const { budgetId } = useParams<{ budgetId: string }>();
   const [showArchived, setShowArchived] = useState(false);
+  // Collapsed on arrival: the structure is set up once and rarely touched.
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
 
   const budgetQuery = useBudget(budgetId);
   const categoriesQuery = useCategories(budgetId, {
@@ -78,7 +86,11 @@ export function Manage() {
         <Header
           budgetId={budgetId}
           showArchived={showArchived}
-          onToggleArchived={() => setShowArchived((v) => !v)}
+          onToggleArchived={() => {
+            // Showing archived items inside a collapsed section would look like nothing happened.
+            if (!showArchived) setCategoriesOpen(true);
+            setShowArchived((v) => !v);
+          }}
         />
 
         {isLoading && <ManageSkeleton />}
@@ -89,20 +101,39 @@ export function Manage() {
           <EmptyState budgetId={budgetId} />
         )}
 
-        {!isLoading && !error && activeCategories.length > 0 && (
-          <CategoryTree
-            budgetId={budgetId}
-            categories={activeCategories}
-            groups={groupItemsByCategory(activeCategories, activeItems)}
-          />
-        )}
+        {!isLoading && !error && (activeCategories.length > 0 || showArchived) && (
+          <Collapsible open={categoriesOpen} onOpenChange={setCategoriesOpen}>
+            <CollapsibleTrigger className="group flex w-full items-center gap-2 rounded-lg glass px-4 py-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-2 focus-visible:outline-ring">
+              <ChevronRight
+                className={`h-4 w-4 shrink-0 transition-transform ${categoriesOpen ? "rotate-90" : ""}`}
+              />
+              <span className="text-lg font-semibold tracking-tight">Categories</span>
+              <span className="text-sm text-muted-foreground">
+                {activeCategories.length} categor{activeCategories.length === 1 ? "y" : "ies"} ·{" "}
+                {activeItems.length} item{activeItems.length === 1 ? "" : "s"}
+              </span>
+              <span className="ml-auto text-xs text-muted-foreground">
+                {categoriesOpen ? "Hide" : "Show"}
+              </span>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-6 pt-3">
+              {activeCategories.length > 0 && (
+                <CategoryTree
+                  budgetId={budgetId}
+                  categories={activeCategories}
+                  groups={groupItemsByCategory(activeCategories, activeItems)}
+                />
+              )}
 
-        {showArchived && !isLoading && !error && (
-          <ArchivedSection
-            budgetId={budgetId}
-            archivedCategories={archivedCategories}
-            standaloneArchivedItems={standaloneArchivedItems}
-          />
+              {showArchived && (
+                <ArchivedSection
+                  budgetId={budgetId}
+                  archivedCategories={archivedCategories}
+                  standaloneArchivedItems={standaloneArchivedItems}
+                />
+              )}
+            </CollapsibleContent>
+          </Collapsible>
         )}
       </section>
 
@@ -135,11 +166,11 @@ function Header({
     <div className="flex items-center justify-between flex-wrap gap-y-2 mb-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-          Categories & items
+          Manage
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Set up the structure of this budget. Add categories like Groceries or
-          Vehicle, then items underneath.
+          Set up this budget: categories like Groceries or Vehicle with items
+          underneath, plus people and quick-add templates.
         </p>
       </div>
       <div className="flex gap-2">
