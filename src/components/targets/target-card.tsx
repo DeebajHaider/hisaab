@@ -16,6 +16,7 @@ import { useTargetSpent } from "@/queries/use-target-spent";
 import { useCreateTarget, useDeleteTarget } from "@/queries/use-target-mutations";
 import { calculateProgress } from "@/lib/calculations/target-progress";
 import { nextPeriod } from "@/lib/calculations/next-target-period";
+import { projectTargetPace } from "@/lib/calculations/target-pace";
 import { todayISO, formatDayLabel } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 import type { Target } from "@/queries/use-targets";
@@ -52,6 +53,13 @@ export function TargetCard({ budgetId, currency, target, categories, items }: Ta
   const spent = spentQuery.data ?? 0;
   const { percent, status } = calculateProgress(spent, target.target_amount);
   const isPast = target.end_date < todayISO();
+  const pace = projectTargetPace({
+    spent,
+    targetAmount: target.target_amount,
+    startDate: target.start_date,
+    endDate: target.end_date,
+    today: todayISO(),
+  });
 
   const trackedNames = [
     ...categories.filter((c) => target.category_ids.includes(c.id)).map((c) => c.name),
@@ -143,6 +151,18 @@ export function TargetCard({ budgetId, currency, target, categories, items }: Ta
           <span className="text-muted-foreground">of {formatAmount(target.target_amount, currency)}</span>
         </div>
       </div>
+
+      {pace && (
+        <p
+          className={cn(
+            "text-xs",
+            pace.willExceed ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground",
+          )}
+        >
+          At this pace you'll reach {formatAmount(pace.projected, currency)} by{" "}
+          {formatDayLabel(target.end_date)} ({Math.round(pace.projectedPercent)}% of the target).
+        </p>
+      )}
 
       {isPast && (
         <Button
