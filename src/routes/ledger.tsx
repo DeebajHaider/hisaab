@@ -42,7 +42,7 @@ export function Ledger() {
   );
   const [to, setTo] = useState(() => initial.to ?? todayISO());
   const [categoryIds, setCategoryIds] = useState<string[]>(initial.categoryIds);
-  const [itemIds, setItemIds] = useState<string[]>([]);
+  const [itemIds, setItemIds] = useState<string[]>(initial.itemIds);
   const [personIds, setPersonIds] = useState<string[]>([]);
   const [searchText, setSearchText] = useState("");
   const search = useDebouncedValue(searchText);

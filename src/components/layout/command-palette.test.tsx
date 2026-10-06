@@ -12,6 +12,11 @@ vi.mock("@/queries/use-budgets", () => ({
     ],
   }),
 }));
+vi.mock("@/queries/use-items", () => ({
+  useItems: () => ({
+    data: [{ id: "i1", name: "Chai", category: { name: "Food" } }],
+  }),
+}));
 vi.mock("@/queries/use-portfolios", () => ({
   usePortfolios: () => ({ data: [{ id: "p1", name: "Retirement" }] }),
 }));
@@ -36,7 +41,13 @@ beforeAll(() => {
 });
 
 function Where() {
-  return <div data-testid="where">{useLocation().pathname}</div>;
+  const { pathname, search } = useLocation();
+  return (
+    <>
+      <div data-testid="where">{pathname}</div>
+      <div data-testid="search-params">{search}</div>
+    </>
+  );
 }
 
 function setup(path = "/app/budgets/b1/ledger", onHelp?: () => void) {
@@ -172,5 +183,19 @@ describe("CommandPalette shortcuts", () => {
     await user.keyboard("?");
     expect(onHelp).not.toHaveBeenCalled();
     expect(screen.getByTestId("field")).toHaveValue("?");
+  });
+
+  it("finds an item by name and opens its transactions in the ledger", async () => {
+    const user = setup("/app/budgets/b1/month/2026-10");
+    await user.keyboard("{Control>}k{/Control}");
+    await user.type(await screen.findByPlaceholderText(/Jump to a page/), "chai");
+
+    await user.click(await screen.findByText("Chai"));
+
+    expect(where()).toBe("/app/budgets/b1/ledger");
+    const params = new URLSearchParams(screen.getByTestId("search-params").textContent ?? "");
+    expect(params.get("item")).toBe("i1");
+    expect(params.get("to")).toBe("2026-10-03");
+    expect(params.get("from")).toBe("2025-10-03");
   });
 });

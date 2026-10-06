@@ -4,18 +4,19 @@ export interface LedgerParams {
   from?: string;
   to?: string;
   categoryIds: string[];
+  itemIds: string[];
 }
 
-/** A Ledger URL pre-filtered to a category over a date range. */
+/** A Ledger URL pre-filtered to a category and/or item over a date range. */
 export function buildLedgerHref(
   budgetId: string,
-  filter: { categoryId: string; from: string; to: string },
+  filter: { categoryId?: string; itemId?: string; from: string; to: string },
 ): string {
-  const params = new URLSearchParams({
-    category: filter.categoryId,
-    from: filter.from,
-    to: filter.to,
-  });
+  const params = new URLSearchParams();
+  if (filter.categoryId) params.set("category", filter.categoryId);
+  if (filter.itemId) params.set("item", filter.itemId);
+  params.set("from", filter.from);
+  params.set("to", filter.to);
   return `/app/budgets/${budgetId}/ledger?${params.toString()}`;
 }
 
@@ -25,6 +26,6 @@ export function parseLedgerParams(params: URLSearchParams): LedgerParams {
     const value = params.get(key);
     return value && ISO_DATE.test(value) ? value : undefined;
   };
-  const categoryIds = (params.get("category") ?? "").split(",").filter(Boolean);
-  return { from: date("from"), to: date("to"), categoryIds };
+  const list = (key: string) => (params.get(key) ?? "").split(",").filter(Boolean);
+  return { from: date("from"), to: date("to"), categoryIds: list("category"), itemIds: list("item") };
 }

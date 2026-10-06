@@ -33,6 +33,8 @@ import { useTheme } from "@/lib/theme-provider";
 import { addDays, todayISO } from "@/lib/format/date";
 import { addMonths, currentYearMonth, type YearMonth } from "@/lib/format/year-month";
 import { useBudgets } from "@/queries/use-budgets";
+import { useItems } from "@/queries/use-items";
+import { buildLedgerHref } from "@/lib/calculations/ledger-params";
 import { usePortfolios } from "@/queries/use-portfolios";
 import {
   resolveShortcut,
@@ -194,12 +196,13 @@ function PaletteContent({
   const { setTheme } = useTheme();
   const budgets = useBudgets().data ?? [];
   const portfolios = usePortfolios().data ?? [];
+  const items = useItems(budgetId).data ?? [];
   const base = budgetId ? `/app/budgets/${budgetId}` : null;
   const currentBudget = budgets.find((b) => b.id === budgetId);
 
   return (
     <Command className="bg-transparent">
-      <CommandInput placeholder="Jump to a page, budget or portfolio…" />
+      <CommandInput placeholder="Jump to a page, item, budget or portfolio…" />
       <CommandList>
         <CommandEmpty>Nothing matches.</CommandEmpty>
 
@@ -233,6 +236,36 @@ function PaletteContent({
               <CommandItem value="budget settings" onSelect={() => onGo(`${base}/settings`)}>
                 <Row icon={<SlidersHorizontal />} hint="G S">Budget settings</Row>
               </CommandItem>
+            </CommandGroup>
+            <CommandSeparator />
+          </>
+        )}
+
+        {base && budgetId && items.length > 0 && (
+          <>
+            <CommandGroup heading="Items — see their transactions">
+              {items.map((item) => (
+                <CommandItem
+                  key={item.id}
+                  value={`item ${item.name} ${item.category?.name ?? ""}`}
+                  onSelect={() =>
+                    onGo(
+                      buildLedgerHref(budgetId, {
+                        itemId: item.id,
+                        from: addDays(todayISO(), -365),
+                        to: todayISO(),
+                      }),
+                    )
+                  }
+                >
+                  <Row icon={<Receipt />}>
+                    {item.name}
+                    {item.category?.name && (
+                      <span className="ml-2 text-xs text-muted-foreground">{item.category.name}</span>
+                    )}
+                  </Row>
+                </CommandItem>
+              ))}
             </CommandGroup>
             <CommandSeparator />
           </>

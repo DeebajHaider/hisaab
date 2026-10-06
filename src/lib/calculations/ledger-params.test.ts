@@ -16,7 +16,14 @@ describe("parseLedgerParams", () => {
       from: "2026-10-01",
       to: "2026-10-31",
       categoryIds: ["c1", "c2"],
+      itemIds: [],
     });
+  });
+
+  it("builds and reads an item filter", () => {
+    const href = buildLedgerHref("b1", { itemId: "i1", from: "2026-01-01", to: "2026-10-06" });
+    expect(href).toBe("/app/budgets/b1/ledger?item=i1&from=2026-01-01&to=2026-10-06");
+    expect(parseLedgerParams(new URLSearchParams(href.split("?")[1])).itemIds).toEqual(["i1"]);
   });
 
   it("round-trips what buildLedgerHref produces", () => {
@@ -31,11 +38,13 @@ describe("parseLedgerParams", () => {
       from: undefined,
       to: undefined,
       categoryIds: [],
+      itemIds: [],
     });
     expect(parseLedgerParams(new URLSearchParams(""))).toEqual({
       from: undefined,
       to: undefined,
       categoryIds: [],
+      itemIds: [],
     });
   });
 });
