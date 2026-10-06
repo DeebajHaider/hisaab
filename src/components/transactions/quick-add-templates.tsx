@@ -1,6 +1,7 @@
 import { Loader2 } from "lucide-react";
 import { useTemplates } from "@/queries/use-templates";
 import { useCreateTransaction } from "@/queries/use-transaction-mutations";
+import { templateNote } from "@/lib/calculations/template-note";
 import { cn } from "@/lib/utils";
 
 interface QuickAddTemplatesProps {
@@ -56,7 +57,7 @@ export function QuickAddTemplates({ budgetId, date, currency }: QuickAddTemplate
                   rate: template.rate,
                   qty: template.qty,
                   personId: template.person_id,
-                  notes: template.notes,
+                  notes: templateNote(template),
                 })
               }
               className={cn(
