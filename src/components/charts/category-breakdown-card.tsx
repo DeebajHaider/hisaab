@@ -6,9 +6,11 @@ import { assignCategoryColors } from "@/lib/calculations/assign-category-colors"
 
 interface CategoryBreakdownCardProps {
   breakdown: CategoryBreakdownRow[];
+  /** Makes each category in the chart a link; called with its name. */
+  onSelectCategory?: (categoryName: string) => void;
 }
 
-export function CategoryBreakdownCard({ breakdown }: CategoryBreakdownCardProps) {
+export function CategoryBreakdownCard({ breakdown, onSelectCategory }: CategoryBreakdownCardProps) {
   // Names of categories currently hidden by the user.
   // Session-ephemeral and persists across month navigation — useful for
   // comparing the same subcategories month-to-month without re-filtering.
@@ -109,7 +111,18 @@ export function CategoryBreakdownCard({ breakdown }: CategoryBreakdownCardProps)
             </button>
           </p>
         ) : (
-          <CategoryBreakdownChart breakdown={visibleBreakdown} colors={colors} />
+          <>
+            <CategoryBreakdownChart
+              breakdown={visibleBreakdown}
+              colors={colors}
+              onSelect={onSelectCategory}
+            />
+            {onSelectCategory && (
+              <p className="text-xs text-muted-foreground">
+                Select a category name to see its transactions in the Ledger.
+              </p>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

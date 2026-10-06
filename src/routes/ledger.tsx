@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { Download, ListChecks } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { LedgerFilters } from "@/components/ledger/ledger-filters";
 import { LedgerDayGroup } from "@/components/ledger/ledger-day-group";
 import { BulkActionBar } from "@/components/ledger/bulk-action-bar";
 import { toggleGroup, toggleSelection } from "@/lib/calculations/bulk-edit";
+import { parseLedgerParams } from "@/lib/calculations/ledger-params";
 import { useBudget } from "@/queries/use-budget";
 import { useCategories } from "@/queries/use-categories";
 import { useItems } from "@/queries/use-items";
@@ -31,11 +32,16 @@ import { downloadCSV } from "@/lib/import/download-csv";
 export function Ledger() {
   const { budgetId } = useParams<{ budgetId: string }>();
 
+  // Links from elsewhere (the Month view's category chart) arrive pre-filtered.
+  // Read once for the initial state; after that the page's own controls rule.
+  const [searchParams] = useSearchParams();
+  const [initial] = useState(() => parseLedgerParams(searchParams));
+
   const [from, setFrom] = useState(
-    () => resolveLedgerPreset("this-month", todayISO(), null).from,
+    () => initial.from ?? resolveLedgerPreset("this-month", todayISO(), null).from,
   );
-  const [to, setTo] = useState(() => todayISO());
-  const [categoryIds, setCategoryIds] = useState<string[]>([]);
+  const [to, setTo] = useState(() => initial.to ?? todayISO());
+  const [categoryIds, setCategoryIds] = useState<string[]>(initial.categoryIds);
   const [itemIds, setItemIds] = useState<string[]>([]);
   const [personIds, setPersonIds] = useState<string[]>([]);
   const [searchText, setSearchText] = useState("");

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { MonthHeader } from "@/components/transactions/month-header";
 import { MonthSummaryCard } from "@/components/transactions/month-summary-card";
 import { VarianceCard } from "@/components/transactions/variance-card";
@@ -16,12 +16,14 @@ import {
 } from "@/lib/calculations/month-summary";
 import {
   currentYearMonth,
+  firstDayOfMonth,
   lastDayOfMonth,
 } from "@/lib/format/year-month";
 import { todayISO } from "@/lib/format/date";
 import { CategoryBreakdownCard } from "@/components/charts/category-breakdown-card";
 import { getCategoryBreakdown } from "@/lib/calculations/category-breakdown";
 import { ErrorBanner } from "@/components/ui/error-banner";
+import { buildLedgerHref } from "@/lib/calculations/ledger-params";
 
 export function MonthView() {
   const { budgetId, yearMonth } = useParams<{
@@ -29,6 +31,7 @@ export function MonthView() {
     yearMonth: string;
   }>();
 
+  const navigate = useNavigate();
   const txQuery = useMonthTransactions(budgetId, yearMonth);
   const incomeQuery = useIncome(budgetId, yearMonth);
   const savingsQuery = useSavings(budgetId, yearMonth);
@@ -119,7 +122,20 @@ export function MonthView() {
             <MonthSummaryCard yearMonth={yearMonth} summary={summary} />
           )}
           {summary && breakdown.length > 0 && (
-            <CategoryBreakdownCard breakdown={breakdown} />
+            <CategoryBreakdownCard
+              breakdown={breakdown}
+              onSelectCategory={(name) => {
+                const id = transactions.find((t) => t.category?.name === name)?.category?.id;
+                if (!id) return;
+                navigate(
+                  buildLedgerHref(budgetId, {
+                    categoryId: id,
+                    from: firstDayOfMonth(yearMonth),
+                    to: lastDayOfMonth(yearMonth),
+                  }),
+                );
+              }}
+            />
           )}
         </>
       )}

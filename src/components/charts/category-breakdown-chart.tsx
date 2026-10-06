@@ -13,6 +13,8 @@ interface CategoryBreakdownChartProps {
   breakdown: CategoryBreakdownRow[];
   /** Color map (category name -> CSS color) — shared with the donut. */
   colors: Record<string, string>;
+  /** When given, category names become links that call this with the name. */
+  onSelect?: (categoryName: string) => void;
 }
 
 // Recharts passes active/payload/label to custom tooltip content, but the
@@ -39,6 +41,7 @@ interface ChartTooltipProps {
 export function CategoryBreakdownChart({
   breakdown,
   colors,
+  onSelect,
 }: CategoryBreakdownChartProps) {
   if (breakdown.length === 0) {
     return null;
@@ -60,7 +63,7 @@ export function CategoryBreakdownChart({
           tickLine={false}
           axisLine={false}
           width={80}
-          tick={{ fontSize: 13 }}
+          tick={onSelect ? <LinkTick onSelect={onSelect} /> : { fontSize: 13 }}
         />
         <Tooltip content={<BreakdownTooltip />} cursor={{ fill: "transparent" }} />
         <Bar dataKey="total" radius={[0, 4, 4, 0]} label={<PercentLabel />}>
@@ -73,6 +76,41 @@ export function CategoryBreakdownChart({
         </Bar>
       </BarChart>
     </ResponsiveContainer>
+  );
+}
+
+/** A Y-axis label that acts as a link (keyboard- and click-activatable). */
+function LinkTick(props: {
+  x?: number;
+  y?: number;
+  payload?: { value: string };
+  onSelect: (name: string) => void;
+}) {
+  const { x = 0, y = 0, payload, onSelect } = props;
+  if (!payload) return null;
+  const activate = () => onSelect(payload.value);
+
+  return (
+    <text
+      x={x}
+      y={y}
+      dy={4}
+      textAnchor="end"
+      fontSize={13}
+      role="link"
+      tabIndex={0}
+      aria-label={`${payload.value}: view transactions in the Ledger`}
+      className="cursor-pointer fill-foreground hover:underline focus-visible:underline focus-visible:outline-none"
+      onClick={activate}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          activate();
+        }
+      }}
+    >
+      {payload.value}
+    </text>
   );
 }
 
