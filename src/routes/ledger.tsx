@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Download } from "lucide-react";
+import { Download, ListChecks } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LedgerFilters } from "@/components/ledger/ledger-filters";
 import { LedgerDayGroup } from "@/components/ledger/ledger-day-group";
+import { BulkActionBar } from "@/components/ledger/bulk-action-bar";
+import { toggleGroup, toggleSelection } from "@/lib/calculations/bulk-edit";
 import { useBudget } from "@/queries/use-budget";
 import { useCategories } from "@/queries/use-categories";
 import { useItems } from "@/queries/use-items";
@@ -38,6 +40,8 @@ export function Ledger() {
   const [personIds, setPersonIds] = useState<string[]>([]);
   const [searchText, setSearchText] = useState("");
   const search = useDebouncedValue(searchText);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
 
   const budgetQuery = useBudget(budgetId);
   const categoriesQuery = useCategories(budgetId);
@@ -117,6 +121,12 @@ export function Ledger() {
   const groups = groupTransactionsByDay(transactions);
   const total = calculateDayTotal(transactions);
   const truncated = transactions.length === LEDGER_ROW_CAP;
+  // Only rows still on screen count, so filtering never leaves hidden ones selected.
+  const selectedRows = transactions.filter((t) => selected.has(t.id));
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelected(new Set());
+  };
 
   const isLoading =
     budgetQuery.isLoading ||
@@ -173,6 +183,17 @@ export function Ledger() {
               <Download className="w-3.5 h-3.5 mr-1" />
               Export
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-muted-foreground hover:text-foreground"
+              disabled={transactions.length === 0}
+              aria-pressed={selectMode}
+              onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+            >
+              <ListChecks className="w-3.5 h-3.5 mr-1" />
+              {selectMode ? "Done" : "Select"}
+            </Button>
           </div>
           <p className="text-sm font-medium tabular-nums">
             Total: {currency}{" "}
@@ -209,9 +230,28 @@ export function Ledger() {
               budgetId={budgetId}
               group={group}
               currency={currency}
+              selection={
+                selectMode
+                  ? {
+                      selected,
+                      onToggle: (id) => setSelected((prev) => toggleSelection(prev, id)),
+                      onToggleGroup: (ids) => setSelected((prev) => toggleGroup(prev, ids)),
+                    }
+                  : undefined
+              }
             />
           ))}
         </div>
+      )}
+
+      {selectMode && selectedRows.length > 0 && (
+        <BulkActionBar
+          budgetId={budgetId}
+          rows={selectedRows}
+          items={items}
+          people={people}
+          onClear={exitSelectMode}
+        />
       )}
     </div>
   );
