@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertCircle, Pin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip } from "@/components/ui/tooltip";
 import { useBudgets } from "@/queries/use-budgets";
 import { useAuth } from "@/lib/auth-context";
 import { pinnedFirst, readPinned, togglePinned, writePinned } from "@/lib/pinned-budgets";
@@ -87,6 +88,7 @@ function BudgetGrid({ budgets }: { budgets: ReturnType<typeof useBudgets>["data"
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {pinnedFirst(budgets, pinned).map((budget) => (
         <div key={budget.id} className="relative">
+        <Tooltip content={pinned.includes(budget.id) ? "Unpin" : "Pin to top"}>
         <button
           type="button"
           onClick={() => togglePin(budget.id)}
@@ -96,6 +98,7 @@ function BudgetGrid({ budgets }: { budgets: ReturnType<typeof useBudgets>["data"
         >
           <Pin className={`h-4 w-4 ${pinned.includes(budget.id) ? "fill-current text-accent-text" : ""}`} />
         </button>
+        </Tooltip>
         <Link to={`/app/budgets/${budget.id}`} className="group block h-full">
           <Card className="h-full transition-colors group-hover:border-accent-border-hover">
             <CardHeader className="pb-2">

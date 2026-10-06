@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Bookmark, BookmarkPlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { MAX_NAME_LENGTH, type SavedLedgerFilter } from "@/lib/saved-ledger-filters";
@@ -44,14 +45,16 @@ export function SavedFilters({ filters, canSave, onApply, onSave, onDelete }: Sa
           >
             {f.name}
           </button>
-          <button
-            type="button"
-            onClick={() => onDelete(f.id)}
-            aria-label={`Delete saved filter ${f.name}`}
-            className="rounded-r-full py-1 pl-0.5 pr-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="h-3 w-3" />
-          </button>
+          <Tooltip content="Delete saved view">
+            <button
+              type="button"
+              onClick={() => onDelete(f.id)}
+              aria-label={`Delete saved filter ${f.name}`}
+              className="rounded-r-full py-1 pl-0.5 pr-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Tooltip>
         </span>
       ))}
 
