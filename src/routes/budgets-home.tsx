@@ -3,6 +3,7 @@ import { AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBudgets } from "@/queries/use-budgets";
 import { CreateBudgetDialog } from "@/components/budgets/create-budget-dialog";
+import { ResumeLastPage } from "@/components/layout/resume-last-page";
 import { BudgetMonthSpend } from "@/components/budgets/budget-month-spend";
 import { BudgetLastActivity } from "@/components/budgets/budget-last-activity";
 
@@ -11,6 +12,7 @@ export function BudgetsHome() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <ResumeLastPage />
       <div className="flex items-center justify-between flex-wrap gap-y-2 mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Your budgets</h1>

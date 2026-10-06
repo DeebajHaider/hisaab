@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { RouteFallback } from "@/components/layout/route-fallback";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { DocumentTitle } from "@/components/layout/document-title";
+import { LastPageTracker } from "@/components/layout/resume-last-page";
 import { ShortcutsMenu } from "@/components/layout/shortcuts-menu";
 import { OfflineBanner } from "@/components/layout/offline-banner";
 import { prefetchAppRoutes } from "@/routes/lazy-routes";
@@ -52,6 +53,7 @@ export function AppLayout() {
       />
       <CommandPalette onHelp={() => setHelpOpen((o) => !o)} />
       <DocumentTitle />
+      <LastPageTracker />
       <AppHeader helpOpen={helpOpen} onHelpOpenChange={setHelpOpen} />
       <main className="relative flex-1">
         <Suspense fallback={<RouteFallback />}>
