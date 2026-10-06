@@ -17,6 +17,8 @@ import { useCreateTarget, useDeleteTarget } from "@/queries/use-target-mutations
 import { calculateProgress } from "@/lib/calculations/target-progress";
 import { nextPeriod } from "@/lib/calculations/next-target-period";
 import { projectTargetPace } from "@/lib/calculations/target-pace";
+import { describeTimeline, targetTimeline } from "@/lib/calculations/target-timeline";
+import { TargetWeeklyBreakdown } from "./target-weekly-breakdown";
 import { todayISO, formatDayLabel } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 import type { Target } from "@/queries/use-targets";
@@ -53,6 +55,13 @@ export function TargetCard({ budgetId, currency, target, categories, items }: Ta
   const spent = spentQuery.data ?? 0;
   const { percent, status } = calculateProgress(spent, target.target_amount);
   const isPast = target.end_date < todayISO();
+  const timeline = targetTimeline({
+    spent,
+    targetAmount: target.target_amount,
+    startDate: target.start_date,
+    endDate: target.end_date,
+    today: todayISO(),
+  });
   const pace = projectTargetPace({
     spent,
     targetAmount: target.target_amount,
@@ -152,6 +161,29 @@ export function TargetCard({ budgetId, currency, target, categories, items }: Ta
         </div>
       </div>
 
+      <div className="space-y-0.5 text-xs text-muted-foreground">
+        <p className="font-medium text-foreground">
+          {describeTimeline(timeline, target.end_date, todayISO())}
+        </p>
+        {timeline.phase === "active" && timeline.remaining < 0 && (
+          <p className="text-red-600 dark:text-red-400">
+            Over by {formatAmount(-timeline.remaining, currency)}.
+          </p>
+        )}
+        {timeline.phase === "active" && timeline.perDayLeft !== null && (
+          <p>
+            {formatAmount(timeline.remaining, currency)} left, about{" "}
+            {formatAmount(timeline.perDayLeft, currency)} a day to stay within it.
+          </p>
+        )}
+        {timeline.phase !== "upcoming" && timeline.avgPerDay !== null && (
+          <p>
+            Averaging {formatAmount(timeline.avgPerDay, currency)} a day
+            {timeline.phase === "active" ? " so far" : ""}.
+          </p>
+        )}
+      </div>
+
       {pace && (
         <p
           className={cn(
@@ -163,6 +195,8 @@ export function TargetCard({ budgetId, currency, target, categories, items }: Ta
           {formatDayLabel(target.end_date)} ({Math.round(pace.projectedPercent)}% of the target).
         </p>
       )}
+
+      <TargetWeeklyBreakdown budgetId={budgetId} target={target} currency={currency} />
 
       {isPast && (
         <Button
