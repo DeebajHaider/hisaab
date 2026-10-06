@@ -5,6 +5,7 @@ import type { Database } from "@/types/db";
 import type { Transaction } from "./use-transactions";
 import type { TransactionInsert } from "@/lib/calculations/copy-transactions";
 import { toast } from "sonner";
+import { forgetDeleted, recordDeleted } from "@/lib/recently-deleted";
 
 
 // ----------------------------------------------------------------------------
@@ -132,10 +133,12 @@ interface DeleteTransactionInput {
   budgetId: string;
   /** When given, the success toast offers Undo, which re-inserts this row. */
   snapshot?: Transaction;
+  /** When given with a snapshot, the row is also kept on this device so it can be restored later. */
+  userId?: string;
 }
 
 
-async function restoreTransaction(row: Transaction) {
+export async function restoreTransaction(row: Transaction) {
   // Same id so anything still pointing at it keeps working. created_by is
   // left to its default (the current user).
   const { error } = await supabase.from("transactions").insert({
@@ -166,12 +169,13 @@ export function useDeleteTransaction() {
       if (error) throw error;
     },
     onSuccess: (_, variables) => {
-      const { snapshot, budgetId } = variables;
+      const { snapshot, budgetId, userId } = variables;
       invalidateTransactionData(queryClient, budgetId);
       if (!snapshot) {
         toast.success("Transaction deleted.");
         return;
       }
+      if (userId) recordDeleted(userId, budgetId, [snapshot]);
       toast("Transaction deleted.", {
         duration: 8000,
         action: {
@@ -179,6 +183,7 @@ export function useDeleteTransaction() {
           onClick: () => {
             restoreTransaction(snapshot)
               .then(() => {
+                if (userId) forgetDeleted(userId, budgetId, [snapshot.id]);
                 invalidateTransactionData(queryClient, budgetId);
                 toast.success("Transaction restored.");
               })
@@ -249,6 +254,36 @@ export function useCopyTransactions() {
     },
     onError: (error) => {
       toast.error("Couldn't copy transactions.", {
+        description: error instanceof Error ? error.message : "Unknown error.",
+        duration: 6000,
+      });
+    },
+  });
+}
+
+// ----------------------------------------------------------------------------
+// Restore from "Recently deleted"
+// ----------------------------------------------------------------------------
+
+interface RestoreDeletedInput {
+  userId: string;
+  budgetId: string;
+  row: Transaction;
+}
+
+/** Put a transaction back from the on-device Recently deleted list. */
+export function useRestoreDeleted() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ row }: RestoreDeletedInput) => restoreTransaction(row),
+    onSuccess: (_, { userId, budgetId, row }) => {
+      forgetDeleted(userId, budgetId, [row.id]);
+      invalidateTransactionData(queryClient, budgetId);
+      toast.success("Transaction restored.");
+    },
+    onError: (error) => {
+      toast.error("Couldn't restore transaction.", {
         description: error instanceof Error ? error.message : "Unknown error.",
         duration: 6000,
       });

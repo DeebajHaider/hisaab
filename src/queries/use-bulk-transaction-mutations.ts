@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { invalidateTransactionData } from "./invalidate-transactions";
 import type { Transaction } from "./use-transactions";
 import type { BulkPatch } from "@/lib/calculations/bulk-edit";
+import { forgetDeleted, recordDeleted } from "@/lib/recently-deleted";
 
 const plural = (n: number) => `${n} transaction${n === 1 ? "" : "s"}`;
 
@@ -90,6 +91,8 @@ export function useBulkUpdateTransactions() {
 interface BulkDeleteInput {
   budgetId: string;
   rows: Transaction[];
+  /** When given, the rows are also kept on this device so they can be restored later. */
+  userId?: string;
 }
 
 /** Delete many transactions at once; Undo re-inserts them with their original ids. */
@@ -107,8 +110,9 @@ export function useBulkDeleteTransactions() {
         );
       if (error) throw error;
     },
-    onSuccess: (_, { budgetId, rows }) => {
+    onSuccess: (_, { budgetId, rows, userId }) => {
       invalidateTransactionData(queryClient, budgetId);
+      if (userId) recordDeleted(userId, budgetId, rows);
       offerUndo(
         queryClient,
         budgetId,
@@ -129,6 +133,13 @@ export function useBulkDeleteTransactions() {
             })),
           );
           if (error) throw error;
+          if (userId) {
+            forgetDeleted(
+              userId,
+              budgetId,
+              rows.map((r) => r.id),
+            );
+          }
         },
         `Restored ${plural(rows.length)}.`,
       );

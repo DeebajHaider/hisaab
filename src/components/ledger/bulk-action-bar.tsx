@@ -33,12 +33,14 @@ interface BulkActionBarProps {
   items: ItemWithCategory[];
   people: Person[];
   onClear: () => void;
+  /** Lets deleted rows also be kept on this device for later restore. */
+  userId?: string;
 }
 
 type Dialogs = "move" | "person" | "delete" | null;
 
 /** Floating bar for acting on the selected Ledger rows. */
-export function BulkActionBar({ budgetId, rows, items, people, onClear }: BulkActionBarProps) {
+export function BulkActionBar({ budgetId, rows, items, people, onClear, userId }: BulkActionBarProps) {
   const [dialog, setDialog] = useState<Dialogs>(null);
   const update = useBulkUpdateTransactions();
   const remove = useBulkDeleteTransactions();
@@ -132,7 +134,7 @@ export function BulkActionBar({ budgetId, rows, items, people, onClear }: BulkAc
         isPending={remove.isPending}
         onConfirm={() =>
           remove.mutate(
-            { budgetId, rows },
+            { budgetId, rows, userId },
             {
               onSuccess: () => {
                 setDialog(null);

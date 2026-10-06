@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBudget } from "@/queries/use-budget";
+import { useAuth } from "@/lib/auth-context";
 import {
   useTransactions,
   type TransactionWithRelations,
@@ -29,6 +30,7 @@ export function DayView() {
 
   const [editing, setEditing] = useState<TransactionWithRelations | null>(null);
   const deleteMutation = useDeleteTransaction();
+  const { user } = useAuth();
   const formRef = useRef<HTMLDivElement>(null);
   // "Log again": a fresh nonce remounts the form with the chosen transaction as its starting point.
   const [repeat, setRepeat] = useState<{ draft: RepeatDraft; nonce: number } | null>(null);
@@ -115,7 +117,7 @@ export function DayView() {
           }}
           onDelete={(tx) =>
             // No confirm step: the toast's Undo is faster and safer.
-            deleteMutation.mutate({ id: tx.id, budgetId, snapshot: tx })
+            deleteMutation.mutate({ id: tx.id, budgetId, snapshot: tx, userId: user?.id })
           }
         />
       )}

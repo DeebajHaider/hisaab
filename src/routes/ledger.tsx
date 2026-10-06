@@ -10,6 +10,7 @@ import { BulkActionBar } from "@/components/ledger/bulk-action-bar";
 import { toggleGroup, toggleSelection } from "@/lib/calculations/bulk-edit";
 import { parseLedgerParams } from "@/lib/calculations/ledger-params";
 import { SavedFilters } from "@/components/ledger/saved-filters";
+import { RecentlyDeleted } from "@/components/ledger/recently-deleted";
 import { useAuth } from "@/lib/auth-context";
 import { newId } from "@/lib/uuid";
 import {
@@ -310,6 +311,8 @@ export function Ledger() {
         </div>
       )}
 
+      {userId && <RecentlyDeleted userId={userId} budgetId={budgetId} currency={currency} />}
+
       {selectMode && selectedRows.length > 0 && (
         <BulkActionBar
           budgetId={budgetId}
@@ -317,6 +320,7 @@ export function Ledger() {
           items={items}
           people={people}
           onClear={exitSelectMode}
+          userId={userId}
         />
       )}
     </div>
