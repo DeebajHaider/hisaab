@@ -7,7 +7,7 @@ import { LastPageTracker } from "@/components/layout/resume-last-page";
 import { ShortcutsMenu } from "@/components/layout/shortcuts-menu";
 import { OfflineBanner } from "@/components/layout/offline-banner";
 import { prefetchAppRoutes } from "@/routes/lazy-routes";
-import { Wallet, Sun, Moon, Monitor, LogOut, Settings } from "lucide-react";
+import { Wallet, Sun, Moon, Monitor, LogOut, Settings, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getInitials } from "@/lib/format/initials";
 import {
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/avatar";
 import { useTheme } from "@/lib/theme-provider";
 import { useAuth } from "@/lib/auth-context";
+import { useInstallPrompt } from "@/lib/use-install-prompt";
 
 
 /**
@@ -151,6 +152,7 @@ function ThemeToggle() {
 
 function UserMenu() {
   const { user, signOut } = useAuth();
+  const { canInstall, install } = useInstallPrompt();
 
   // Get initials for the avatar fallback. e.g. "deebaj@example.com" → "D"
   const initial = getInitials({ email: user?.email });
@@ -181,6 +183,12 @@ function UserMenu() {
             Settings
           </Link>
         </DropdownMenuItem>
+        {canInstall && (
+          <DropdownMenuItem onClick={() => install()}>
+            <Download className="w-4 h-4 mr-2" />
+            Install app
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => signOut()}>
           <LogOut className="w-4 h-4 mr-2" />
