@@ -9,6 +9,17 @@ import { LedgerDayGroup } from "@/components/ledger/ledger-day-group";
 import { BulkActionBar } from "@/components/ledger/bulk-action-bar";
 import { toggleGroup, toggleSelection } from "@/lib/calculations/bulk-edit";
 import { parseLedgerParams } from "@/lib/calculations/ledger-params";
+import { SavedFilters } from "@/components/ledger/saved-filters";
+import { useAuth } from "@/lib/auth-context";
+import { newId } from "@/lib/uuid";
+import {
+  normalizeName,
+  readSavedFilters,
+  removeFilter,
+  upsertFilter,
+  writeSavedFilters,
+  type SavedLedgerFilter,
+} from "@/lib/saved-ledger-filters";
 import { useBudget } from "@/queries/use-budget";
 import { useCategories } from "@/queries/use-categories";
 import { useItems } from "@/queries/use-items";
@@ -46,6 +57,11 @@ export function Ledger() {
   const [personIds, setPersonIds] = useState<string[]>([]);
   const [searchText, setSearchText] = useState("");
   const search = useDebouncedValue(searchText);
+  const { user } = useAuth();
+  const userId = user?.id;
+  const [savedFilters, setSavedFilters] = useState<SavedLedgerFilter[]>(() =>
+    userId && budgetId ? readSavedFilters(userId, budgetId) : [],
+  );
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
 
@@ -110,6 +126,42 @@ export function Ledger() {
     setPersonIds((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
   };
 
+  const persistSaved = (next: SavedLedgerFilter[]) => {
+    setSavedFilters(next);
+    if (userId && budgetId) writeSavedFilters(userId, budgetId, next);
+  };
+
+  const saveCurrentView = (rawName: string) => {
+    const name = normalizeName(rawName);
+    if (!name) return;
+    persistSaved(
+      upsertFilter(savedFilters, {
+        id: newId(),
+        name,
+        preset: activePreset,
+        from,
+        to,
+        categoryIds,
+        itemIds,
+        personIds,
+        search: searchText,
+      }),
+    );
+  };
+
+  const applySavedView = (view: SavedLedgerFilter) => {
+    // A preset is re-resolved so "This month" means this month today, not when it was saved.
+    const range = view.preset
+      ? resolveLedgerPreset(view.preset, todayISO(), earliestDate)
+      : { from: view.from, to: view.to };
+    setFrom(range.from);
+    setTo(range.to);
+    setCategoryIds(view.categoryIds);
+    setItemIds(view.itemIds);
+    setPersonIds(view.personIds);
+    setSearchText(view.search);
+  };
+
   const hasExtraFilters =
     categoryIds.length > 0 || itemIds.length > 0 || personIds.length > 0 || searchText.trim() !== "";
   const clearFilters = () => {
@@ -168,6 +220,14 @@ export function Ledger() {
         search={searchText}
         onSearchChange={setSearchText}
         onClearFilters={hasExtraFilters ? clearFilters : undefined}
+      />
+
+      <SavedFilters
+        filters={savedFilters}
+        canSave={hasExtraFilters || activePreset !== "this-month"}
+        onApply={applySavedView}
+        onSave={saveCurrentView}
+        onDelete={(id) => persistSaved(removeFilter(savedFilters, id))}
       />
 
       {!isLoading && (
