@@ -22,7 +22,8 @@ import {
   useCreateTransaction,
   useUpdateTransaction,
 } from "@/queries/use-transaction-mutations";
-import type { TransactionWithRelations } from "@/queries/use-transactions";
+import { useTransactions, type TransactionWithRelations } from "@/queries/use-transactions";
+import { findDuplicate } from "@/lib/calculations/find-duplicate";
 import type { RepeatDraft } from "@/lib/calculations/copy-transactions";
 
 interface TransactionEntryFormProps {
@@ -82,6 +83,12 @@ export function TransactionEntryForm({
 
   const isEditing = !!existing;
   const mutationPending = createMutation.isPending || updateMutation.isPending;
+  const dayQuery = useTransactions(budgetId, isEditing ? editingDate : date);
+  const duplicate = findDuplicate(
+    dayQuery.data ?? NONE,
+    { itemId: selectedItemId, amount: Number(amount) },
+    existing?.id,
+  );
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
@@ -673,6 +680,20 @@ export function TransactionEntryForm({
             className="text-sm"
           />
         </div>
+
+        {duplicate && (
+          <p
+            className="rounded-md border border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-300"
+            role="status"
+          >
+            You already logged {duplicate.item?.name ?? "this item"} for{" "}
+            {Number(duplicate.amount).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}{" "}
+            on this day. You can still add it.
+          </p>
+        )}
 
         {error && (
           <p className="text-sm text-destructive" role="alert">

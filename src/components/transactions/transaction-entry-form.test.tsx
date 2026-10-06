@@ -7,6 +7,7 @@ const state = vi.hoisted(() => ({
   items: [] as Record<string, unknown>[],
   createItem: { isPending: false, mutateAsync: vi.fn() },
   createTx: { isPending: false, mutateAsync: vi.fn() },
+  dayRows: [] as Record<string, unknown>[],
 }));
 
 const car = { id: "cat-car", name: "Car", budget_id: "b1", tracks_person: false };
@@ -18,6 +19,9 @@ vi.mock("@/queries/use-items", () => ({
   useItems: () => ({ data: [...state.items], isLoading: false }),
 }));
 vi.mock("@/queries/use-people", () => ({ usePeople: () => ({ data: [] }) }));
+vi.mock("@/queries/use-transactions", () => ({
+  useTransactions: () => ({ data: state.dayRows }),
+}));
 vi.mock("@/queries/use-recent-items", () => ({ useRecentItems: () => ({ data: [] }) }));
 vi.mock("@/queries/use-item-mutations", () => ({ useCreateItem: () => state.createItem }));
 vi.mock("@/queries/use-transaction-mutations", () => ({
@@ -48,6 +52,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   state.items = [item("item-petrol", "Petrol")];
+  state.dayRows = [];
   state.createTx.mutateAsync.mockReset();
   state.createItem.mutateAsync.mockReset().mockImplementation(
     async ({ name }: { name: string }) => {
@@ -235,5 +240,39 @@ describe("TransactionEntryForm with two copies mounted (page form + Edit dialog)
       </>,
     );
     expect(container.querySelectorAll("[data-entry-search]")).toHaveLength(1);
+  });
+});
+
+describe("TransactionEntryForm duplicate warning", () => {
+  async function pickPetrol(user: ReturnType<typeof userEvent.setup>) {
+    await user.type(search(), "Petr");
+    await user.click(await screen.findByRole("button", { name: /Petrol/ }));
+  }
+
+  it("warns when the same item and amount were already logged that day, but still allows it", async () => {
+    state.dayRows = [
+      { id: "t1", item_id: "item-petrol", amount: 4250, item: { id: "item-petrol", name: "Petrol" } },
+    ];
+    const user = userEvent.setup();
+    render(<TransactionEntryForm budgetId="b1" date="2026-10-02" />);
+
+    await pickPetrol(user);
+    await user.type(screen.getByLabelText("Amount"), "4250");
+
+    expect(screen.getByRole("status")).toHaveTextContent("You already logged Petrol for 4,250.00");
+    expect(screen.getByRole("button", { name: "Save & next" })).toBeEnabled();
+  });
+
+  it("stays quiet for a different amount", async () => {
+    state.dayRows = [
+      { id: "t1", item_id: "item-petrol", amount: 4250, item: { id: "item-petrol", name: "Petrol" } },
+    ];
+    const user = userEvent.setup();
+    render(<TransactionEntryForm budgetId="b1" date="2026-10-02" />);
+
+    await pickPetrol(user);
+    await user.type(screen.getByLabelText("Amount"), "100");
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 });
