@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBudget } from "@/queries/use-budget";
 import { useAuth } from "@/lib/auth-context";
+import { GettingStarted } from "@/components/budgets/getting-started";
 import {
   useTransactions,
   type TransactionWithRelations,
@@ -58,6 +59,8 @@ export function DayView() {
       className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6 sm:space-y-8 min-h-[70vh]"
     >
       <DayHeader budgetId={budgetId} date={date} total={total} currency={currency} />
+
+      <GettingStarted budgetId={budgetId} />
 
       <TargetAlerts budgetId={budgetId} date={date} currency={currency} />
 
