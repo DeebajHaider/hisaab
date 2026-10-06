@@ -33,6 +33,7 @@ import { CategoryTree } from "@/components/manage/category-tree";
 import { CategoryFormDialog } from "@/components/manage/category-form-dialog";
 import { PersonList } from "@/components/manage/person-list";
 import { TemplateList } from "@/components/manage/template-list";
+import { IncomeTemplateList } from "@/components/manage/income-template-list";
 import {
   useArchiveCategory,
   useDeleteCategory,
@@ -113,6 +114,8 @@ export function Manage() {
         categories={activeCategories}
         items={activeItems}
       />
+
+      <IncomeTemplateList budgetId={budgetId} currency={currency} />
     </div>
   );
 }

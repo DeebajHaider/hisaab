@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useIncome, type IncomeEntry } from "@/queries/use-income";
 import { useDeleteIncome } from "@/queries/use-income-mutations";
 import { IncomeFormDialog } from "./income-form-dialog";
+import { IncomeQuickAdd } from "./income-quick-add";
+import { useBudget } from "@/queries/use-budget";
 import { DeleteConfirmDialog } from "./delete-confirm-dialog";
 import type { YearMonth } from "@/lib/format/year-month";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,6 +21,7 @@ export function IncomeSection({ budgetId, yearMonth }: IncomeSectionProps) {
   const [editing, setEditing] = useState<IncomeEntry | null>(null);
   const [deleting, setDeleting] = useState<IncomeEntry | null>(null);
   const deleteMutation = useDeleteIncome();
+  const currency = useBudget(budgetId).data?.currency ?? "PKR";
 
   const handleDelete = async () => {
     if (!deleting) return;
@@ -45,6 +48,7 @@ export function IncomeSection({ budgetId, yearMonth }: IncomeSectionProps) {
           />
         </CardHeader>
         <CardContent>
+          <IncomeQuickAdd budgetId={budgetId} yearMonth={yearMonth} currency={currency} />
           {isLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-10 w-full" />

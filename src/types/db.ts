@@ -358,6 +358,50 @@ export type Database = {
           },
         ]
       }
+      income_templates: {
+        Row: {
+          amount: number
+          budget_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_archived: boolean
+          notes: string | null
+          sort_order: number
+          source: string
+        }
+        Insert: {
+          amount: number
+          budget_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          notes?: string | null
+          sort_order?: number
+          source: string
+        }
+        Update: {
+          amount?: number
+          budget_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          notes?: string | null
+          sort_order?: number
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "income_templates_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       items: {
         Row: {
           category_id: string
