@@ -165,11 +165,11 @@ describe("TransactionEntryForm log again", () => {
     expect(search()).toHaveValue("Petrol");
     const amount = screen.getByLabelText("Amount") as HTMLInputElement;
     await waitFor(() => expect(amount).toHaveFocus());
-    expect(amount).toHaveValue(4250);
+    expect(amount).toHaveValue("4250");
 
     // Selected on focus, so typing replaces 4250 instead of appending to it.
     await user.keyboard("5000");
-    expect(amount).toHaveValue(5000);
+    expect(amount).toHaveValue("5000");
   });
 
   it("lands on Qty for rate x qty items", async () => {
@@ -274,5 +274,37 @@ describe("TransactionEntryForm duplicate warning", () => {
     await user.type(screen.getByLabelText("Amount"), "100");
 
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+});
+
+describe("TransactionEntryForm amount sums", () => {
+  it("shows the result of a typed sum and settles it on blur", async () => {
+    const user = userEvent.setup();
+    render(<TransactionEntryForm budgetId="b1" date="2026-10-02" />);
+
+    await user.type(search(), "Petr");
+    await user.click(await screen.findByRole("button", { name: /Petrol/ }));
+    const amount = screen.getByLabelText("Amount");
+    await user.type(amount, "120+80");
+
+    expect(screen.getByText("= 200")).toBeInTheDocument();
+    await user.tab();
+    expect(amount).toHaveValue("200");
+    expect(screen.queryByText("= 200")).not.toBeInTheDocument();
+  });
+
+  it("saves the evaluated amount", async () => {
+    const user = userEvent.setup();
+    state.createTx.mutateAsync.mockResolvedValue(undefined);
+    render(<TransactionEntryForm budgetId="b1" date="2026-10-02" />);
+
+    await user.type(search(), "Petr");
+    await user.click(await screen.findByRole("button", { name: /Petrol/ }));
+    await user.type(screen.getByLabelText("Amount"), "450*3");
+    await user.click(screen.getByRole("button", { name: "Save & next" }));
+
+    expect(state.createTx.mutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 1350, itemId: "item-petrol" }),
+    );
   });
 });

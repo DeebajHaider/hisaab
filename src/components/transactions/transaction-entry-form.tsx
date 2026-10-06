@@ -24,6 +24,7 @@ import {
 } from "@/queries/use-transaction-mutations";
 import { useTransactions, type TransactionWithRelations } from "@/queries/use-transactions";
 import { findDuplicate } from "@/lib/calculations/find-duplicate";
+import { evaluateAmount, formatEvaluated, isExpression } from "@/lib/calculations/evaluate-amount";
 import type { RepeatDraft } from "@/lib/calculations/copy-transactions";
 
 interface TransactionEntryFormProps {
@@ -86,11 +87,15 @@ export function TransactionEntryForm({
   const dayQuery = useTransactions(budgetId, isEditing ? editingDate : date);
   const duplicate = findDuplicate(
     dayQuery.data ?? NONE,
-    { itemId: selectedItemId, amount: Number(amount) },
+    { itemId: selectedItemId, amount: evaluateAmount(amount) ?? NaN },
     existing?.id,
   );
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const sumValue = mode === "lump" && isExpression(amount) ? evaluateAmount(amount) : null;
+  const showSum = sumValue !== null;
+  const sumResult = sumValue === null ? "" : formatEvaluated(sumValue);
+
   const amountInputRef = useRef<HTMLInputElement>(null);
   const rateInputRef = useRef<HTMLInputElement>(null);
   const qtyInputRef = useRef<HTMLInputElement>(null);
@@ -332,7 +337,8 @@ export function TransactionEntryForm({
       return;
     }
 
-    const parsedAmount = Number(amount);
+    const evaluated = evaluateAmount(amount);
+    const parsedAmount = evaluated === null ? NaN : Math.round(evaluated * 100) / 100;
     if (
       amount.trim() === "" ||
       Number.isNaN(parsedAmount) ||
@@ -600,17 +606,29 @@ export function TransactionEntryForm({
             <Input
               ref={amountInputRef}
               id={fid("amount-input")}
-              type="number"
+              type="text"
               inputMode="decimal"
+              autoComplete="off"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              min={0}
-              step="0.01"
+              onBlur={() => {
+                // Settle a typed sum like 120+80 into its result.
+                const value = evaluateAmount(amount);
+                if (mode === "lump" && value !== null && isExpression(amount)) {
+                  setAmount(formatEvaluated(value));
+                }
+              }}
               placeholder="0.00"
               readOnly={mode === "rate_qty"}
               className={mode === "rate_qty" ? "bg-muted/50" : ""}
+              aria-describedby={showSum ? fid("amount-sum") : undefined}
               required
             />
+            {showSum && (
+              <p id={fid("amount-sum")} className="text-xs text-muted-foreground tabular-nums">
+                = {sumResult}
+              </p>
+            )}
           </div>
         </div>
 
