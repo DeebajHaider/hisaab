@@ -35,49 +35,8 @@ export function DayView() {
   // "Log again": a fresh nonce remounts the form with the chosen transaction as its starting point.
   const [repeat, setRepeat] = useState<{ draft: RepeatDraft; nonce: number } | null>(null);
 
-  // --- Keyboard navigation ---------------------------------------------------
-  // Left/right arrows move to the previous/next day, but ONLY when:
-  //   - no dialog is open (edit)
-  //   - focus isn't inside an input/textarea/contenteditable
-  //   - focus isn't inside an open popover/dropdown/listbox
-  // The popover/dropdown check covers the calendar picker, the item-search
-  // combobox, and the Select dropdowns — they all need arrows for their own
-  // navigation. role="combobox"/"listbox"/"dialog" are what Radix renders.
-  useEffect(() => {
-    if (!budgetId || !date) return;
-
-    const handler = (e: KeyboardEvent) => {
-      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-      // Don't intercept when modifier keys are held — the user might be
-      // doing browser navigation (Alt+Left) or text selection (Shift+Arrow).
-      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-      if (editing) return;
-
-      const active = document.activeElement as HTMLElement | null;
-      if (active) {
-        const tag = active.tagName;
-        if (
-          tag === "INPUT" ||
-          tag === "TEXTAREA" ||
-          tag === "SELECT" ||
-          active.isContentEditable
-        ) {
-          return;
-        }
-        // Inside an open dropdown / popover / dialog content?
-        if (active.closest('[role="combobox"], [role="listbox"], [role="dialog"]')) {
-          return;
-        }
-      }
-
-      e.preventDefault();
-      const target = e.key === "ArrowLeft" ? addDays(date, -1) : addDays(date, 1);
-      navigate(`/app/budgets/${budgetId}/day/${target}`);
-    };
-
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [budgetId, date, editing, navigate]);
+  // Arrow-key and "t" day navigation is handled app-wide by CommandPalette's
+  // shortcuts (see shortcut-catalog), so only swipe lives here.
 
   // Swipe left for the next day, right for the previous (phones).
   const swipe = useSwipe((direction) => {
