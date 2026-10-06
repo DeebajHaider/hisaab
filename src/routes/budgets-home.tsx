@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Pin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBudgets } from "@/queries/use-budgets";
+import { useAuth } from "@/lib/auth-context";
+import { pinnedFirst, readPinned, togglePinned, writePinned } from "@/lib/pinned-budgets";
 import { CreateBudgetDialog } from "@/components/budgets/create-budget-dialog";
 import { ResumeLastPage } from "@/components/layout/resume-last-page";
 import { BudgetMonthSpend } from "@/components/budgets/budget-month-spend";
@@ -69,15 +72,34 @@ function EmptyState() {
 }
 
 function BudgetGrid({ budgets }: { budgets: ReturnType<typeof useBudgets>["data"] }) {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const [pinned, setPinned] = useState<string[]>(() => (userId ? readPinned(userId) : []));
   if (!budgets) return null;
+
+  const togglePin = (id: string) => {
+    const next = togglePinned(pinned, id);
+    setPinned(next);
+    if (userId) writePinned(userId, next);
+  };
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {budgets.map((budget) => (
-        <Link key={budget.id} to={`/app/budgets/${budget.id}`} className="group">
+      {pinnedFirst(budgets, pinned).map((budget) => (
+        <div key={budget.id} className="relative">
+        <button
+          type="button"
+          onClick={() => togglePin(budget.id)}
+          aria-pressed={pinned.includes(budget.id)}
+          aria-label={`${pinned.includes(budget.id) ? "Unpin" : "Pin"} ${budget.name}`}
+          className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+        >
+          <Pin className={`h-4 w-4 ${pinned.includes(budget.id) ? "fill-current text-accent-text" : ""}`} />
+        </button>
+        <Link to={`/app/budgets/${budget.id}`} className="group block h-full">
           <Card className="h-full transition-colors group-hover:border-accent-border-hover">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center justify-between">
+              <CardTitle className="text-base flex items-center justify-between pr-9">
                 <span className="truncate">{budget.name}</span>
                 {budget.is_shared && (
                   <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-accent-soft text-accent-soft-foreground">
@@ -92,6 +114,7 @@ function BudgetGrid({ budgets }: { budgets: ReturnType<typeof useBudgets>["data"
             </CardContent>
           </Card>
         </Link>
+        </div>
       ))}
     </div>
   );

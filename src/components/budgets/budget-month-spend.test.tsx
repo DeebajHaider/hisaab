@@ -27,9 +27,27 @@ beforeEach(() => {
 });
 
 describe("BudgetMonthSpend", () => {
-  it("asks for last month through this month", () => {
+  it("asks for the last six months through this month", () => {
     render(<BudgetMonthSpend budgetId="b1" currency="PKR" />);
-    expect(state.args).toEqual(["b1", "2026-09", "2026-10"]);
+    expect(state.args).toEqual(["b1", "2026-05", "2026-10"]);
+  });
+
+  it("draws a bar per month once there is history, and nothing when there is none", () => {
+    state.result = {
+      isLoading: false,
+      isError: false,
+      data: [
+        { yearMonth: "2026-08", total: 100 },
+        { yearMonth: "2026-10", total: 50 },
+      ],
+    };
+    const { rerender } = render(<BudgetMonthSpend budgetId="b1" currency="PKR" />);
+    const chart = screen.getByRole("img", { name: /last 6 months/ });
+    expect(chart.children).toHaveLength(6);
+
+    state.result = { isLoading: false, isError: false, data: [] };
+    rerender(<BudgetMonthSpend budgetId="b1" currency="PKR" />);
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 
   it("shows this month's total and last month's for reference", () => {

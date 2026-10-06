@@ -1,6 +1,9 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMonthlyTotals } from "@/queries/use-monthly-totals";
 import { addMonths, currentYearMonth, formatMonthLabel } from "@/lib/format/year-month";
+import { sparkBars } from "@/lib/calculations/spark-bars";
+
+const SPARK_MONTHS = 6;
 
 function formatMoney(amount: number): string {
   return amount.toLocaleString(undefined, {
@@ -19,7 +22,8 @@ export function BudgetMonthSpend({
 }) {
   const thisMonth = currentYearMonth();
   const lastMonth = addMonths(thisMonth, -1);
-  const { data, isLoading, isError } = useMonthlyTotals(budgetId, lastMonth, thisMonth);
+  const firstMonth = addMonths(thisMonth, -(SPARK_MONTHS - 1));
+  const { data, isLoading, isError } = useMonthlyTotals(budgetId, firstMonth, thisMonth);
 
   if (isError) return null;
 
@@ -35,6 +39,12 @@ export function BudgetMonthSpend({
   const totalFor = (ym: string) => data.find((row) => row.yearMonth === ym)?.total ?? 0;
   const current = totalFor(thisMonth);
   const previous = totalFor(lastMonth);
+  const months = Array.from({ length: SPARK_MONTHS }, (_, i) => addMonths(firstMonth, i));
+  const bars = sparkBars(
+    months,
+    Object.fromEntries(data.map((row) => [row.yearMonth, row.total])),
+  );
+  const hasHistory = bars.some((b) => b.total > 0);
 
   return (
     <div>
@@ -46,6 +56,24 @@ export function BudgetMonthSpend({
         <p className="mt-1 text-xs text-muted-foreground tabular-nums">
           Last month {currency} {formatMoney(previous)}
         </p>
+      )}
+      {hasHistory && (
+        <div
+          className="mt-3 flex h-8 items-end gap-1"
+          role="img"
+          aria-label={`Spending over the last ${SPARK_MONTHS} months`}
+        >
+          {bars.map((bar) => (
+            <div
+              key={bar.yearMonth}
+              title={`${formatMonthLabel(bar.yearMonth)}: ${currency} ${formatMoney(bar.total)}`}
+              className={`flex-1 rounded-sm ${
+                bar.yearMonth === thisMonth ? "bg-accent-solid" : "bg-muted-foreground/30"
+              }`}
+              style={{ height: `${Math.max(bar.height * 100, bar.total > 0 ? 8 : 3)}%` }}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
