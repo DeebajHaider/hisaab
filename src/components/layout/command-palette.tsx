@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { useMatch, useNavigate } from "react-router-dom";
+import { useLocation, useMatch, useNavigate } from "react-router-dom";
 import {
   Briefcase,
   Calendar,
@@ -30,13 +30,15 @@ import {
   Command,
 } from "@/components/ui/command";
 import { useTheme } from "@/lib/theme-provider";
-import { todayISO } from "@/lib/format/date";
+import { addDays, todayISO } from "@/lib/format/date";
+import { addMonths, currentYearMonth, type YearMonth } from "@/lib/format/year-month";
 import { useBudgets } from "@/queries/use-budgets";
 import { usePortfolios } from "@/queries/use-portfolios";
 import {
   resolveShortcut,
   type ShortcutAction,
 } from "@/lib/shortcuts/resolve-shortcut";
+import { isShortcutAvailable, shortcutPage } from "@/lib/shortcuts/shortcut-catalog";
 
 const SEQUENCE_TIMEOUT_MS = 1500;
 
@@ -49,8 +51,11 @@ function isTypingContext(el: Element | null): boolean {
 }
 
 /** Global keyboard shortcuts plus the Ctrl/Cmd+K palette. Mounted once in AppLayout. */
-export function CommandPalette() {
+export function CommandPalette({ onHelp }: { onHelp?: () => void } = {}) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const dayMatch = useMatch("/app/budgets/:budgetId/day/:date");
+  const monthMatch = useMatch("/app/budgets/:budgetId/month/:yearMonth");
   const [open, setOpen] = useState(false);
   const budgetMatch = useMatch("/app/budgets/:budgetId/*");
   const budgetId = budgetMatch?.params.budgetId;
@@ -79,9 +84,29 @@ export function CommandPalette() {
   const run = useCallback(
     (action: ShortcutAction) => {
       if (action === "palette") return setOpen((o) => !o);
+      if (action === "help") return onHelp?.();
       if (action === "new") return focusNewTransaction();
       if (!budgetId) return;
       const base = `/app/budgets/${budgetId}`;
+
+      if (action === "search") {
+        document.querySelector<HTMLElement>("[data-ledger-search]")?.focus();
+        return;
+      }
+      if (action === "prev" || action === "next") {
+        const step = action === "prev" ? -1 : 1;
+        if (dayMatch?.params.date) {
+          navigate(`${base}/day/${addDays(dayMatch.params.date, step)}`);
+        } else if (monthMatch?.params.yearMonth) {
+          navigate(`${base}/month/${addMonths(monthMatch.params.yearMonth as YearMonth, step)}`);
+        }
+        return;
+      }
+      if (action === "today") {
+        navigate(dayMatch ? `${base}/day/${todayISO()}` : `${base}/month/${currentYearMonth()}`);
+        return;
+      }
+
       const paths: Record<string, string> = {
         "go:day": `${base}/day/${todayISO()}`,
         "go:month": `${base}/month`,
@@ -91,7 +116,7 @@ export function CommandPalette() {
       };
       navigate(paths[action]);
     },
-    [budgetId, focusNewTransaction, navigate],
+    [budgetId, dayMatch, monthMatch, focusNewTransaction, navigate, onHelp],
   );
 
   useEffect(() => {
@@ -101,6 +126,11 @@ export function CommandPalette() {
 
       // Only the palette shortcut works while typing or inside a dialog.
       if (typing && result.action !== "palette") {
+        pendingG.current = false;
+        return;
+      }
+      // Keys with no meaning on this page stay with the browser.
+      if (result.action && !isShortcutAvailable(result.action, shortcutPage(pathname))) {
         pendingG.current = false;
         return;
       }
@@ -118,7 +148,7 @@ export function CommandPalette() {
       window.removeEventListener("keydown", onKeyDown);
       clearTimeout(gTimer.current);
     };
-  }, [run]);
+  }, [run, pathname]);
 
   const go = (path: string) => {
     setOpen(false);

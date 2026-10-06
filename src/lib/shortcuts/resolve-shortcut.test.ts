@@ -72,6 +72,26 @@ describe("resolveShortcut", () => {
     }
   });
 
+  it("maps ? to help even though it needs Shift", () => {
+    expect(resolveShortcut(false, key("?", { shiftKey: true }))).toEqual({
+      action: "help",
+      pendingG: false,
+      preventDefault: true,
+    });
+  });
+
+  it("maps the page-level keys", () => {
+    const expected = { t: "today", "/": "search", ArrowLeft: "prev", ArrowRight: "next" };
+    for (const [k, action] of Object.entries(expected)) {
+      expect(resolveShortcut(false, key(k)).action).toBe(action);
+    }
+  });
+
+  it("leaves Ctrl/Alt/Shift-modified arrows to the browser", () => {
+    expect(resolveShortcut(false, key("ArrowLeft", { altKey: true })).action).toBeNull();
+    expect(resolveShortcut(false, key("ArrowRight", { shiftKey: true })).action).toBeNull();
+  });
+
   it("ignores shifted letters (capital N is not the n shortcut)", () => {
     expect(resolveShortcut(false, key("N", { shiftKey: true })).action).toBeNull();
   });

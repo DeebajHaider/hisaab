@@ -1,8 +1,9 @@
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { RouteFallback } from "@/components/layout/route-fallback";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { DocumentTitle } from "@/components/layout/document-title";
+import { ShortcutsMenu } from "@/components/layout/shortcuts-menu";
 import { OfflineBanner } from "@/components/layout/offline-banner";
 import { prefetchAppRoutes } from "@/routes/lazy-routes";
 import { Wallet, Sun, Moon, Monitor, LogOut, Settings } from "lucide-react";
@@ -30,6 +31,7 @@ import { useAuth } from "@/lib/auth-context";
  * Renders nothing if user is null (RequireAuth handles that, but defensive).
  */
 export function AppLayout() {
+  const [helpOpen, setHelpOpen] = useState(false);
   useEffect(() => {
     prefetchAppRoutes();
   }, []);
@@ -48,9 +50,9 @@ export function AppLayout() {
             "radial-gradient(ellipse 800px 500px at 30% 105%, var(--ambient-3), transparent 70%)",
         }}
       />
-      <CommandPalette />
+      <CommandPalette onHelp={() => setHelpOpen((o) => !o)} />
       <DocumentTitle />
-      <AppHeader />
+      <AppHeader helpOpen={helpOpen} onHelpOpenChange={setHelpOpen} />
       <main className="relative flex-1">
         <Suspense fallback={<RouteFallback />}>
           <Outlet />
@@ -60,7 +62,13 @@ export function AppLayout() {
   );
 }
 
-function AppHeader() {
+function AppHeader({
+  helpOpen,
+  onHelpOpenChange,
+}: {
+  helpOpen: boolean;
+  onHelpOpenChange: (open: boolean) => void;
+}) {
   return (
     <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-40 pt-[env(safe-area-inset-top)]">
       <div className="px-3 sm:px-6 h-14 flex items-center justify-between">
@@ -72,6 +80,7 @@ function AppHeader() {
           <SectionNav />
         </div>
         <div className="flex items-center gap-2">
+          <ShortcutsMenu open={helpOpen} onOpenChange={onHelpOpenChange} />
           <ThemeToggle />
           <UserMenu />
         </div>

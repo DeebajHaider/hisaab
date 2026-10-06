@@ -16,7 +16,14 @@ vi.mock("@/queries/use-portfolios", () => ({
   usePortfolios: () => ({ data: [{ id: "p1", name: "Retirement" }] }),
 }));
 vi.mock("@/lib/theme-provider", () => ({ useTheme: () => ({ setTheme: vi.fn() }) }));
-vi.mock("@/lib/format/date", () => ({ todayISO: () => "2026-10-03" }));
+vi.mock("@/lib/format/date", async (orig) => ({
+  ...(await orig<typeof import("@/lib/format/date")>()),
+  todayISO: () => "2026-10-03",
+}));
+vi.mock("@/lib/format/year-month", async (orig) => ({
+  ...(await orig<typeof import("@/lib/format/year-month")>()),
+  currentYearMonth: () => "2026-10",
+}));
 
 beforeAll(() => {
   // cmdk relies on these, which jsdom lacks.
@@ -32,11 +39,11 @@ function Where() {
   return <div data-testid="where">{useLocation().pathname}</div>;
 }
 
-function setup(path = "/app/budgets/b1/ledger") {
+function setup(path = "/app/budgets/b1/ledger", onHelp?: () => void) {
   const user = userEvent.setup();
   render(
     <MemoryRouter initialEntries={[path]}>
-      <CommandPalette />
+      <CommandPalette onHelp={onHelp} />
       <Routes>
         <Route
           path="*"
@@ -125,5 +132,45 @@ describe("CommandPalette shortcuts", () => {
     await user.click(screen.getByTestId("field"));
     await user.keyboard("{Control>}k{/Control}");
     expect(await screen.findByPlaceholderText(/Jump to a page/)).toBeInTheDocument();
+  });
+
+  it("steps through days with the arrow keys and jumps to today with t", async () => {
+    const user = setup("/app/budgets/b1/day/2026-10-01");
+    await user.keyboard("{ArrowRight}");
+    expect(where()).toBe("/app/budgets/b1/day/2026-10-02");
+    await user.keyboard("{ArrowLeft}{ArrowLeft}");
+    expect(where()).toBe("/app/budgets/b1/day/2026-09-30");
+    await user.keyboard("t");
+    expect(where()).toBe("/app/budgets/b1/day/2026-10-03");
+  });
+
+  it("steps through months with the arrow keys and jumps to this month with t", async () => {
+    const user = setup("/app/budgets/b1/month/2026-01");
+    await user.keyboard("{ArrowLeft}");
+    expect(where()).toBe("/app/budgets/b1/month/2025-12");
+    await user.keyboard("t");
+    expect(where()).toBe("/app/budgets/b1/month/2026-10");
+  });
+
+  it("leaves arrows and t alone on pages they do not apply to", async () => {
+    const user = setup("/app/budgets/b1/ledger");
+    await user.keyboard("{ArrowRight}t");
+    expect(where()).toBe("/app/budgets/b1/ledger");
+  });
+
+  it("opens the shortcut help on ?", async () => {
+    const onHelp = vi.fn();
+    const user = setup("/app/budgets/b1/ledger", onHelp);
+    await user.keyboard("?");
+    expect(onHelp).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not trigger help while typing a question mark in a field", async () => {
+    const onHelp = vi.fn();
+    const user = setup("/app/budgets/b1/ledger", onHelp);
+    await user.click(screen.getByTestId("field"));
+    await user.keyboard("?");
+    expect(onHelp).not.toHaveBeenCalled();
+    expect(screen.getByTestId("field")).toHaveValue("?");
   });
 });

@@ -103,6 +103,7 @@ export function LedgerFilters({
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search notes…"
           aria-label="Search notes"
+          data-ledger-search
           autoComplete="off"
           className="pl-9 pr-9 [&::-webkit-search-cancel-button]:hidden"
         />

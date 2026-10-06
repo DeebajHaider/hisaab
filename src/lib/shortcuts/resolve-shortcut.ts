@@ -13,7 +13,12 @@ export type ShortcutAction =
   | "go:month"
   | "go:ledger"
   | "go:trends"
-  | "go:settings";
+  | "go:settings"
+  | "help"
+  | "prev"
+  | "next"
+  | "today"
+  | "search";
 
 export interface ShortcutResult {
   action: ShortcutAction | null;
@@ -30,6 +35,14 @@ const GO_KEYS: Record<string, ShortcutAction> = {
   s: "go:settings",
 };
 
+const SIMPLE_KEYS: Record<string, ShortcutAction> = {
+  n: "new",
+  t: "today",
+  "/": "search",
+  ArrowLeft: "prev",
+  ArrowRight: "next",
+};
+
 const NONE: ShortcutResult = { action: null, pendingG: false, preventDefault: false };
 
 /** Pure key -> shortcut mapping. Whether the key was pressed while typing in a
@@ -37,6 +50,10 @@ const NONE: ShortcutResult = { action: null, pendingG: false, preventDefault: fa
 export function resolveShortcut(pendingG: boolean, e: KeyInfo): ShortcutResult {
   if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k") {
     return { action: "palette", pendingG: false, preventDefault: true };
+  }
+
+  if (e.key === "?" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    return { action: "help", pendingG: false, preventDefault: true };
   }
 
   if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return NONE;
@@ -49,6 +66,6 @@ export function resolveShortcut(pendingG: boolean, e: KeyInfo): ShortcutResult {
   }
 
   if (e.key === "g") return { action: null, pendingG: true, preventDefault: false };
-  if (e.key === "n") return { action: "new", pendingG: false, preventDefault: true };
-  return NONE;
+  const action = SIMPLE_KEYS[e.key];
+  return action ? { action, pendingG: false, preventDefault: true } : NONE;
 }
