@@ -161,40 +161,51 @@ export function TargetCard({ budgetId, currency, target, categories, items }: Ta
         </div>
       </div>
 
-      <div className="space-y-0.5 text-xs text-muted-foreground">
-        <p className="font-medium text-foreground">
-          {describeTimeline(timeline, target.end_date, todayISO())}
+      <div className="space-y-3 border-t border-border/50 pt-3">
+        <p className="flex items-center gap-2 text-sm font-semibold">
+          <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs text-accent-soft-foreground">
+            {describeTimeline(timeline, target.end_date, todayISO())}
+          </span>
         </p>
-        {timeline.phase === "active" && timeline.remaining < 0 && (
-          <p className="text-red-600 dark:text-red-400">
-            Over by {formatAmount(-timeline.remaining, currency)}.
-          </p>
+
+        {timeline.phase !== "upcoming" && (
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+            <Stat
+              label={timeline.remaining < 0 ? "Over by" : "Left"}
+              value={formatAmount(Math.abs(timeline.remaining), currency)}
+              tone={timeline.remaining < 0 ? "bad" : undefined}
+            />
+            {timeline.phase === "active" && timeline.perDayLeft !== null && (
+              <Stat label="Can spend per day" value={formatAmount(timeline.perDayLeft, currency)} />
+            )}
+            {timeline.avgPerDay !== null && (
+              <Stat
+                label={timeline.phase === "active" ? "Spending per day" : "Averaged per day"}
+                value={formatAmount(timeline.avgPerDay, currency)}
+              />
+            )}
+          </dl>
         )}
-        {timeline.phase === "active" && timeline.perDayLeft !== null && (
-          <p>
-            {formatAmount(timeline.remaining, currency)} left, about{" "}
-            {formatAmount(timeline.perDayLeft, currency)} a day to stay within it.
-          </p>
-        )}
-        {timeline.phase !== "upcoming" && timeline.avgPerDay !== null && (
-          <p>
-            Averaging {formatAmount(timeline.avgPerDay, currency)} a day
-            {timeline.phase === "active" ? " so far" : ""}.
+
+        {pace && (
+          <p
+            className={cn(
+              "rounded-md px-3 py-2 text-sm",
+              pace.willExceed
+                ? "bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                : "bg-muted/50 text-foreground",
+            )}
+          >
+            At this pace you'll reach{" "}
+            <strong className="font-semibold tabular-nums">
+              {formatAmount(pace.projected, currency)}
+            </strong>{" "}
+            by {formatDayLabel(target.end_date)}, which is{" "}
+            <strong className="font-semibold">{Math.round(pace.projectedPercent)}%</strong> of the
+            target.
           </p>
         )}
       </div>
-
-      {pace && (
-        <p
-          className={cn(
-            "text-xs",
-            pace.willExceed ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground",
-          )}
-        >
-          At this pace you'll reach {formatAmount(pace.projected, currency)} by{" "}
-          {formatDayLabel(target.end_date)} ({Math.round(pace.projectedPercent)}% of the target).
-        </p>
-      )}
 
       <TargetWeeklyBreakdown budgetId={budgetId} target={target} currency={currency} />
 
@@ -235,6 +246,30 @@ export function TargetCard({ budgetId, currency, target, categories, items }: Ta
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "bad";
+}) {
+  return (
+    <div>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd
+        className={cn(
+          "mt-0.5 text-sm font-semibold tabular-nums",
+          tone === "bad" ? "text-red-600 dark:text-red-400" : "text-foreground",
+        )}
+      >
+        {value}
+      </dd>
     </div>
   );
 }
