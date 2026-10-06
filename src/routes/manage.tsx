@@ -137,8 +137,6 @@ export function Manage() {
         )}
       </section>
 
-      <PersonList budgetId={budgetId} />
-
       <TemplateList
         budgetId={budgetId}
         currency={currency}
@@ -147,6 +145,8 @@ export function Manage() {
       />
 
       <IncomeTemplateList budgetId={budgetId} currency={currency} />
+
+      <PersonList budgetId={budgetId} />
     </div>
   );
 }
