@@ -257,7 +257,9 @@ export function TransactionEntryForm({
     }
 
     setQty("");
-    setAmount("");
+    // A lump-sum item's default is its usual amount, so it fills the Amount
+    // field directly (rate x qty items fill Rate and wait for a quantity).
+    setAmount(itemMode === "lump" && item.default_rate !== null ? String(item.default_rate) : "");
 
     // Straight to the first empty number field, so logging is
     // pick -> type -> Enter. The delay lets the render commit, and lets a
@@ -268,7 +270,11 @@ export function TransactionEntryForm({
           ? qtyInputRef
           : rateInputRef
         : amountInputRef;
-    setTimeout(() => nextField.current?.focus(), 60);
+    setTimeout(() => {
+      nextField.current?.focus();
+      // Select a prefilled value so typing replaces it instead of appending.
+      nextField.current?.select();
+    }, 60);
   };
 
   const clearItem = () => {

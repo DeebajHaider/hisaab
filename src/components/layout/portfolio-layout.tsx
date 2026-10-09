@@ -40,7 +40,7 @@ function DesktopSidebar({
   portfolioName: string;
 }) {
   return (
-    <aside className="hidden lg:flex w-60 shrink-0 border-r border-border/40 flex-col">
+    <aside className="hidden lg:flex w-60 shrink-0 border-r border-border/40 flex-col lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:self-start lg:overflow-y-auto">
       <SidebarHeader portfolioName={portfolioName} />
       <SidebarNav portfolioId={portfolioId} />
     </aside>

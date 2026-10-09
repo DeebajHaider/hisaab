@@ -308,3 +308,31 @@ describe("TransactionEntryForm amount sums", () => {
     );
   });
 });
+
+describe("TransactionEntryForm item defaults", () => {
+  it("prefills Amount with a lump-sum item's default and selects it for overwriting", async () => {
+    state.items = [{ ...item("item-gym", "Gym fees"), default_mode: "lump", default_rate: 5000 }];
+    const user = userEvent.setup();
+    render(<TransactionEntryForm budgetId="b1" date="2026-10-02" />);
+
+    await user.type(search(), "Gym");
+    await user.click(await screen.findByRole("button", { name: /Gym fees/ }));
+
+    const amount = screen.getByLabelText("Amount") as HTMLInputElement;
+    expect(amount).toHaveValue("5000");
+    await waitFor(() => expect(amount).toHaveFocus());
+
+    await user.keyboard("6500");
+    expect(amount).toHaveValue("6500");
+  });
+
+  it("leaves Amount empty for an item with no default", async () => {
+    const user = userEvent.setup();
+    render(<TransactionEntryForm budgetId="b1" date="2026-10-02" />);
+
+    await user.type(search(), "Petr");
+    await user.click(await screen.findByRole("button", { name: /Petrol/ }));
+
+    expect(screen.getByLabelText("Amount")).toHaveValue("");
+  });
+});

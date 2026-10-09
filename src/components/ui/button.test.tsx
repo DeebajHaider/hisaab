@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Button } from "./button";
 
 describe("Button tooltips", () => {
@@ -32,5 +32,18 @@ describe("Button tooltips", () => {
     rerender(<Button tooltip="Saves your changes">Save</Button>);
     await user.hover(screen.getByRole("button", { name: "Save" }));
     expect(await screen.findByRole("tooltip")).toHaveTextContent("Saves your changes");
+  });
+});
+
+describe("Button tooltips on touch screens", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("does not add a tooltip when the device cannot hover", async () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    const user = userEvent.setup();
+    render(<Button size="icon" aria-label="Delete rent">x</Button>);
+
+    await user.click(screen.getByRole("button", { name: "Delete rent" }));
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 });

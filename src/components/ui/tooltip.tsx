@@ -3,9 +3,18 @@ import { Tooltip as TooltipPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+const HOVER_QUERY = "(hover: hover) and (pointer: fine)"
+
+/** Whether the main input can hover (mouse/trackpad). False on phones and tablets. */
+function canHover(): boolean {
+  if (typeof window === "undefined" || !window.matchMedia) return true
+  return window.matchMedia(HOVER_QUERY).matches
+}
+
 /**
  * A hover/focus label for a control. Brings its own provider so it works
- * anywhere, and (being hover-driven) never appears on touch screens.
+ * anywhere. On touch screens it renders nothing extra: a tap leaves focus on
+ * the control, which would otherwise pin the tooltip open after the action.
  */
 function Tooltip({
   content,
@@ -19,6 +28,8 @@ function Tooltip({
   side?: "top" | "right" | "bottom" | "left"
   delayDuration?: number
 }) {
+  if (!canHover()) return children
+
   return (
     <TooltipPrimitive.Provider delayDuration={delayDuration} skipDelayDuration={150}>
       <TooltipPrimitive.Root>
