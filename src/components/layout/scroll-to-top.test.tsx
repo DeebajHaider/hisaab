@@ -1,12 +1,15 @@
 import { render } from "@testing-library/react";
 import { MemoryRouter, useNavigate } from "react-router-dom";
-import { act } from "react";
+import { act, useEffect } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ScrollToTop } from "./scroll-to-top";
 
 let go: (to: string) => void = () => {};
 function Nav() {
-  go = useNavigate();
+  const navigate = useNavigate();
+  useEffect(() => {
+    go = navigate;
+  }, [navigate]);
   return null;
 }
 
