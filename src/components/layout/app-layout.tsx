@@ -7,7 +7,7 @@ import { LastPageTracker } from "@/components/layout/resume-last-page";
 import { ShortcutsMenu } from "@/components/layout/shortcuts-menu";
 import { OfflineBanner } from "@/components/layout/offline-banner";
 import { prefetchAppRoutes } from "@/routes/lazy-routes";
-import { Wallet, Sun, Moon, Monitor, LogOut, Settings, Download } from "lucide-react";
+import { Wallet, Sun, Moon, Monitor, LogOut, Settings, Download, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getInitials } from "@/lib/format/initials";
 import {
@@ -25,6 +25,7 @@ import {
 import { useTheme } from "@/lib/theme-provider";
 import { useAuth } from "@/lib/auth-context";
 import { useInstallPrompt } from "@/lib/use-install-prompt";
+import { usePrivacyMode } from "@/lib/use-privacy-mode";
 
 
 /**
@@ -83,6 +84,7 @@ function AppHeader({
           <SectionNav />
         </div>
         <div className="flex items-center gap-2">
+          <PrivacyToggle />
           <ShortcutsMenu open={helpOpen} onOpenChange={onHelpOpenChange} />
           <ThemeToggle />
           <UserMenu />
@@ -120,6 +122,24 @@ function SectionNav() {
         Portfolio
       </Link>
     </nav>
+  );
+}
+
+/** Blurs every amount on screen, for using the app in public. */
+function PrivacyToggle() {
+  const { hidden, toggle } = usePrivacyMode();
+  const Icon = hidden ? EyeOff : Eye;
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="w-9 h-9"
+      onClick={toggle}
+      aria-pressed={hidden}
+      aria-label={hidden ? "Show amounts" : "Hide amounts"}
+    >
+      <Icon className="w-4 h-4" />
+    </Button>
   );
 }
 

@@ -341,3 +341,17 @@ input:-webkit-autofill:focus {
   box-shadow: 0 0 0 1000px var(--background) inset;
   transition: background-color 600000s 0s;
 }
+
+/* Privacy mode: blur anything that shows a money figure, app-wide. Amounts are
+   set in tabular numerals throughout, so that class is the hook; chart labels
+   and tooltips are covered separately. Hover or focus reveals one at a time. */
+html[data-privacy="on"] .tabular-nums,
+html[data-privacy="on"] .recharts-wrapper,
+html[data-privacy="on"] [data-amount] {
+  filter: blur(7px);
+  transition: filter 0.15s ease;
+}
+html[data-privacy="on"] .tabular-nums:hover,
+html[data-privacy="on"] [data-amount]:hover {
+  filter: none;
+}

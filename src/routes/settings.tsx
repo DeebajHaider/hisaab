@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import { BackupSection } from "@/components/settings/backup-section";
 import { hasPasswordLogin } from "@/lib/auth-providers";
 import { useMyProfile } from "@/queries/use-my-profile";
 import { useUpdateMyProfile } from "@/queries/use-update-my-profile";
@@ -322,6 +323,8 @@ export function Settings() {
         </form>
         )}
       </section>
+
+      <BackupSection />
 
       {/* ── Sessions ─────────────────────────────────────────────── */}
       <SessionsSection />
