@@ -699,6 +699,7 @@ export type Database = {
           person_id: string | null
           qty: number | null
           rate: number | null
+          tags: string[]
         }
         Insert: {
           amount: number
@@ -713,6 +714,7 @@ export type Database = {
           person_id?: string | null
           qty?: number | null
           rate?: number | null
+          tags?: string[]
         }
         Update: {
           amount?: number
@@ -727,6 +729,7 @@ export type Database = {
           person_id?: string | null
           qty?: number | null
           rate?: number | null
+          tags?: string[]
         }
         Relationships: [
           {

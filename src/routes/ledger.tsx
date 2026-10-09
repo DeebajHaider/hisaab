@@ -9,6 +9,7 @@ import { LedgerDayGroup } from "@/components/ledger/ledger-day-group";
 import { BulkActionBar } from "@/components/ledger/bulk-action-bar";
 import { toggleGroup, toggleSelection } from "@/lib/calculations/bulk-edit";
 import { parseLedgerParams } from "@/lib/calculations/ledger-params";
+import { useTags } from "@/queries/use-tags";
 import { SavedFilters } from "@/components/ledger/saved-filters";
 import { RecentlyDeleted } from "@/components/ledger/recently-deleted";
 import { useAuth } from "@/lib/auth-context";
@@ -56,6 +57,7 @@ export function Ledger() {
   const [categoryIds, setCategoryIds] = useState<string[]>(initial.categoryIds);
   const [itemIds, setItemIds] = useState<string[]>(initial.itemIds);
   const [personIds, setPersonIds] = useState<string[]>([]);
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [searchText, setSearchText] = useState("");
   const search = useDebouncedValue(searchText);
   const { user } = useAuth();
@@ -71,6 +73,7 @@ export function Ledger() {
   const itemsQuery = useItems(budgetId);
   // Archived people included: their past transactions still need filtering.
   const peopleQuery = usePeople(budgetId, { includeArchived: true });
+  const tagsQuery = useTags(budgetId);
   const earliestQuery = useEarliestTransactionMonth(budgetId);
   const ledgerQuery = useLedgerTransactions(budgetId, {
     from,
@@ -79,6 +82,7 @@ export function Ledger() {
     itemIds,
     personIds,
     search,
+    tags: tagFilter,
   });
 
   const categories = categoriesQuery.data ?? [];
@@ -145,6 +149,7 @@ export function Ledger() {
         categoryIds,
         itemIds,
         personIds,
+        tags: tagFilter,
         search: searchText,
       }),
     );
@@ -160,15 +165,21 @@ export function Ledger() {
     setCategoryIds(view.categoryIds);
     setItemIds(view.itemIds);
     setPersonIds(view.personIds);
+    setTagFilter(view.tags ?? []);
     setSearchText(view.search);
   };
 
   const hasExtraFilters =
-    categoryIds.length > 0 || itemIds.length > 0 || personIds.length > 0 || searchText.trim() !== "";
+    categoryIds.length > 0 ||
+    itemIds.length > 0 ||
+    personIds.length > 0 ||
+    tagFilter.length > 0 ||
+    searchText.trim() !== "";
   const clearFilters = () => {
     setCategoryIds([]);
     setItemIds([]);
     setPersonIds([]);
+    setTagFilter([]);
     setSearchText("");
   };
 
@@ -220,6 +231,11 @@ export function Ledger() {
         onTogglePerson={handleTogglePerson}
         search={searchText}
         onSearchChange={setSearchText}
+        tags={(tagsQuery.data ?? []).map((t) => t.tag)}
+        selectedTags={tagFilter}
+        onToggleTag={(tag) =>
+          setTagFilter((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
+        }
         onClearFilters={hasExtraFilters ? clearFilters : undefined}
       />
 

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import type { DayGroup } from "@/lib/calculations/group-by-day";
 import type { TransactionWithRelations } from "@/queries/use-transactions";
 import { formatDayLabel } from "@/lib/format/date";
+import { TagChips } from "@/components/transactions/tag-chips";
 
 export interface LedgerSelection {
   selected: ReadonlySet<string>;
@@ -123,6 +124,7 @@ function LedgerRow({
               {transaction.notes}
             </div>
           )}
+          <TagChips tags={transaction.tags} />
         </div>
 
         <div className="text-sm font-medium tabular-nums shrink-0">

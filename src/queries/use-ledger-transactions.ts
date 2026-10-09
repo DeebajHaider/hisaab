@@ -14,6 +14,8 @@ export interface LedgerFilters {
   personIds: string[];
   /** Free text matched against the transaction's notes. */
   search: string;
+  /** Show transactions carrying any of these tags. */
+  tags?: string[];
 }
 
 /**
@@ -30,12 +32,12 @@ export function useLedgerTransactions(
   budgetId: string | undefined,
   filters: LedgerFilters,
 ) {
-  const { from, to, categoryIds, itemIds, personIds, search } = filters;
+  const { from, to, categoryIds, itemIds, personIds, search, tags = [] } = filters;
   const notesPattern = containsPattern(search);
 
   return useQuery({
     queryKey: budgetId
-      ? transactionKeys.ledger(budgetId, from, to, categoryIds, itemIds, personIds, notesPattern ?? "")
+      ? transactionKeys.ledger(budgetId, from, to, categoryIds, itemIds, personIds, notesPattern ?? "", tags)
       : ["transactions", "noop"],
     enabled: !!budgetId && !!from && !!to,
     // Keep the old rows on screen while a changed filter loads, so typing in
@@ -64,6 +66,9 @@ export function useLedgerTransactions(
       }
       if (personIds.length > 0) {
         query = query.in("person_id", personIds);
+      }
+      if (tags.length > 0) {
+        query = query.overlaps("tags", tags);
       }
       if (notesPattern) {
         query = query.ilike("notes", notesPattern);

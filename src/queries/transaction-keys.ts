@@ -33,6 +33,7 @@ export const transactionKeys = {
     itemIds: string[],
     personIds: string[],
     search: string,
+    tags: string[] = [],
   ) =>
     [
       "transactions",
@@ -44,5 +45,6 @@ export const transactionKeys = {
       [...itemIds].sort(),
       [...personIds].sort(),
       search,
+      [...tags].sort(),
     ] as const,
 };

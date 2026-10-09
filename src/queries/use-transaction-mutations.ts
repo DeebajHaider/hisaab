@@ -22,6 +22,7 @@ interface CreateTransactionInput {
   qty?: number | null;
   personId?: string | null;
   notes?: string | null;
+  tags?: string[];
 }
 
 /**
@@ -46,6 +47,7 @@ export function useCreateTransaction() {
         qty: input.qty ?? null,
         person_id: input.personId ?? null,
         notes: input.notes ?? null,
+        tags: input.tags ?? [],
       });
 
       if (error) throw error;
@@ -82,6 +84,7 @@ interface UpdateTransactionInput {
     qty?: number | null;
     personId?: string | null;
     notes?: string | null;
+    tags?: string[];
   };
 }
 
@@ -100,6 +103,7 @@ export function useUpdateTransaction() {
       if (input.patch.qty !== undefined) dbPatch.qty = input.patch.qty;
       if (input.patch.personId !== undefined) dbPatch.person_id = input.patch.personId;
       if (input.patch.notes !== undefined) dbPatch.notes = input.patch.notes;
+      if (input.patch.tags !== undefined) dbPatch.tags = input.patch.tags;
 
       const { error } = await supabase
         .from("transactions")
@@ -152,6 +156,7 @@ export async function restoreTransaction(row: Transaction) {
     qty: row.qty,
     person_id: row.person_id,
     notes: row.notes,
+    tags: row.tags,
   });
   if (error) throw error;
 }

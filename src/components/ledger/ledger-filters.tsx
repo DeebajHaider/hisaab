@@ -41,6 +41,10 @@ interface LedgerFiltersProps {
   onTogglePerson: (id: string) => void;
   search: string;
   onSearchChange: (value: string) => void;
+  /** Tags in use; the Tags filter only appears when there are some. */
+  tags?: string[];
+  selectedTags?: string[];
+  onToggleTag?: (tag: string) => void;
   /** Shown only when something other than the date range is filtered. */
   onClearFilters?: () => void;
 }
@@ -69,6 +73,9 @@ export function LedgerFilters({
   onTogglePerson,
   search,
   onSearchChange,
+  tags = [],
+  selectedTags = [],
+  onToggleTag,
   onClearFilters,
 }: LedgerFiltersProps) {
   const categoryOptions = useMemo(
@@ -177,6 +184,17 @@ export function LedgerFilters({
             options={personOptions}
             selected={selectedPersonIds}
             onToggle={onTogglePerson}
+            emptyLabel=""
+          />
+        </FilterSection>
+      )}
+
+      {tags.length > 0 && onToggleTag && (
+        <FilterSection label="Tags" selectedCount={selectedTags.length}>
+          <FilterChips
+            options={tags.map((t) => ({ id: t, label: t }))}
+            selected={selectedTags}
+            onToggle={onToggleTag}
             emptyLabel=""
           />
         </FilterSection>

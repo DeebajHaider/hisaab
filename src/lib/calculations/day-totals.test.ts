@@ -17,6 +17,7 @@ function makeTransaction(
     rate: null,
     qty: null,
     notes: null,
+    tags: [],
     created_by: "user-1",
     created_at: "2026-05-05T10:00:00Z",
     item: { id: "item-1", name: "Item", unit: null },

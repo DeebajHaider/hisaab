@@ -6,6 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { TagChips } from "@/components/transactions/tag-chips";
 import type { TransactionWithRelations } from "@/queries/use-transactions";
 import {
   groupTransactionsByCategory,
@@ -139,6 +140,7 @@ function TransactionRow({
             {transaction.notes}
           </div>
         )}
+        <TagChips tags={transaction.tags} />
       </div>
 
       <div className="text-sm font-medium tabular-nums shrink-0">

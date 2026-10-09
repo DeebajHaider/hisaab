@@ -10,6 +10,8 @@ export interface SavedLedgerFilter {
   categoryIds: string[];
   itemIds: string[];
   personIds: string[];
+  /** Absent in views saved before tags existed. */
+  tags?: string[];
   search: string;
 }
 

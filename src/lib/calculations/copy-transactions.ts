@@ -21,6 +21,7 @@ export function buildCopies(
     qty: t.qty,
     person_id: t.person_id,
     notes: null,
+    tags: t.tags,
   }));
 }
 
@@ -32,6 +33,7 @@ export interface RepeatDraft {
   qty: string;
   amount: string;
   personId: string | null;
+  tags: string[];
 }
 
 /** Starting values for the Add form when logging a transaction again. */
@@ -45,5 +47,6 @@ export function buildRepeatDraft(t: TransactionWithRelations): RepeatDraft {
     qty: hasRateQty ? String(t.qty) : "",
     amount: String(t.amount),
     personId: t.person_id,
+    tags: t.tags,
   };
 }

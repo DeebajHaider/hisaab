@@ -23,6 +23,8 @@ import {
   useUpdateTransaction,
 } from "@/queries/use-transaction-mutations";
 import { useTransactions, type TransactionWithRelations } from "@/queries/use-transactions";
+import { TagInput } from "@/components/transactions/tag-input";
+import { useTags } from "@/queries/use-tags";
 import { findDuplicate } from "@/lib/calculations/find-duplicate";
 import { evaluateAmount, formatEvaluated, isExpression } from "@/lib/calculations/evaluate-amount";
 import type { RepeatDraft } from "@/lib/calculations/copy-transactions";
@@ -65,6 +67,7 @@ export function TransactionEntryForm({
   const [amount, setAmount] = useState(initial?.amount ?? "");
   const [personId, setPersonId] = useState<string | null>(initial?.personId ?? null);
   const [notes, setNotes] = useState("");
+  const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   // The date being edited. Only meaningful in edit mode — in create mode the
@@ -83,6 +86,7 @@ export function TransactionEntryForm({
   const createItemMutation = useCreateItem();
 
   const isEditing = !!existing;
+  const tagsQuery = useTags(budgetId);
   const mutationPending = createMutation.isPending || updateMutation.isPending;
   const dayQuery = useTransactions(budgetId, isEditing ? editingDate : date);
   const duplicate = findDuplicate(
@@ -197,6 +201,7 @@ export function TransactionEntryForm({
       setAmount(String(existing.amount));
       setPersonId(existing.person_id);
       setNotes(existing.notes ?? "");
+      setTags(existing.tags ?? []);
       setSearchQuery("");
       setBrowseCategoryId(existing.category_id);
       setEditingDate(existing.date);
@@ -319,6 +324,7 @@ export function TransactionEntryForm({
     setAmount("");
     setPersonId(null);
     setNotes("");
+    setTags([]);
     setError(null);
     setSearchQuery("");
   };
@@ -385,6 +391,7 @@ export function TransactionEntryForm({
             qty: parsedQty,
             personId: selectedCategory.tracks_person ? personId : null,
             notes: trimmedNotes,
+            tags,
           },
         });
       } else {
@@ -398,6 +405,7 @@ export function TransactionEntryForm({
           qty: parsedQty,
           personId: selectedCategory.tracks_person ? personId : null,
           notes: trimmedNotes,
+          tags,
         });
         resetForm();
         searchInputRef.current?.focus();
@@ -704,6 +712,13 @@ export function TransactionEntryForm({
             className="text-sm"
           />
         </div>
+
+        <TagInput
+          id={fid("tags-input")}
+          value={tags}
+          onChange={setTags}
+          suggestions={(tagsQuery.data ?? []).map((t) => t.tag)}
+        />
 
         {duplicate && (
           <p

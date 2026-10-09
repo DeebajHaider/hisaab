@@ -130,6 +130,7 @@ export function useBulkDeleteTransactions() {
               qty: r.qty,
               person_id: r.person_id,
               notes: r.notes,
+              tags: r.tags,
             })),
           );
           if (error) throw error;

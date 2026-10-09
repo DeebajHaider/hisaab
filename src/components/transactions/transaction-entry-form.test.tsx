@@ -22,6 +22,7 @@ vi.mock("@/queries/use-people", () => ({ usePeople: () => ({ data: [] }) }));
 vi.mock("@/queries/use-transactions", () => ({
   useTransactions: () => ({ data: state.dayRows }),
 }));
+vi.mock("@/queries/use-tags", () => ({ useTags: () => ({ data: [] }) }));
 vi.mock("@/queries/use-recent-items", () => ({ useRecentItems: () => ({ data: [] }) }));
 vi.mock("@/queries/use-item-mutations", () => ({ useCreateItem: () => state.createItem }));
 vi.mock("@/queries/use-transaction-mutations", () => ({
@@ -158,6 +159,7 @@ describe("TransactionEntryForm log again", () => {
           qty: "",
           amount: "4250",
           personId: null,
+          tags: [],
         }}
       />,
     );
@@ -188,6 +190,7 @@ describe("TransactionEntryForm log again", () => {
           qty: "2",
           amount: "360",
           personId: null,
+          tags: [],
         }}
       />,
     );

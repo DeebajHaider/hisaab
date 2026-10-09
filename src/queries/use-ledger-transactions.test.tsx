@@ -14,7 +14,7 @@ vi.mock("@/lib/supabase", () => {
   // A chainable stand-in for the PostgREST builder that records each call.
   const builder: Record<string, unknown> = {};
   let budget = "";
-  for (const name of ["select", "eq", "gte", "lte", "in", "ilike", "order"]) {
+  for (const name of ["select", "eq", "gte", "lte", "in", "ilike", "overlaps", "order"]) {
     builder[name] = (...args: unknown[]) => {
       calls.log.push([name, ...args]);
       if (name === "eq" && args[0] === "budget_id") budget = args[1] as string;
@@ -70,6 +70,22 @@ describe("useLedgerTransactions filters", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(used("ilike")).toEqual([["ilike", "notes", "%50\\% off%"]]);
+  });
+
+  it("filters to transactions carrying any of the chosen tags", async () => {
+    const { result } = renderHook(
+      () => useLedgerTransactions("b1", { ...base, tags: ["trip", "gift"] }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(used("overlaps")).toEqual([["overlaps", "tags", ["trip", "gift"]]]);
+  });
+
+  it("applies no tag filter by default", async () => {
+    const { result } = renderHook(() => useLedgerTransactions("b1", base), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(used("overlaps")).toHaveLength(0);
   });
 
   it("ignores a blank search", async () => {
