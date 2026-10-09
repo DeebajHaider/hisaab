@@ -124,7 +124,7 @@ export function MonthView() {
       ) : (
         <>
           {/* The three cards that matter most come first: how the month is
-              going, where the money went, and what came in. */}
+              going, where the money went, and what came in, then savings. */}
           <VarianceCard
             income={incomeTotal}
             expenses={expensesTotal}
@@ -147,6 +147,7 @@ export function MonthView() {
             />
           )}
           <IncomeSection budgetId={budgetId} yearMonth={yearMonth} />
+          <SavingsSection budgetId={budgetId} yearMonth={yearMonth} />
 
           {summary && (
             <MonthRecapCard
@@ -176,7 +177,6 @@ export function MonthView() {
               currency={currency}
             />
           )}
-          <SavingsSection budgetId={budgetId} yearMonth={yearMonth} />
         </>
       )}
 
