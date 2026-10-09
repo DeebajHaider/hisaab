@@ -6,6 +6,10 @@ import { VarianceCard } from "@/components/transactions/variance-card";
 import { IncomeSection } from "@/components/transactions/income-section";
 import { SavingsSection } from "@/components/transactions/savings-section";
 import { useMonthTransactions } from "@/queries/use-month-transactions";
+import { useBudget } from "@/queries/use-budget";
+import { MonthRecapCard } from "@/components/transactions/month-recap-card";
+import { SpendingHeatmap } from "@/components/transactions/spending-heatmap";
+import { MonthCompareCard } from "@/components/transactions/month-compare-card";
 import { useIncome } from "@/queries/use-income";
 import { useSavings } from "@/queries/use-savings";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +19,7 @@ import {
   type MonthMeta,
 } from "@/lib/calculations/month-summary";
 import {
+  addMonths,
   currentYearMonth,
   firstDayOfMonth,
   lastDayOfMonth,
@@ -33,6 +38,11 @@ export function MonthView() {
 
   const navigate = useNavigate();
   const txQuery = useMonthTransactions(budgetId, yearMonth);
+  const previousQuery = useMonthTransactions(
+    budgetId,
+    yearMonth ? addMonths(yearMonth, -1) : undefined,
+  );
+  const currency = useBudget(budgetId).data?.currency ?? "PKR";
   const incomeQuery = useIncome(budgetId, yearMonth);
   const savingsQuery = useSavings(budgetId, yearMonth);
 
@@ -119,7 +129,24 @@ export function MonthView() {
             savings={savingsTotal}
           />
           {summary && (
+            <MonthRecapCard
+              current={transactions}
+              previous={previousQuery.data ?? []}
+              daysElapsed={monthMeta.daysElapsed}
+              totalDays={monthMeta.totalDays}
+              currency={currency}
+            />
+          )}
+          {summary && (
             <MonthSummaryCard yearMonth={yearMonth} summary={summary} />
+          )}
+          {summary && (
+            <SpendingHeatmap
+              budgetId={budgetId}
+              yearMonth={yearMonth}
+              transactions={transactions}
+              currency={currency}
+            />
           )}
           {summary && breakdown.length > 0 && (
             <CategoryBreakdownCard
@@ -135,6 +162,14 @@ export function MonthView() {
                   }),
                 );
               }}
+            />
+          )}
+          {summary && (
+            <MonthCompareCard
+              budgetId={budgetId}
+              yearMonth={yearMonth}
+              current={transactions}
+              currency={currency}
             />
           )}
         </>

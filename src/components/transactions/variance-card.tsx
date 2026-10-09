@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { calculateVariance } from "@/lib/calculations/variance";
+import { calculateRates } from "@/lib/calculations/savings-rate";
 
 interface VarianceCardProps {
   income: number;
@@ -18,6 +19,8 @@ interface VarianceCardProps {
  */
 export function VarianceCard({ income, expenses, savings }: VarianceCardProps) {
   const variance = calculateVariance({ income, expenses, savings });
+
+  const rates = calculateRates({ income, expenses, savings });
 
   const status = variance > 0 ? "surplus" : variance < 0 ? "deficit" : "balanced";
 
@@ -82,6 +85,30 @@ export function VarianceCard({ income, expenses, savings }: VarianceCardProps) {
             </div>
           </div>
         </div>
+
+        {rates.keptPercent !== null && rates.savedPercent !== null && (
+          <p className="border-t pt-3 text-sm text-muted-foreground">
+            You kept{" "}
+            <strong
+              className={`font-semibold tabular-nums ${
+                rates.keptPercent < 0 ? "text-destructive" : "text-foreground"
+              }`}
+            >
+              {Math.round(rates.keptPercent)}%
+            </strong>{" "}
+            of your income this month
+            {savings > 0 && (
+              <>
+                , and put{" "}
+                <strong className="font-semibold tabular-nums text-foreground">
+                  {Math.round(rates.savedPercent)}%
+                </strong>{" "}
+                into savings
+              </>
+            )}
+            .
+          </p>
+        )}
       </CardContent>
     </Card>
   );
