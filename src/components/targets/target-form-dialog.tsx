@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
@@ -64,17 +64,22 @@ export function TargetFormDialog({
   // would otherwise re-fire this mid-edit and clobber whatever the user has
   // typed, since react-query hands back new object/array references on
   // every refetch even when the content is unchanged.
-  useEffect(() => {
-    if (!open) return;
-    setName(existing?.name ?? "");
-    setAmount(existing ? String(existing.target_amount) : "");
-    setStartDate(existing?.start_date ?? todayISO());
-    setEndDate(existing?.end_date ?? todayISO());
-    setCategoryIds(existing?.category_ids ?? []);
-    setItemIds(existing?.item_ids ?? []);
-    setError(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  // Fill the form each time the dialog opens. Done during render (React's
+  // "adjust state when a prop changes" pattern) rather than in an effect, and
+  // only on the open transition, so a background refetch can't clobber typing.
+  const [wasOpen, setWasOpen] = useState(false);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setName(existing?.name ?? "");
+      setAmount(existing ? String(existing.target_amount) : "");
+      setStartDate(existing?.start_date ?? todayISO());
+      setEndDate(existing?.end_date ?? todayISO());
+      setCategoryIds(existing?.category_ids ?? []);
+      setItemIds(existing?.item_ids ?? []);
+      setError(null);
+    }
+  }
 
   const handlePresetSelect = (preset: TargetPreset) => {
     const range = resolveTargetPreset(preset, todayISO());

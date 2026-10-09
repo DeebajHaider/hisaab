@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
@@ -52,14 +52,18 @@ export function CategoryFormDialog({
   // new object reference even when nothing actually changed. Depending on
   // `existing` here would re-fire this effect mid-edit and silently
   // overwrite whatever the user has typed since opening.
-  useEffect(() => {
+  // Fill the form each time the dialog opens. Done during render (React's
+  // "adjust state when a prop changes" pattern) rather than in an effect, and
+  // only on the open transition, so a background refetch can't clobber typing.
+  const [wasOpen, setWasOpen] = useState(false);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) {
       setName(existing?.name ?? "");
       setTracksPerson(existing?.tracks_person ?? false);
       setError(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 

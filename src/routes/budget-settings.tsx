@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -82,9 +82,11 @@ function RenameSection({
   const updateBudget = useUpdateBudget();
 
   // Re-sync if the budget name changes externally (e.g. another tab).
-  useEffect(() => {
+  const [syncedName, setSyncedName] = useState(currentName);
+  if (currentName !== syncedName) {
+    setSyncedName(currentName);
     setName(currentName);
-  }, [currentName]);
+  }
 
   const isDirty =
     name.trim() !== currentName.trim() && name.trim().length > 0;

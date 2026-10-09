@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -38,17 +38,13 @@ export function Settings() {
   const [displayName, setDisplayName] = useState("");
   const [justSaved, setJustSaved] = useState(false);
 
-  useEffect(() => {
-    if (profileQuery.data && !justSaved) {
-      setDisplayName(profileQuery.data.display_name ?? "");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileQuery.data]);
-
-  useEffect(() => {
-    if (justSaved) setJustSaved(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayName]);
+  // Load the saved name when the profile arrives or changes (not while the
+  // "Saved" confirmation is showing). Done during render rather than in an effect.
+  const [seenProfile, setSeenProfile] = useState<typeof profileQuery.data>(undefined);
+  if (profileQuery.data && profileQuery.data !== seenProfile) {
+    setSeenProfile(profileQuery.data);
+    if (!justSaved) setDisplayName(profileQuery.data.display_name ?? "");
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -166,7 +162,10 @@ export function Settings() {
               <Input
                 id="display-name"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(e) => {
+                  setDisplayName(e.target.value);
+                  setJustSaved(false);
+                }}
                 maxLength={MAX_DISPLAY_NAME_LENGTH}
                 placeholder="e.g. Deebaj"
                 autoComplete="off"

@@ -68,6 +68,14 @@ export function TransactionEntryForm({
   const [personId, setPersonId] = useState<string | null>(initial?.personId ?? null);
   const [notes, setNotes] = useState("");
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
+  // In rate x qty mode the amount is derived from the two; in lump mode it is what was typed.
+  const computedAmount = (() => {
+    const r = Number(rate);
+    const q = Number(qty);
+    if (rate.trim() === "" || qty.trim() === "" || Number.isNaN(r) || Number.isNaN(q)) return "";
+    return (r * q).toFixed(2);
+  })();
+  const amountText = mode === "rate_qty" ? computedAmount : amount;
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   // The date being edited. Only meaningful in edit mode — in create mode the
@@ -91,12 +99,12 @@ export function TransactionEntryForm({
   const dayQuery = useTransactions(budgetId, isEditing ? editingDate : date);
   const duplicate = findDuplicate(
     dayQuery.data ?? NONE,
-    { itemId: selectedItemId, amount: evaluateAmount(amount) ?? NaN },
+    { itemId: selectedItemId, amount: evaluateAmount(amountText) ?? NaN },
     existing?.id,
   );
 
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const sumValue = mode === "lump" && isExpression(amount) ? evaluateAmount(amount) : null;
+  const sumValue = mode === "lump" && isExpression(amountText) ? evaluateAmount(amountText) : null;
   const showSum = sumValue !== null;
   const sumResult = sumValue === null ? "" : formatEvaluated(sumValue);
 
@@ -189,24 +197,25 @@ export function TransactionEntryForm({
     [peopleForPicker, personId],
   );
 
-  // --- Edit-mode pre-fill
-  useEffect(() => {
-    if (existing) {
-      setSelectedItemId(existing.item_id);
-      setMode(
-        existing.rate !== null && existing.qty !== null ? "rate_qty" : "lump",
-      );
-      setRate(existing.rate !== null ? String(existing.rate) : "");
-      setQty(existing.qty !== null ? String(existing.qty) : "");
-      setAmount(String(existing.amount));
-      setPersonId(existing.person_id);
-      setNotes(existing.notes ?? "");
-      setTags(existing.tags ?? []);
-      setSearchQuery("");
-      setBrowseCategoryId(existing.category_id);
-      setEditingDate(existing.date);
-    }
-  }, [existing]);
+  // --- Edit-mode pre-fill, when the transaction being edited arrives or changes.
+  // Done during render (React's "adjust state when a prop changes" pattern).
+  const [filledFrom, setFilledFrom] = useState<typeof existing>(null);
+  if (existing && existing !== filledFrom) {
+    setFilledFrom(existing);
+    setSelectedItemId(existing.item_id);
+    setMode(
+      existing.rate !== null && existing.qty !== null ? "rate_qty" : "lump",
+    );
+    setRate(existing.rate !== null ? String(existing.rate) : "");
+    setQty(existing.qty !== null ? String(existing.qty) : "");
+    setAmount(String(existing.amount));
+    setPersonId(existing.person_id);
+    setNotes(existing.notes ?? "");
+    setTags(existing.tags ?? []);
+    setSearchQuery("");
+    setBrowseCategoryId(existing.category_id);
+    setEditingDate(existing.date);
+  }
 
   // --- "Log again": once the form is on screen, put the cursor in the
   // number the user is most likely to change, selected so typing replaces it.
@@ -219,23 +228,6 @@ export function TransactionEntryForm({
     field?.focus();
     field?.select();
   }, [initial, formReady]);
-
-  // --- Auto-compute amount in rate_qty mode
-  useEffect(() => {
-    if (mode !== "rate_qty") return;
-    const r = Number(rate);
-    const q = Number(qty);
-    if (
-      rate.trim() === "" ||
-      qty.trim() === "" ||
-      Number.isNaN(r) ||
-      Number.isNaN(q)
-    ) {
-      setAmount("");
-      return;
-    }
-    setAmount((r * q).toFixed(2));
-  }, [mode, rate, qty]);
 
   // --- Handlers
   const pickItem = (id: string) => {
@@ -349,10 +341,10 @@ export function TransactionEntryForm({
       return;
     }
 
-    const evaluated = evaluateAmount(amount);
+    const evaluated = evaluateAmount(amountText);
     const parsedAmount = evaluated === null ? NaN : Math.round(evaluated * 100) / 100;
     if (
-      amount.trim() === "" ||
+      amountText.trim() === "" ||
       Number.isNaN(parsedAmount) ||
       parsedAmount < 0
     ) {
@@ -550,7 +542,11 @@ export function TransactionEntryForm({
           <div className="flex rounded-md overflow-hidden border border-border/60">
             <button
               type="button"
-              onClick={() => setMode("lump")}
+              onClick={() => {
+                // Keep the worked-out total when leaving rate x qty.
+                if (mode === "rate_qty" && computedAmount) setAmount(computedAmount);
+                setMode("lump");
+              }}
               className={`px-3 py-1 text-xs ${
                 mode === "lump"
                   ? "bg-accent-solid text-white"
@@ -623,12 +619,12 @@ export function TransactionEntryForm({
               type="text"
               inputMode="decimal"
               autoComplete="off"
-              value={amount}
+              value={amountText}
               onChange={(e) => setAmount(e.target.value)}
               onBlur={() => {
                 // Settle a typed sum like 120+80 into its result.
-                const value = evaluateAmount(amount);
-                if (mode === "lump" && value !== null && isExpression(amount)) {
+                const value = evaluateAmount(amountText);
+                if (mode === "lump" && value !== null && isExpression(amountText)) {
                   setAmount(formatEvaluated(value));
                 }
               }}
@@ -766,7 +762,7 @@ export function TransactionEntryForm({
             disabled={
               mutationPending ||
               !selectedItem ||
-              !amount.trim() ||
+              !amountText.trim() ||
               (selectedCategory?.tracks_person && !personId)
             }
           >
@@ -833,9 +829,12 @@ function SearchCombobox({
     setOpen(false);
   };
 
-  useEffect(() => {
+  // Back to the first result whenever the result list changes.
+  const [shownItems, setShownItems] = useState(items);
+  if (items !== shownItems) {
+    setShownItems(items);
     setHighlightIdx(0);
-  }, [items]);
+  }
 
   useEffect(() => {
     if (!open) return;

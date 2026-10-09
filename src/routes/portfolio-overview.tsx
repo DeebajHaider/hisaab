@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,17 +40,16 @@ export function PortfolioOverview() {
   // not on every render of portfolioQuery.data, which would re-fire on any
   // background refetch and clobber whatever the user is actively typing
   // (same class of bug fixed in the edit dialogs earlier).
-  const seededRef = useRef(false);
-  useEffect(() => {
-    if (seededRef.current || !portfolioQuery.data) return;
+  const [seeded, setSeeded] = useState(false);
+  if (!seeded && portfolioQuery.data) {
+    setSeeded(true);
     const stored = (portfolioQuery.data.fx_rates as Record<string, number>) ?? {};
     if (Object.keys(stored).length > 0) {
       const asStrings: Record<string, string> = {};
       for (const [cur, rate] of Object.entries(stored)) asStrings[cur] = String(rate);
       setRateInputs(asStrings);
     }
-    seededRef.current = true;
-  }, [portfolioQuery.data]);
+  }
 
   const persistRates = (next: Record<string, string>) => {
     if (!portfolioId) return;

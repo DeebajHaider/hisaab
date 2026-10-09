@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,13 +30,18 @@ export function AdjustInvestmentDialog({ holding, open, onOpenChange }: Props) {
   const [error, setError] = useState<string | null>(null);
   const adjust = useAdjustHoldingInvestment();
 
-  useEffect(() => {
+  // Fill the form each time the dialog opens. Done during render (React's
+  // "adjust state when a prop changes" pattern) rather than in an effect, and
+  // only on the open transition, so a background refetch can't clobber typing.
+  const [wasOpen, setWasOpen] = useState(false);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) {
       setMode("add");
       setAmount("");
       setError(null);
     }
-  }, [open]);
+  }
 
   const amt = Number(amount);
   const validAmount = amount.trim() !== "" && !Number.isNaN(amt) && amt > 0;

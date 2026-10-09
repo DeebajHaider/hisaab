@@ -26,4 +26,11 @@ export default defineConfig([
       ],
     },
   },
+  {
+    // shadcn primitives export their style variants next to the component, and
+    // the context providers export a hook next to the provider. Both are
+    // standard patterns; they only cost a full reload instead of fast refresh in dev.
+    files: ['src/components/ui/**', 'src/lib/auth-context.tsx', 'src/lib/theme-provider.tsx'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
 ])

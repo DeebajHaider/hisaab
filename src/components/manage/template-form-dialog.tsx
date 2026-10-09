@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, type FormEvent, type ReactNode } from "react";
+import { useState, useMemo, type FormEvent, type ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
@@ -73,39 +73,41 @@ export function TemplateFormDialog({
   // otherwise re-fire this mid-edit and clobber whatever the user has
   // typed, since react-query hands back new object/array references on
   // every refetch even when the content is unchanged.
-  useEffect(() => {
-    if (!open) return;
-    setCategoryId(existing?.category_id ?? categories[0]?.id ?? "");
-    setItemId(existing?.item_id ?? "");
-    setLabel(existing?.label ?? "");
-    setMode(existing?.rate !== null && existing?.rate !== undefined ? "rate_qty" : "lump");
-    setRate(existing?.rate !== null && existing?.rate !== undefined ? String(existing.rate) : "");
-    setQty(existing?.qty !== null && existing?.qty !== undefined ? String(existing.qty) : "");
-    setAmount(existing ? String(existing.amount) : "");
-    setPersonId(existing?.person_id ?? null);
-    setNotes(existing?.notes ?? "");
-    setError(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  // Reset the item when the category changes away from the current item's category.
-  useEffect(() => {
-    if (selectedItem && selectedItem.category_id !== categoryId) {
-      setItemId("");
+  // Fill the form each time the dialog opens. Done during render (React's
+  // "adjust state when a prop changes" pattern) rather than in an effect, and
+  // only on the open transition, so a background refetch can't clobber typing.
+  const [wasOpen, setWasOpen] = useState(false);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setCategoryId(existing?.category_id ?? categories[0]?.id ?? "");
+      setItemId(existing?.item_id ?? "");
+      setLabel(existing?.label ?? "");
+      setMode(existing?.rate !== null && existing?.rate !== undefined ? "rate_qty" : "lump");
+      setRate(existing?.rate !== null && existing?.rate !== undefined ? String(existing.rate) : "");
+      setQty(existing?.qty !== null && existing?.qty !== undefined ? String(existing.qty) : "");
+      setAmount(existing ? String(existing.amount) : "");
+      setPersonId(existing?.person_id ?? null);
+      setNotes(existing?.notes ?? "");
+      setError(null);
     }
-  }, [categoryId, selectedItem]);
+  }
 
-  // Auto-compute amount in rate_qty mode, same as the transaction entry form.
-  useEffect(() => {
-    if (mode !== "rate_qty") return;
+  // In rate x qty mode the amount is derived, same as the transaction entry
+  // form; in lump mode it is whatever was typed.
+  const computedAmount = (() => {
     const r = Number(rate);
     const q = Number(qty);
-    if (rate.trim() === "" || qty.trim() === "" || Number.isNaN(r) || Number.isNaN(q)) {
-      setAmount("");
-      return;
-    }
-    setAmount((r * q).toFixed(2));
-  }, [mode, rate, qty]);
+    if (rate.trim() === "" || qty.trim() === "" || Number.isNaN(r) || Number.isNaN(q)) return "";
+    return (r * q).toFixed(2);
+  })();
+  const effectiveAmount = mode === "rate_qty" ? computedAmount : amount;
+
+  // Changing category drops an item that belongs to the old one.
+  const handleCategoryChange = (next: string) => {
+    setCategoryId(next);
+    if (selectedItem && selectedItem.category_id !== next) setItemId("");
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -120,8 +122,8 @@ export function TemplateFormDialog({
       return;
     }
 
-    const parsedAmount = Number(amount);
-    if (amount.trim() === "" || Number.isNaN(parsedAmount) || parsedAmount < 0) {
+    const parsedAmount = Number(effectiveAmount);
+    if (effectiveAmount.trim() === "" || Number.isNaN(parsedAmount) || parsedAmount < 0) {
       setError("Amount must be a non-negative number");
       return;
     }
@@ -188,7 +190,7 @@ export function TemplateFormDialog({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="template-category">Category</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
+              <Select value={categoryId} onValueChange={handleCategoryChange}>
                 <SelectTrigger id="template-category">
                   <SelectValue placeholder="Pick a category" />
                 </SelectTrigger>
@@ -310,7 +312,7 @@ export function TemplateFormDialog({
                 id="template-amount"
                 type="number"
                 inputMode="decimal"
-                value={amount}
+                value={effectiveAmount}
                 onChange={(e) => setAmount(e.target.value)}
                 min={0}
                 step="0.01"
@@ -371,7 +373,7 @@ export function TemplateFormDialog({
             <Button
               type="submit"
               className="bg-accent-solid hover:bg-accent-solid-hover text-white"
-              disabled={isPending || !categoryId || !itemId || !amount.trim()}
+              disabled={isPending || !categoryId || !itemId || !effectiveAmount.trim()}
             >
               {isPending
                 ? isEditing

@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
   Dialog,
   DialogContent,
@@ -37,13 +37,18 @@ export function UpdateValueDialog({ holding, open, onOpenChange }: Props) {
   const minDate =
     history && history.length > 0 ? history[0].as_of : undefined;
 
-  useEffect(() => {
+  // Fill the form each time the dialog opens. Done during render (React's
+  // "adjust state when a prop changes" pattern) rather than in an effect, and
+  // only on the open transition, so a background refetch can't clobber typing.
+  const [wasOpen, setWasOpen] = useState(false);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) {
       setValue(String(holding.current_value));
       setAsOf(today);
       setError(null);
     }
-  }, [open, holding, today]);
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

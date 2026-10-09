@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
@@ -43,13 +43,17 @@ export function PortfolioFormDialog({
   // `existing` — see CategoryFormDialog's dialog for why (a background
   // refetch of the portfolios list would otherwise re-fire this mid-edit
   // and clobber whatever the user has typed).
-  useEffect(() => {
+  // Fill the form each time the dialog opens. Done during render (React's
+  // "adjust state when a prop changes" pattern) rather than in an effect, and
+  // only on the open transition, so a background refetch can't clobber typing.
+  const [wasOpen, setWasOpen] = useState(false);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) {
       setName(existing?.name ?? "");
       setError(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

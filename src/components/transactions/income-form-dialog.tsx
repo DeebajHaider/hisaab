@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
@@ -73,7 +73,12 @@ export function IncomeFormDialog({
   const minDate = firstDayOfMonth(yearMonth);
   const maxDate = lastDayOfMonth(yearMonth);
 
-  useEffect(() => {
+  // Fill the form each time the dialog opens. Done during render (React's
+  // "adjust state when a prop changes" pattern) rather than in an effect, and
+  // only on the open transition, so a background refetch can't clobber typing.
+  const [wasOpen, setWasOpen] = useState(false);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) {
       setSource(existing?.source ?? "");
       setAmount(existing ? String(existing.amount) : "");
@@ -87,7 +92,7 @@ export function IncomeFormDialog({
       setNotes(existing?.notes ?? "");
       setError(null);
     }
-  }, [open, existing, minDate, maxDate]);
+  }
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
