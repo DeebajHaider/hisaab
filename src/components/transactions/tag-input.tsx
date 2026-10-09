@@ -68,7 +68,7 @@ export function TagInput({
             maxLength={MAX_TAG_LENGTH}
             placeholder={value.length === 0 ? "e.g. trip, reimbursable" : "Add another"}
             autoComplete="off"
-            className="h-7 w-44 text-xs"
+            className="h-8 w-44 text-base md:text-xs"
           />
         )}
       </div>

@@ -347,7 +347,7 @@ function CSVTab({
           placeholder={
             TEMPLATE_CSV_SAMPLE.split("\n").slice(0, 4).join("\n") + "\n..."
           }
-          className="font-mono text-xs h-32"
+          className="font-mono text-base md:text-xs h-32"
         />
       </div>
 

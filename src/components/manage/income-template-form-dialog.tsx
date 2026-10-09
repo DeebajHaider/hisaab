@@ -137,7 +137,6 @@ export function IncomeTemplateFormDialog({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              className="text-sm"
             />
           </div>
 

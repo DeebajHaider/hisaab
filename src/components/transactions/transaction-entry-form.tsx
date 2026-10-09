@@ -705,7 +705,6 @@ export function TransactionEntryForm({
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
             placeholder=""
-            className="text-sm"
           />
         </div>
 

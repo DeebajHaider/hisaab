@@ -355,3 +355,13 @@ html[data-privacy="on"] .tabular-nums:hover,
 html[data-privacy="on"] [data-amount]:hover {
   filter: none;
 }
+
+/* Touch screens: icon buttons are 32px on desktop, too small to hit reliably
+   with a thumb. Give them a 40px minimum wherever the pointer is coarse. */
+@media (pointer: coarse) {
+  [data-slot="button"][data-size="icon"],
+  [data-slot="button"][data-size="icon-sm"] {
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+  }
+}
