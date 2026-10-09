@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBudget } from "@/queries/use-budget";
 import { useAuth } from "@/lib/auth-context";
+import { QuickEntry } from "@/components/transactions/quick-entry";
 import { GettingStarted } from "@/components/budgets/getting-started";
 import {
   useTransactions,
@@ -87,6 +88,8 @@ export function DayView() {
       <CopyPreviousDay budgetId={budgetId} date={date} currency={currency} />
 
       <QuickAddTemplates budgetId={budgetId} date={date} currency={currency} />
+
+      <QuickEntry budgetId={budgetId} date={date} currency={currency} />
 
       {/* Deliberately not sticky: on phones the form is about a full
           viewport tall, so pinning it covers the whole transaction list.
