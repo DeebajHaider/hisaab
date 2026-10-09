@@ -123,11 +123,31 @@ export function MonthView() {
         </Card>
       ) : (
         <>
+          {/* The three cards that matter most come first: how the month is
+              going, where the money went, and what came in. */}
           <VarianceCard
             income={incomeTotal}
             expenses={expensesTotal}
             savings={savingsTotal}
           />
+          {summary && breakdown.length > 0 && (
+            <CategoryBreakdownCard
+              breakdown={breakdown}
+              onSelectCategory={(name) => {
+                const id = transactions.find((t) => t.category?.name === name)?.category?.id;
+                if (!id) return;
+                navigate(
+                  buildLedgerHref(budgetId, {
+                    categoryId: id,
+                    from: firstDayOfMonth(yearMonth),
+                    to: lastDayOfMonth(yearMonth),
+                  }),
+                );
+              }}
+            />
+          )}
+          <IncomeSection budgetId={budgetId} yearMonth={yearMonth} />
+
           {summary && (
             <MonthRecapCard
               current={transactions}
@@ -148,22 +168,6 @@ export function MonthView() {
               currency={currency}
             />
           )}
-          {summary && breakdown.length > 0 && (
-            <CategoryBreakdownCard
-              breakdown={breakdown}
-              onSelectCategory={(name) => {
-                const id = transactions.find((t) => t.category?.name === name)?.category?.id;
-                if (!id) return;
-                navigate(
-                  buildLedgerHref(budgetId, {
-                    categoryId: id,
-                    from: firstDayOfMonth(yearMonth),
-                    to: lastDayOfMonth(yearMonth),
-                  }),
-                );
-              }}
-            />
-          )}
           {summary && (
             <MonthCompareCard
               budgetId={budgetId}
@@ -172,13 +176,18 @@ export function MonthView() {
               currency={currency}
             />
           )}
+          <SavingsSection budgetId={budgetId} yearMonth={yearMonth} />
         </>
       )}
 
-      {/* Income and Savings sections always render so Add buttons are
-          accessible even when the month is empty. */}
-      <IncomeSection budgetId={budgetId} yearMonth={yearMonth} />
-      <SavingsSection budgetId={budgetId} yearMonth={yearMonth} />
+      {/* With nothing to show (loading, error or an empty month) the Income and
+          Savings sections still render, so the Add buttons are reachable. */}
+      {(isLoading || queryError || !hasAnyData) && (
+        <>
+          <IncomeSection budgetId={budgetId} yearMonth={yearMonth} />
+          <SavingsSection budgetId={budgetId} yearMonth={yearMonth} />
+        </>
+      )}
     </div>
   );
 }
